@@ -586,22 +586,28 @@ student_story_progress (
 
 **Tagline del logo:** "Educación que empodera. Dignidad que transforma." (Es el tagline poético del branding — distinto de la propuesta de valor funcional que usa "fortalecemos".)
 
-**Paleta de color (extraída de mockups preliminares — puede cambiar con branding definitivo):**
+**Paleta de color definitiva (Mini Brand Identity Guide v3.5 — Sharis Peralta, 23/08/2026):**
 
-| Token | Color aprox. | Uso |
-|-------|-------------|-----|
-| Fondo dark | `#1A1525` | Fondo principal en dark mode |
-| Superficie dark | `#231B35` | Cards y contenedores en dark mode |
-| Acento principal | `#E86B9A` | Botones CTA, texto destacado, barras de progreso |
-| Acento secundario | `#7BB8C0` | Teal del logo, "Learn" wordmark, elementos secundarios |
-| Texto principal | `#FFFFFF` | Títulos en dark mode |
-| Texto secundario | `#B8A9C9` | Cuerpo y descripciones en dark mode |
-| Gamificación | Naranja/ámbar | Racha, insignias especiales |
+| # | Nombre | HEX | RGB | Uso |
+|---|--------|-----|-----|-----|
+| 1 | Púrpura Profundo | `#160B24` | R:22 G:11 B:36 | Fondo principal dark mode, secciones destacadas |
+| 2 | Rosa Pastel | `#F0A8B6` | R:240 G:168 B:182 | Acento principal, botones CTA, barras de progreso |
+| 3 | Celeste Pastel | `#A4CDD5` | R:164 G:205 B:213 | Acento secundario, "Learn" wordmark, elementos secundarios |
+| 4 | Blanco | `#FFFFFF` | R:255 G:255 B:255 | Fondo light mode, texto principal en dark mode |
 
-**Dark mode:** base del branding — morado/navy oscuro.  
-**Light mode:** fondo blanco/crema con los mismos acentos rosa y teal. Toggle en Extras > Configuración.
+> ⚠️ **Corrección respecto a versiones anteriores:** los valores `#1A1525`, `#E86B9A` y `#7BB8C0` que aparecían en el PRD eran aproximaciones preliminares. Los valores definitivos son los de la tabla anterior, extraídos de la guía oficial de Sharis.
 
-> ⚠️ La tipografía definitiva la define el equipo de diseño. Usar `Inter` como placeholder — es reemplazable con un cambio de una línea en Tailwind.
+**Dark mode:** fondo `#160B24` con acentos rosa y celeste pastel.  
+**Light mode:** fondo `#FFFFFF` con los mismos acentos. Toggle en Extras > Configuración.
+
+**Tipografía definitiva (Mini Brand Identity Guide v3.5):**
+
+| Tipo | Fuente | Uso |
+|------|--------|-----|
+| Principal | **Sitka Small Semibold** (serif) | Títulos, headings, logo wordmark, elementos primarios de marca |
+| Secundaria | **Nunito** (sans-serif redondeada) | Cuerpo de texto, descripciones, párrafos informativos, UI secundaria |
+
+> ⚠️ **Corrección respecto a versiones anteriores:** `Inter` era placeholder. Las fuentes definitivas son Sitka Small Semibold + Nunito. Actualizar `tailwind.config.ts` cuando se implemente el frontend.
 
 ### Estructura de navegación
 
