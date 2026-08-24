@@ -2,6 +2,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import WordSearch from "@/components/games/WordSearch";
 import Quiz from "@/components/games/Quiz";
+import ProgresoLectura from "@/components/ProgresoLectura";
 
 interface SopaLetrasConfig {
   palabras: string[];
@@ -63,12 +64,7 @@ export default async function TemaPage({
       </Link>
       <h1 className="text-2xl font-bold mt-2 mb-3">{tema?.titulo}</h1>
 
-      <div className="mb-6">
-        <p className="text-sm text-gray-500 mb-1">1 de 3 elementos</p>
-        <div className="w-full h-2 rounded-full bg-gray-200">
-          <div className="h-2 rounded-full bg-blue-500" style={{ width: "33%" }} />
-        </div>
-      </div>
+      <ProgresoLectura temaId={params.topicId} />
 
       <p className="text-base leading-relaxed whitespace-pre-line">
         {tema?.contenido_lectura}
