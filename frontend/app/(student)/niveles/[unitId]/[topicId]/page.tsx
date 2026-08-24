@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase";
 import WordSearch from "@/components/games/WordSearch";
 import Quiz from "@/components/games/Quiz";
 import ProgresoLectura from "@/components/ProgresoLectura";
+import Reflexion from "@/components/Reflexion";
 
 interface SopaLetrasConfig {
   palabras: string[];
@@ -15,6 +16,13 @@ interface QuizConfig {
   opciones: { id: string; texto: string }[];
   respuesta_correcta: string;
   retroalimentacion: string;
+}
+
+interface ReflexionConfig {
+  pregunta: string;
+  opciones: { id: string; texto: string }[];
+  respuesta_correcta: string;
+  dato_extra: string;
 }
 
 export default async function TemaPage({
@@ -54,6 +62,19 @@ export default async function TemaPage({
 
   const quizConfig = quizActividad?.config_json as QuizConfig | undefined;
 
+  const { data: scenarioActividades } = await supabase
+    .from("actividades")
+    .select("config_json, tipos_actividad!inner(nombre)")
+    .eq("tema_id", params.topicId)
+    .eq("tipos_actividad.nombre", "scenario");
+
+  const scenarioActividad =
+    scenarioActividades && scenarioActividades.length > 0
+      ? scenarioActividades[Math.floor(Math.random() * scenarioActividades.length)]
+      : null;
+
+  const reflexionConfig = scenarioActividad?.config_json as ReflexionConfig | undefined;
+
   return (
     <main className="max-w-2xl mx-auto p-6">
       <Link
@@ -73,14 +94,21 @@ export default async function TemaPage({
       {sopaConfig && (
         <div className="mt-10">
           <h2 className="text-lg font-semibold mb-4">Sopa de letras</h2>
-          <WordSearch config={sopaConfig} />
+          <WordSearch config={sopaConfig} temaId={params.topicId} />
         </div>
       )}
 
       {quizConfig && (
         <div className="mt-10">
           <h2 className="text-lg font-semibold mb-4">Quiz</h2>
-          <Quiz config={quizConfig} />
+          <Quiz config={quizConfig} temaId={params.topicId} />
+        </div>
+      )}
+
+      {reflexionConfig && (
+        <div className="mt-10">
+          <h2 className="text-lg font-semibold mb-4">Reflexión</h2>
+          <Reflexion config={reflexionConfig} temaId={params.topicId} />
         </div>
       )}
     </main>
