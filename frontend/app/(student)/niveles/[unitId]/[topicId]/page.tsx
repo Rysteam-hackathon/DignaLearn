@@ -1,11 +1,19 @@
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import WordSearch from "@/components/games/WordSearch";
+import Quiz from "@/components/games/Quiz";
 
 interface SopaLetrasConfig {
   palabras: string[];
   pistas: string[];
   tamaño: number;
+}
+
+interface QuizConfig {
+  pregunta: string;
+  opciones: { id: string; texto: string }[];
+  respuesta_correcta: string;
+  retroalimentacion: string;
 }
 
 export default async function TemaPage({
@@ -32,6 +40,19 @@ export default async function TemaPage({
 
   const sopaConfig = actividad?.config_json as SopaLetrasConfig | undefined;
 
+  const { data: quizActividades } = await supabase
+    .from("actividades")
+    .select("config_json, tipos_actividad!inner(nombre)")
+    .eq("tema_id", params.topicId)
+    .eq("tipos_actividad.nombre", "quiz");
+
+  const quizActividad =
+    quizActividades && quizActividades.length > 0
+      ? quizActividades[Math.floor(Math.random() * quizActividades.length)]
+      : null;
+
+  const quizConfig = quizActividad?.config_json as QuizConfig | undefined;
+
   return (
     <main className="max-w-2xl mx-auto p-6">
       <Link
@@ -57,6 +78,13 @@ export default async function TemaPage({
         <div className="mt-10">
           <h2 className="text-lg font-semibold mb-4">Sopa de letras</h2>
           <WordSearch config={sopaConfig} />
+        </div>
+      )}
+
+      {quizConfig && (
+        <div className="mt-10">
+          <h2 className="text-lg font-semibold mb-4">Quiz</h2>
+          <Quiz config={quizConfig} />
         </div>
       )}
     </main>

@@ -1,0 +1,96 @@
+"use client";
+
+import { useState } from "react";
+
+interface QuizOption {
+  id: string;
+  texto: string;
+}
+
+interface QuizConfig {
+  pregunta: string;
+  opciones: QuizOption[];
+  respuesta_correcta: string;
+  retroalimentacion: string;
+}
+
+interface QuizProps {
+  config: QuizConfig;
+}
+
+export default function Quiz({ config }: QuizProps) {
+  const { pregunta, opciones, respuesta_correcta, retroalimentacion } = config;
+
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [confirmed, setConfirmed] = useState(false);
+
+  const esCorrecta = confirmed && selectedId === respuesta_correcta;
+
+  function handleSelect(id: string) {
+    if (confirmed) return;
+    setSelectedId(id);
+  }
+
+  function handleConfirmar() {
+    if (!selectedId) return;
+    setConfirmed(true);
+  }
+
+  function optionClass(opcion: QuizOption): string {
+    const isSelected = selectedId === opcion.id;
+
+    if (!confirmed) {
+      return isSelected
+        ? "border-gray-800 bg-gray-100"
+        : "border-gray-300 bg-white hover:bg-gray-50";
+    }
+
+    const isCorrecta = opcion.id === respuesta_correcta;
+    if (isCorrecta) return "border-transparent bg-[#A4CDD5]";
+    if (isSelected && !isCorrecta) return "border-transparent bg-[#F0A8B6]";
+    return "border-gray-300 bg-white opacity-60";
+  }
+
+  return (
+    <div className="max-w-xl">
+      <p className="text-base font-medium mb-4">{pregunta}</p>
+
+      <div className="flex flex-col gap-2 mb-4">
+        {opciones.map((opcion) => (
+          <button
+            key={opcion.id}
+            type="button"
+            onClick={() => handleSelect(opcion.id)}
+            disabled={confirmed}
+            className={`text-left px-4 py-3 rounded-lg border text-sm transition-colors ${optionClass(
+              opcion
+            )}`}
+          >
+            {opcion.texto}
+          </button>
+        ))}
+      </div>
+
+      {!confirmed ? (
+        <button
+          type="button"
+          onClick={handleConfirmar}
+          disabled={!selectedId}
+          className="px-4 py-2 rounded-lg bg-gray-800 text-white text-sm disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          Confirmar respuesta
+        </button>
+      ) : (
+        <div
+          className="rounded-lg p-4"
+          style={{ backgroundColor: esCorrecta ? "#A4CDD5" : "#F0A8B6" }}
+        >
+          <p className="text-sm font-semibold mb-1 text-gray-900">
+            {esCorrecta ? "¡Correcto!" : "Incorrecto"}
+          </p>
+          <p className="text-sm text-gray-900">{retroalimentacion}</p>
+        </div>
+      )}
+    </div>
+  );
+}
