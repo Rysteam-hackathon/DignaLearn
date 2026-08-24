@@ -2,6 +2,8 @@ import { supabase } from "@/lib/supabase";
 
 export type ElementoProgreso = "lectura" | "actividad" | "reflexion";
 
+export const PROGRESO_ACTUALIZADO_EVENT = "progreso-actualizado";
+
 export interface ProgresoTema {
   lectura_completada: boolean;
   actividad_completada: boolean;

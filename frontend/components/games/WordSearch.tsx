@@ -1,6 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { getEstudianteLocal } from "@/lib/auth";
+import { marcarElementoCompletado, PROGRESO_ACTUALIZADO_EVENT } from "@/lib/progress";
 
 interface WordSearchConfig {
   palabras: string[];
@@ -10,6 +12,7 @@ interface WordSearchConfig {
 
 interface WordSearchProps {
   config: WordSearchConfig;
+  temaId: string;
 }
 
 interface Cell {
@@ -30,8 +33,12 @@ const DIRECTIONS: [number, number][] = [
 
 const ALPHABET = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ";
 
-function generateGrid(palabras: string[], size: number): string[][] {
+function generateGrid(
+  palabras: string[],
+  size: number
+): { grid: string[][]; placements: Record<string, Cell[]> } {
   const grid: string[][] = Array.from({ length: size }, () => Array(size).fill(""));
+  const placements: Record<string, Cell[]> = {};
   const ordenadas = [...palabras].sort((a, b) => b.length - a.length);
 
   for (const palabra of ordenadas) {
@@ -60,11 +67,14 @@ function generateGrid(palabras: string[], size: number): string[][] {
       }
       if (!cabe) continue;
 
+      const cells: Cell[] = [];
       for (let i = 0; i < palabra.length; i++) {
         const r = row + dRow * i;
         const c = col + dCol * i;
         grid[r][c] = palabra[i];
+        cells.push({ row: r, col: c });
       }
+      placements[palabra] = cells;
       colocada = true;
     }
   }
@@ -77,7 +87,7 @@ function generateGrid(palabras: string[], size: number): string[][] {
     }
   }
 
-  return grid;
+  return { grid, placements };
 }
 
 function getLine(start: Cell, end: Cell): Cell[] | null {
@@ -98,15 +108,19 @@ function getLine(start: Cell, end: Cell): Cell[] | null {
   return cells;
 }
 
-export default function WordSearch({ config }: WordSearchProps) {
+export default function WordSearch({ config, temaId }: WordSearchProps) {
   const { palabras, pistas, tamaño } = config;
 
-  const grid = useMemo(() => generateGrid(palabras, tamaño), [palabras, tamaño]);
+  const { grid, placements } = useMemo(
+    () => generateGrid(palabras, tamaño),
+    [palabras, tamaño]
+  );
 
   const [selStart, setSelStart] = useState<Cell | null>(null);
   const [activeCells, setActiveCells] = useState<Cell[]>([]);
   const [foundWords, setFoundWords] = useState<string[]>([]);
   const [foundCells, setFoundCells] = useState<Record<string, Cell[]>>({});
+  const [progresoGuardado, setProgresoGuardado] = useState(false);
 
   const foundCellsSet = useMemo(() => {
     const set = new Set<string>();
@@ -154,6 +168,11 @@ export default function WordSearch({ config }: WordSearchProps) {
     }
   }
 
+  function handleCompletarTodoPrueba() {
+    setFoundWords(palabras);
+    setFoundCells(placements);
+  }
+
   function cellClass(row: number, col: number): string {
     const key = `${row}-${col}`;
     if (foundCellsSet.has(key)) return "bg-[#A4CDD5]";
@@ -162,6 +181,22 @@ export default function WordSearch({ config }: WordSearchProps) {
   }
 
   const completado = foundWords.length === palabras.length;
+
+  useEffect(() => {
+    if (!completado || progresoGuardado) return;
+
+    const estudiante = getEstudianteLocal();
+    if (!estudiante) return;
+
+    setProgresoGuardado(true);
+    marcarElementoCompletado(estudiante.id, temaId, "actividad")
+      .then(() => {
+        window.dispatchEvent(new Event(PROGRESO_ACTUALIZADO_EVENT));
+      })
+      .catch(() => {
+        // no bloqueamos la UI si falla el guardado de progreso
+      });
+  }, [completado, progresoGuardado, temaId]);
 
   return (
     <div className="flex flex-col md:flex-row gap-8">
@@ -175,7 +210,7 @@ export default function WordSearch({ config }: WordSearchProps) {
               key={`${r}-${c}`}
               type="button"
               onClick={() => handleCellClick(r, c)}
-              className={`w-8 h-8 flex items-center justify-center text-sm font-semibold border border-gray-300 rounded transition-colors ${cellClass(
+              className={`w-8 h-8 flex items-center justify-center text-sm font-semibold text-gray-900 border border-gray-300 rounded transition-colors ${cellClass(
                 r,
                 c
               )}`}
@@ -209,6 +244,16 @@ export default function WordSearch({ config }: WordSearchProps) {
           <p className="text-sm font-semibold text-emerald-600">
             ¡Completaste la sopa de letras!
           </p>
+        )}
+
+        {process.env.NODE_ENV === "development" && !completado && (
+          <button
+            type="button"
+            onClick={handleCompletarTodoPrueba}
+            className="mt-2 text-xs px-3 py-1.5 rounded border border-dashed border-gray-400 text-gray-500 hover:bg-gray-50"
+          >
+            Completar todo (prueba)
+          </button>
         )}
       </div>
     </div>

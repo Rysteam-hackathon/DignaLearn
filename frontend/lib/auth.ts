@@ -17,6 +17,19 @@ export interface DocenteProfile {
   nombre_escuela: string | null;
 }
 
+export function getEstudianteLocal(): EstudianteProfile | null {
+  if (typeof window === "undefined") return null;
+
+  const raw = localStorage.getItem("dignalearn_user");
+  if (!raw) return null;
+
+  try {
+    return JSON.parse(raw) as EstudianteProfile;
+  } catch {
+    return null;
+  }
+}
+
 export async function loginEstudiante(
   codigo: string,
   pin: string

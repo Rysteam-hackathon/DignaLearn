@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { getEstudianteLocal } from "@/lib/auth";
+import { marcarElementoCompletado, PROGRESO_ACTUALIZADO_EVENT } from "@/lib/progress";
 
 interface QuizOption {
   id: string;
@@ -16,9 +18,10 @@ interface QuizConfig {
 
 interface QuizProps {
   config: QuizConfig;
+  temaId: string;
 }
 
-export default function Quiz({ config }: QuizProps) {
+export default function Quiz({ config, temaId }: QuizProps) {
   const { pregunta, opciones, respuesta_correcta, retroalimentacion } = config;
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -34,6 +37,17 @@ export default function Quiz({ config }: QuizProps) {
   function handleConfirmar() {
     if (!selectedId) return;
     setConfirmed(true);
+
+    const estudiante = getEstudianteLocal();
+    if (estudiante) {
+      marcarElementoCompletado(estudiante.id, temaId, "actividad")
+        .then(() => {
+          window.dispatchEvent(new Event(PROGRESO_ACTUALIZADO_EVENT));
+        })
+        .catch(() => {
+          // no bloqueamos la UI si falla el guardado de progreso
+        });
+    }
   }
 
   function optionClass(opcion: QuizOption): string {

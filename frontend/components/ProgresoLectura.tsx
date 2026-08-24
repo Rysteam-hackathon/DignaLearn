@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   marcarElementoCompletado,
   obtenerProgresoPorTema,
+  PROGRESO_ACTUALIZADO_EVENT,
   type ProgresoTema,
 } from "@/lib/progress";
 
@@ -36,10 +37,21 @@ export default function ProgresoLectura({ temaId }: ProgresoLecturaProps) {
     }
   }, []);
 
-  useEffect(() => {
+  const refrescarProgreso = useCallback(() => {
     if (!estudianteId) return;
     obtenerProgresoPorTema(estudianteId, temaId).then(setProgreso);
   }, [estudianteId, temaId]);
+
+  useEffect(() => {
+    refrescarProgreso();
+  }, [refrescarProgreso]);
+
+  useEffect(() => {
+    window.addEventListener(PROGRESO_ACTUALIZADO_EVENT, refrescarProgreso);
+    return () => {
+      window.removeEventListener(PROGRESO_ACTUALIZADO_EVENT, refrescarProgreso);
+    };
+  }, [refrescarProgreso]);
 
   async function handleMarcarLectura() {
     if (!estudianteId || guardando) return;
