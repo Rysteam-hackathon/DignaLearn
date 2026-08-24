@@ -14,7 +14,10 @@ export default async function UnidadPage({
 
   return (
     <main className="max-w-2xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Temas</h1>
+      <Link href="/niveles" className="text-sm text-gray-500 hover:underline">
+        ← Volver a Unidades
+      </Link>
+      <h1 className="text-2xl font-bold mb-6 mt-2">Temas</h1>
       <div className="grid gap-4">
         {temas?.map((tema) => (
           <Link

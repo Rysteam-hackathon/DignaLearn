@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
 export default async function TemaPage({
@@ -13,7 +14,21 @@ export default async function TemaPage({
 
   return (
     <main className="max-w-2xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-4">{tema?.titulo}</h1>
+      <Link
+        href={`/niveles/${params.unitId}`}
+        className="text-sm text-gray-500 hover:underline"
+      >
+        ← Volver a Temas
+      </Link>
+      <h1 className="text-2xl font-bold mt-2 mb-3">{tema?.titulo}</h1>
+
+      <div className="mb-6">
+        <p className="text-sm text-gray-500 mb-1">1 de 3 elementos</p>
+        <div className="w-full h-2 rounded-full bg-gray-200">
+          <div className="h-2 rounded-full bg-blue-500" style={{ width: "33%" }} />
+        </div>
+      </div>
+
       <p className="text-base leading-relaxed whitespace-pre-line">
         {tema?.contenido_lectura}
       </p>
