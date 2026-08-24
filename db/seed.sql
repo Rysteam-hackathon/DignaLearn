@@ -100,3 +100,99 @@ CROSS JOIN (VALUES
      'Contenido pendiente de adaptación pedagógica — basado en Mecanismos de Denuncia: Presencial, En Línea, Telefónicas gratuitas, Instituciones que atienden', 4)
 ) AS v(titulo, contenido_lectura, orden)
 WHERE g.numero_grado = 9 AND g.nivel = 'secundaria' AND u.numero_unidad = 2;
+
+
+-- ============================================================
+-- UNIDADES — Segundo Semestre (Unidades III y IV)
+-- ============================================================
+
+-- 7mo grado
+INSERT INTO unidades (grado_id, titulo, numero_unidad, semestre, activa) VALUES
+    ((SELECT id FROM grados WHERE numero_grado = 7 AND nivel = 'secundaria'),
+     'Relaciones de complementariedad', 3, 2, TRUE),
+    ((SELECT id FROM grados WHERE numero_grado = 7 AND nivel = 'secundaria'),
+     'Protagonismo y liderazgo en unidad', 4, 2, TRUE);
+
+-- 9no grado
+INSERT INTO unidades (grado_id, titulo, numero_unidad, semestre, activa) VALUES
+    ((SELECT id FROM grados WHERE numero_grado = 9 AND nivel = 'secundaria'),
+     'Relaciones de complementariedad', 3, 2, TRUE),
+    ((SELECT id FROM grados WHERE numero_grado = 9 AND nivel = 'secundaria'),
+     'Protagonismo y liderazgo en unidad', 4, 2, TRUE);
+
+
+-- ============================================================
+-- TEMAS — Segundo Semestre (Unidades III y IV)
+-- ============================================================
+
+-- 7mo grado — Unidad III: Relaciones de complementariedad
+INSERT INTO temas (unidad_id, titulo, contenido_lectura, orden, minutos_estimados)
+SELECT u.id, v.titulo, v.contenido_lectura, v.orden, 20
+FROM unidades u
+JOIN grados g ON g.id = u.grado_id
+CROSS JOIN (VALUES
+    ('Relaciones complementarias: Importancia en el hogar',
+     'Contenido pendiente de adaptación pedagógica — basado en Relaciones complementarias: Importancia en el hogar', 1),
+    ('La igualdad de género en las relaciones de complementariedad: Familia, Escuela',
+     'Contenido pendiente de adaptación pedagógica — basado en La igualdad de género en las relaciones de complementariedad: Familia, Escuela', 2),
+    ('Los roles de género en las relaciones de complementariedad: Familia, Escuela',
+     'Contenido pendiente de adaptación pedagógica — basado en Los roles de género en las relaciones de complementariedad: Familia, Escuela', 3),
+    ('Los estereotipos y su afectación en los roles de género: Familia, Escuela',
+     'Contenido pendiente de adaptación pedagógica — basado en Los estereotipos y su afectación en los roles de género: Familia, Escuela', 4),
+    ('Ley 648: de igualdad de derechos y oportunidades (Título I, Capítulo I, Art. 3, incisos b, d, e, g, h)',
+     'Contenido pendiente de adaptación pedagógica — basado en Ley 648: de igualdad de derechos y oportunidades (Título I, Capítulo I, Art. 3, incisos b, d, e, g, h)', 5)
+) AS v(titulo, contenido_lectura, orden)
+WHERE g.numero_grado = 7 AND g.nivel = 'secundaria' AND u.numero_unidad = 3;
+
+-- 7mo grado — Unidad IV: Protagonismo y liderazgo en unidad
+INSERT INTO temas (unidad_id, titulo, contenido_lectura, orden, minutos_estimados)
+SELECT u.id, v.titulo, v.contenido_lectura, v.orden, 20
+FROM unidades u
+JOIN grados g ON g.id = u.grado_id
+CROSS JOIN (VALUES
+    ('Características del liderazgo femenino',
+     'Contenido pendiente de adaptación pedagógica — basado en Características del liderazgo femenino', 1),
+    ('El rol de la mujer como lideresa: Familia, Escuela, Comunidad',
+     'Contenido pendiente de adaptación pedagógica — basado en El rol de la mujer como lideresa: Familia, Escuela, Comunidad', 2),
+    ('El protagonismo de la mujer nicaragüense en: Familia, Escuela, Comunidad',
+     'Contenido pendiente de adaptación pedagógica — basado en El protagonismo de la mujer nicaragüense en: Familia, Escuela, Comunidad', 3),
+    ('Mujeres destacadas: Familia, Escuela, Comunidad',
+     'Contenido pendiente de adaptación pedagógica — basado en Mujeres destacadas: Familia, Escuela, Comunidad', 4)
+) AS v(titulo, contenido_lectura, orden)
+WHERE g.numero_grado = 7 AND g.nivel = 'secundaria' AND u.numero_unidad = 4;
+
+-- 9no grado — Unidad III: Relaciones de complementariedad
+INSERT INTO temas (unidad_id, titulo, contenido_lectura, orden, minutos_estimados)
+SELECT u.id, v.titulo, v.contenido_lectura, v.orden, 20
+FROM unidades u
+JOIN grados g ON g.id = u.grado_id
+CROSS JOIN (VALUES
+    ('Las relaciones de complementariedad: Derecho a vivir en relaciones de equidad y de solidaridad (Familia, Escuela, Comunidad)',
+     'Contenido pendiente de adaptación pedagógica — basado en Las relaciones de complementariedad: Derecho a vivir en relaciones de equidad y de solidaridad (Familia, Escuela, Comunidad)', 1),
+    ('Los procesos de cambio en las relaciones de complementariedad: Familia, Escuela, Comunidad',
+     'Contenido pendiente de adaptación pedagógica — basado en Los procesos de cambio en las relaciones de complementariedad: Familia, Escuela, Comunidad', 2),
+    ('La influencia del medio social en las relaciones de complementariedad',
+     'Contenido pendiente de adaptación pedagógica — basado en La influencia del medio social en las relaciones de complementariedad', 3),
+    ('La importancia de las relaciones de complementariedad: Familia, Escuela, Comunidad',
+     'Contenido pendiente de adaptación pedagógica — basado en La importancia de las relaciones de complementariedad: Familia, Escuela, Comunidad', 4),
+    ('Ley 648: de igualdad de derechos y oportunidades (Capítulo IV, En el Ámbito Social, Art. 23, numeral 1, 2, 3, 4, 6 y 10)',
+     'Contenido pendiente de adaptación pedagógica — basado en Ley 648: de igualdad de derechos y oportunidades (Capítulo IV, En el Ámbito Social, Art. 23, numeral 1, 2, 3, 4, 6 y 10)', 5)
+) AS v(titulo, contenido_lectura, orden)
+WHERE g.numero_grado = 9 AND g.nivel = 'secundaria' AND u.numero_unidad = 3;
+
+-- 9no grado — Unidad IV: Protagonismo y liderazgo en unidad
+INSERT INTO temas (unidad_id, titulo, contenido_lectura, orden, minutos_estimados)
+SELECT u.id, v.titulo, v.contenido_lectura, v.orden, 20
+FROM unidades u
+JOIN grados g ON g.id = u.grado_id
+CROSS JOIN (VALUES
+    ('Protagonismo de la mujer en la historia de Nicaragua: Empoderamiento de la mujer nicaragüense en el área laboral',
+     'Contenido pendiente de adaptación pedagógica — basado en Protagonismo de la mujer en la historia de Nicaragua: Empoderamiento de la mujer nicaragüense en el área laboral', 1),
+    ('Derechos e Igualdad de oportunidades en el área laboral: Protección de la mujer trabajadora',
+     'Contenido pendiente de adaptación pedagógica — basado en Derechos e Igualdad de oportunidades en el área laboral: Protección de la mujer trabajadora', 2),
+    ('La actitud de la mujer frente al trabajo: Erradicación de la pobreza',
+     'Contenido pendiente de adaptación pedagógica — basado en La actitud de la mujer frente al trabajo: Erradicación de la pobreza', 3),
+    ('Mujeres que han hecho historia en Nicaragua',
+     'Contenido pendiente de adaptación pedagógica — basado en Mujeres que han hecho historia en Nicaragua', 4)
+) AS v(titulo, contenido_lectura, orden)
+WHERE g.numero_grado = 9 AND g.nivel = 'secundaria' AND u.numero_unidad = 4;

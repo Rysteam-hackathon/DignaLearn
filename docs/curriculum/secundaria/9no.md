@@ -17,3 +17,18 @@
 - Ley 648, artículo #1, 2, 3, sus incisos (a, b, c, f, h) - 6 (inciso #1)
 - Sistema de alertas tempranas para prevenir la violencia en la mujer nicaragüense: Señales de Violencia
 - Mecanismos de Denuncia: Presencial, En Línea, Telefónicas gratuitas, Instituciones que atienden
+
+## Unidad III: Relaciones de complementariedad
+
+- Las relaciones de complementariedad: Derecho a vivir en relaciones de equidad y de solidaridad (Familia, Escuela, Comunidad)
+- Los procesos de cambio en las relaciones de complementariedad: Familia, Escuela, Comunidad
+- La influencia del medio social en las relaciones de complementariedad
+- La importancia de las relaciones de complementariedad: Familia, Escuela, Comunidad
+- Ley 648: de igualdad de derechos y oportunidades (Capítulo IV, En el Ámbito Social, Art. 23, numeral 1, 2, 3, 4, 6 y 10)
+
+## Unidad IV: Protagonismo y liderazgo en unidad
+
+- Protagonismo de la mujer en la historia de Nicaragua: Empoderamiento de la mujer nicaragüense en el área laboral
+- Derechos e Igualdad de oportunidades en el área laboral: Protección de la mujer trabajadora
+- La actitud de la mujer frente al trabajo: Erradicación de la pobreza
+- Mujeres que han hecho historia en Nicaragua
