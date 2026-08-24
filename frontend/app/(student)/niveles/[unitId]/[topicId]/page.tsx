@@ -1,5 +1,12 @@
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import WordSearch from "@/components/games/WordSearch";
+
+interface SopaLetrasConfig {
+  palabras: string[];
+  pistas: string[];
+  tamaño: number;
+}
 
 export default async function TemaPage({
   params,
@@ -11,6 +18,19 @@ export default async function TemaPage({
     .select("titulo, contenido_lectura")
     .eq("id", params.topicId)
     .single();
+
+  const { data: actividades } = await supabase
+    .from("actividades")
+    .select("config_json, tipos_actividad!inner(nombre)")
+    .eq("tema_id", params.topicId)
+    .eq("tipos_actividad.nombre", "sopa_letras");
+
+  const actividad =
+    actividades && actividades.length > 0
+      ? actividades[Math.floor(Math.random() * actividades.length)]
+      : null;
+
+  const sopaConfig = actividad?.config_json as SopaLetrasConfig | undefined;
 
   return (
     <main className="max-w-2xl mx-auto p-6">
@@ -32,6 +52,13 @@ export default async function TemaPage({
       <p className="text-base leading-relaxed whitespace-pre-line">
         {tema?.contenido_lectura}
       </p>
+
+      {sopaConfig && (
+        <div className="mt-10">
+          <h2 className="text-lg font-semibold mb-4">Sopa de letras</h2>
+          <WordSearch config={sopaConfig} />
+        </div>
+      )}
     </main>
   );
 }
