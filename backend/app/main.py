@@ -2,6 +2,8 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.routers import gamification
+
 load_dotenv()
 
 app = FastAPI(title="DignaLearn API", version="0.1.0")
@@ -13,6 +15,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(gamification.router)
 
 
 @app.get("/")
