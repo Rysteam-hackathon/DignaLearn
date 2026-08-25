@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(./venv/Scripts/python -c ' *)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(\"./venv/Scripts/python\" -c \"import bcrypt\")",
+      "Bash(venv/Scripts/pip install *)",
+      "Bash(venv/Scripts/pip freeze *)",
+      "Bash(venv/Scripts/python -c \"import bcrypt; from app.routers.docente import router; print\\('OK'\\)\")"
     ]
   }
 }
