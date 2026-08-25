@@ -164,11 +164,24 @@ def crear_estudiante(body: CrearEstudianteRequest) -> dict:
         "rol_id": rol_estudiante_id,
     }).execute()
 
+    # Resolver numero_grado → id real en tabla grados
+    grado_resultado = (
+        supabase.table("grados")
+        .select("id")
+        .eq("numero_grado", body.grado_id)
+        .eq("nivel", "secundaria")
+        .maybe_single()
+        .execute()
+    )
+    if not grado_resultado or not grado_resultado.data:
+        raise HTTPException(status_code=400, detail="Grado no válido.")
+    grado_id_real = grado_resultado.data["id"]
+
     perfil_resultado = (
         supabase.table("perfiles_estudiante")
         .insert({
             "usuario_id": usuario_id,
-            "grado_id": body.grado_id,
+            "grado_id": grado_id_real,
             "codigo_acceso": codigo,
             "pin_hash": pin_hash,
         })

@@ -6,7 +6,8 @@
       "Bash(\"./venv/Scripts/python\" -c \"import bcrypt\")",
       "Bash(venv/Scripts/pip install *)",
       "Bash(venv/Scripts/pip freeze *)",
-      "Bash(venv/Scripts/python -c \"import bcrypt; from app.routers.docente import router; print\\('OK'\\)\")"
+      "Bash(venv/Scripts/python -c \"import bcrypt; from app.routers.docente import router; print\\('OK'\\)\")",
+      "Bash(venv/Scripts/python -c \"from app.routers.docente import router; print\\('OK'\\)\")"
     ]
   }
 }

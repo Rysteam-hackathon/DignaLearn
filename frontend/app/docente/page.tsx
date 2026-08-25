@@ -301,7 +301,7 @@ export default function DocentePage() {
                     </p>
                     <p className="text-xs text-gray-400">
                       {est.codigo_acceso} ·{" "}
-                      {est.grado_id === 1 ? "7mo" : "9no"} grado
+                      {est.grado_id === 1 ? "7mo" : est.grado_id === 2 ? "9no" : `Grado ${est.grado_id}`} grado
                     </p>
                   </div>
                 </div>
