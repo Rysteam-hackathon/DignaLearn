@@ -866,3 +866,160 @@ Esta funcionalidad respeta los permisos RLS del rol docente — no puede ver dat
 
 El PRD es la fuente de verdad del proyecto. Cualquier decisión nueva tomada en sesiones de desarrollo debe agregarse aquí antes de codear. Al iniciar una nueva sesión con el asistente de arquitectura, este documento debe estar cargado en el contexto del proyecto para mantener continuidad.
 
+
+---
+
+## PARTE 19 — Decisiones y Actualizaciones (Sesión 24/08/2026)
+
+> Estas decisiones actualizan y complementan las partes anteriores. Tienen precedencia sobre cualquier versión anterior.
+
+---
+
+### Renombrado: insignias → logros
+
+En todo el proyecto, la UI y el código, el término correcto es **"logros"** — nunca "insignias". La BD ya usa `logros` y `estudiante_logros`. El componente se llama `LogroCelebracion.tsx`.
+
+---
+
+### Regla de lenguaje neutral en género (OBLIGATORIA)
+
+Todos los textos automáticos que el sistema genera deben ser neutrales en género. Esto incluye mensajes de celebración, nombres de logros del sistema, botones y cualquier texto de UI generado por código.
+
+- ✅ "Completaste", "Desbloqueaste", "Lograste", "El Primer Paso"
+- ❌ "Exploradora", "Lideresa", "Guardiana", "eres una gran estudiante"
+
+Los nombres de unidades del MINED (ej: "Liderazgo en acción") pueden mantenerse porque son nombres curriculares, no mensajes del sistema.
+
+---
+
+### Catálogo definitivo de logros (28 logros MVP)
+
+**Nivel 2 — Unidad (4 por grado × 2 grados = 8 logros):**
+
+| Logro | Condición | Grado |
+|-------|-----------|-------|
+| Guardianes de la Dignidad | Unidad I completa | 7mo y 9no |
+| Conocedores de la Ley | Unidad II completa | 7mo y 9no |
+| Defensores de la Equidad | Unidad III completa | 7mo y 9no |
+| Líderes en Acción | Unidad IV completa | 7mo y 9no |
+
+**Nivel 3 — Especiales (8 logros transversales):**
+
+| Logro | Condición |
+|-------|-----------|
+| El Primer Paso | Primer tema dominado (los 3 elementos) |
+| Constante | 5 días consecutivos en actividad_diaria |
+| Semana Activa | 7 días consecutivos |
+| Imparable | 30 días consecutivos |
+| Coleccionista | 3 logros de unidad desbloqueados |
+| Ojo Alerta | Completar Unidad II de cualquier grado |
+| Protagonismo de Nicaragua | 9no grado completo (4 unidades) |
+| Seriamente | 4 unidades de un grado completas |
+
+> Nota: "Seriamente" reemplaza el nombre anterior "Año Completo". "El Primer Paso" reemplaza "Primera Exploradora" por razones de neutralidad de género.
+
+**Nivel 1 — Tema:** un logro por cada tema dominado (los 3 elementos completos). ~16 por grado en el MVP.
+
+---
+
+### Flujo técnico del sistema de logros
+
+```
+Estudiante completa Reflexión (Elemento 3)
+→ Reflexion.tsx llama a POST /api/gamification/evaluar/{estudiante_id}
+→ FastAPI (gamification.py) evalúa las 5 condiciones
+→ INSERT en estudiante_logros para los nuevos logros
+→ Retorna lista de logros recién desbloqueados
+→ Frontend muestra LogroCelebracion.tsx en cola secuencial
+```
+
+**Archivos implementados:**
+- `backend/app/services/gamification.py` — función `evaluar_logros()`
+- `backend/app/routers/gamification.py` — endpoint POST
+- `frontend/components/LogroCelebracion.tsx` — componente de celebración
+
+**Pendiente conectar:** llamar al endpoint desde `Reflexion.tsx` y mostrar la celebración.
+
+---
+
+### Animación de LogroCelebracion.tsx
+
+- Overlay `#160B24` con fade-in 300ms
+- Badge escala de 0.3 a 1.0 con ease-out 500ms
+- Confetti con CSS keyframes únicamente (sin JS ni librerías)
+- Auto-cierre a los 4 segundos o click para cerrar
+- Múltiples logros: cola secuencial con 500ms entre cada uno
+- Placeholder SVG hasta que Sharis entregue arte final
+
+---
+
+### Regla general de animaciones (OBLIGATORIA)
+
+**Solo CSS transitions y keyframes. Sin excepciones.**
+
+Prohibido en todo el proyecto: GSAP, Framer Motion, anime.js, Canvas API, Pixi.js, Phaser, cualquier librería de animación externa.
+
+---
+
+### Mascota guía — especificación definitiva
+
+- Sprite pixel art (Sharis/Sidar entrega el arte, placeholder SVG por ahora)
+- Posición: esquina inferior derecha, aproximadamente 44×44px
+- Aparece con burbuja de diálogo cuando el estudiante falla actividades
+- Pistas: se revelan desde la tabla `pistas_actividad` de forma progresiva (orden 1 más vaga → orden 3 más específica)
+- Nunca revela la respuesta directa — solo pistas contextuales
+- Animación: 2-3 frames (boca abierta/semicerrada/cerrada) sincronizados con efecto typewriter del texto
+- **MVP:** texto pregrabado sin IA
+- **Post-hackathon:** posible integración con API de IA (a confirmar con mentores del HK)
+
+---
+
+### Modo Historia — estado y requisitos técnicos
+
+**Estado al 24/08:** Sidar entregó una app Vite incompatible. Recibió el documento `CONTEXTO_SIDAR.md` con instrucciones completas de integración.
+
+**Deadline de entrega de Sidar: 27 de agosto** (3 días antes de la evaluación para tener buffer de integración).
+
+**Requisitos técnicos que Sidar debe cumplir:**
+- Componentes React/TypeScript en estructura Next.js (sin Vite, sin su propio package.json)
+- Rutas en `frontend/app/(student)/historia/`
+- Componentes en `frontend/components/story/`
+- JSON de capítulos en `frontend/public/story/`
+- Imágenes WebP/PNG: fondos <200KB, sprites <100KB
+- Solo Tailwind para estilos, colores de Sharis obligatorios
+- Sin su propio sistema de auth — usa el cliente Supabase del proyecto
+
+**Sidar no toca GitHub ni Supabase directamente — entrega sus archivos a Dirk quien hace la integración.**
+
+---
+
+### Corrección de seguridad aplicada (24/08)
+
+La `NEXT_PUBLIC_SUPABASE_ANON_KEY` en `frontend/.env.local` tenía la service_role key por error. Fue corregida — ahora tiene correctamente la anon key. Verificado que el JWT contiene `"role":"anon"`.
+
+**Regla:** `NEXT_PUBLIC_*` variables se exponen en el navegador. Nunca poner service_role key en variables NEXT_PUBLIC.
+
+---
+
+### Contexto de evaluación del hackathon
+
+El 30 de agosto es la evaluación de la **fase inicial** del hackathon. Si el equipo pasa, hay una fase completa posterior donde el proyecto puede expandirse. Por esto la prioridad es siempre **calidad sobre velocidad** — no se construye solo para la demo, se construye bien desde el inicio.
+
+---
+
+### Dashboard del estudiante — dirección de diseño
+
+El dashboard post-login debe sentirse narrativo y propio, no como Duolingo (feedback del equipo). Evitar el patrón de "métricas + barras de progreso + stats" típico de plataformas de aprendizaje. La dirección visual se define en el paso 15 de pulido junto con los colores definitivos de Sharis.
+
+---
+
+### Validación de progresión entre unidades
+
+Para el MVP: los temas dentro de una unidad son secuenciales (Tema 2 no se desbloquea sin dominar Tema 1). Las unidades no tienen bloqueo técnico real entre sí — se muestran visualmente con candado si las anteriores no están completas, pero no hay verificación técnica que bloquee el acceso. El bloqueo real de unidades se implementa en la fase siguiente si el equipo avanza.
+
+---
+
+### Problema conocido pendiente
+
+`/niveles/page.tsx` tiene el `grado_id` hardcodeado a 7mo grado. Hay que conectarlo al perfil del estudiante en localStorage para que muestre el grado correcto según quién esté logueado.
+
