@@ -49,7 +49,7 @@
 - **`seed.sql`** — 8 unidades + 34 temas reales (7mo y 9no, Unidades I-IV) extraídos de `docs/curriculum/secundaria/{7mo,9no}.md`.
 - **`seed_actividades.sql`** — 3 actividades de ejemplo (sopa + quiz + scenario) para el Tema 1.
 - **`seed_logros.sql`** — catálogo de 12 logros (1 tema + 4 unidad + 7 especiales).
-- **`seed_actividades_completo.sql`** — 132 actividades (33 sopas + 99 preguntas de quiz) para los 33 temas que no tenían contenido. **Ver sección 2, es lo único sin ejecutar.**
+- **`seed_actividades_completo.sql`** — 132 actividades (33 sopas + 99 preguntas de quiz) para los 33 temas que no tenían contenido. **Ya ejecutado y verificado** (ver sección 2). Sigue sin commitear — ver sección 4.
 - **`migrations/001_add_tema_id_to_estudiante_logros.sql`** — agrega `tema_id` a `estudiante_logros` + 2 índices UNIQUE parciales (uno por tema para logros de nivel "tema", uno general para el resto).
 - **`migrations/002_rls_logros_actividad.sql`** — políticas RLS para `estudiante_logros` y `actividad_diaria` (RLS ya estaba habilitado en la BD por fuera de estos archivos).
 - **`migrations/003_rls_docente.sql`** — políticas RLS para que un docente autenticado vea/gestione solo a sus propios estudiantes (`perfiles_docente`, `docente_estudiantes`, `perfiles_estudiante`, `usuarios`, `progreso_estudiante`).
@@ -57,15 +57,20 @@
 
 ## 2. Pendiente de ejecutar en Supabase
 
-**Última verificación completa contra la BD real** (vía `psycopg2` + `DATABASE_URL`) confirmó que **ya están aplicados**: `seed.sql` (34 temas, 8 unidades), `seed_actividades.sql` (3 actividades), `seed_logros.sql` (12 logros), y las migraciones **001, 002 y 003** (columna `tema_id`, índices, y las 27 políticas RLS — incluidas las de docente y las de `estudiante_logros`/`actividad_diaria`).
+**Nada pendiente.** `db/seed_actividades_completo.sql` ya se ejecutó y se verificó contra la BD real (vía `psycopg2` + `DATABASE_URL`) al cierre de esta sesión, junto con todo lo demás:
 
-**Lo único pendiente de correr en el SQL Editor de Supabase es:**
+| Verificación | Resultado |
+|---|---|
+| Temas sin actividades | 0 (esperado: 0) |
+| Total actividades | 135 (esperado: 135 = 3 de `seed_actividades.sql` + 132 de `seed_actividades_completo.sql`) |
+| Total logros | 12 |
+| Total temas | 34 |
+| Total unidades | 8 |
+| Tipos de actividad presentes | `drag_drop`, `quiz`, `scenario`, `sopa_letras` (los 4 del catálogo) |
+| Total políticas RLS | 27 |
+| Estudiantes / Docentes | 2 / 1 |
 
-```
-db/seed_actividades_completo.sql
-```
-
-132 `INSERT` (33 sopas de letras + 99 preguntas de quiz) para los 33 temas que hasta ahora no tenían ninguna actividad. Fue validado localmente (JSON parseado sin errores, los 33 `tema_id` coinciden exactamente con los reales de la BD, cada uno aparece 4 veces) pero **nunca se ejecutó contra Supabase**. Después de correrlo, la query de verificación al final del archivo confirma que los 34 temas quedan con actividades.
+Todos los archivos de seed y las 3 migraciones (`001`, `002`, `003`) están aplicados en Supabase. **El currículo completo (34 temas de 7mo y 9no) tiene sopa de letras + quiz funcionando de punta a punta.**
 
 
 ## 3. Decisiones técnicas importantes
@@ -80,3 +85,12 @@ db/seed_actividades_completo.sql
 - **Dos "corrupciones de encoding" reportadas resultaron ser falsas alarmas.** Los títulos con tildes/eñes en `temas` y `logros` (ej. "nicaragüense", "¡Tema completado!") están correctamente guardados en UTF-8 — lo que se veía como `�` era una limitación de renderizado de la terminal usada para las verificaciones, no un problema de la base de datos. **No hace falta ningún `UPDATE` de corrección** — si se vuelve a ver `�` en una consulta, verificar el code point real antes de asumir corrupción.
 - **`/historia` está en el menú de navegación pero la página no existe** (Modo Historia, a cargo de otro miembro del equipo — Sidar).
 - **Política RLS `"docente lee nombres de sus estudiantes"` en `usuarios` usa `USING (true)`** — cualquier docente autenticado puede leer `nombre_display`/`email` de **todos** los usuarios del sistema, no solo los suyos. Detectado y documentado, no corregido (aceptable para MVP con pocos docentes, pero es una fuga de privacidad real si crece el número de docentes).
+
+
+## 4. Estado al cierre de sesión — pendientes para la próxima sesión
+
+- Dark/light mode toggle (en `/extras` o layout del estudiante, usando clase CSS en `html` + `localStorage`)
+- Pulido visual completo con branding de Sharis (fuentes Sitka Small Semibold + Nunito en `tailwind.config.ts`, revisar consistencia de colores en todas las páginas)
+- Integración Modo Historia de Sidar (rutas en `frontend/app/(student)/historia/`, componentes en `frontend/components/story/`)
+- README técnico completo
+- Hacer commit de `seed_actividades_completo.sql` (está sin commitear — `git status` lo muestra como untracked, aunque ya está ejecutado y verificado en Supabase)
