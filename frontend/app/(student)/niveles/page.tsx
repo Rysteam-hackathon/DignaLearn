@@ -1,25 +1,68 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { getEstudianteLocal } from "@/lib/auth";
 
-export default async function NivelesPage() {
-  const { data: grado } = await supabase
-    .from("grados")
-    .select("id")
-    .eq("numero_grado", 7)
-    .eq("nivel", "secundaria")
-    .single();
+interface Unidad {
+  id: string;
+  titulo: string;
+  numero_unidad: number;
+}
 
-  const { data: unidades } = await supabase
-    .from("unidades")
-    .select("id, titulo, numero_unidad")
-    .eq("grado_id", grado?.id)
-    .order("numero_unidad", { ascending: true });
+export default function NivelesPage() {
+  const [unidades, setUnidades] = useState<Unidad[]>([]);
+  const [cargando, setCargando] = useState(true);
+  const [gradoNombre, setGradoNombre] = useState<string>("");
+
+  useEffect(() => {
+    async function cargarUnidades() {
+      const estudiante = getEstudianteLocal();
+      if (!estudiante) {
+        setCargando(false);
+        return;
+      }
+
+      const { data: grado } = await supabase
+        .from("grados")
+        .select("numero_grado, nivel")
+        .eq("id", estudiante.grado_id)
+        .single();
+
+      if (grado) {
+        setGradoNombre(`${grado.numero_grado}mo grado — ${grado.nivel}`);
+      }
+
+      const { data } = await supabase
+        .from("unidades")
+        .select("id, titulo, numero_unidad")
+        .eq("grado_id", estudiante.grado_id)
+        .order("numero_unidad", { ascending: true });
+
+      setUnidades(data ?? []);
+      setCargando(false);
+    }
+
+    cargarUnidades();
+  }, []);
+
+  if (cargando) {
+    return (
+      <main className="max-w-2xl mx-auto p-6">
+        <p className="text-sm text-gray-500">Cargando unidades...</p>
+      </main>
+    );
+  }
 
   return (
     <main className="max-w-2xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Unidades</h1>
+      <h1 className="text-2xl font-bold mb-1">Unidades</h1>
+      {gradoNombre && (
+        <p className="text-sm text-gray-500 mb-6">{gradoNombre}</p>
+      )}
       <div className="grid gap-4">
-        {unidades?.map((unidad) => (
+        {unidades.map((unidad) => (
           <Link
             key={unidad.id}
             href={`/niveles/${unidad.id}`}

@@ -79,3 +79,29 @@ export async function marcarElementoCompletado(
 
   return data;
 }
+
+export async function registrarActividadDiaria(estudianteId: string): Promise<void> {
+  const hoy = new Date().toISOString().split("T")[0];
+
+  const { data: existente } = await supabase
+    .from("actividad_diaria")
+    .select("id, elementos_completados")
+    .eq("estudiante_id", estudianteId)
+    .eq("fecha_actividad", hoy)
+    .maybeSingle();
+
+  if (existente) {
+    await supabase
+      .from("actividad_diaria")
+      .update({ elementos_completados: existente.elementos_completados + 1 })
+      .eq("id", existente.id);
+  } else {
+    await supabase
+      .from("actividad_diaria")
+      .insert({
+        estudiante_id: estudianteId,
+        fecha_actividad: hoy,
+        elementos_completados: 1,
+      });
+  }
+}

@@ -6,7 +6,7 @@ from supabase import Client
 
 from app.supabase_client import get_supabase_client
 
-RACHA_DIAS_REQUERIDA = 5
+RACHA_UMBRALES = [5, 7, 30]
 UNIDADES_POR_GRADO = 4
 
 
@@ -19,9 +19,6 @@ class LogroDesbloqueado(BaseModel):
 
 
 def evaluar_logros(estudiante_id: str, tema_id: str) -> list[LogroDesbloqueado]:
-    """Evalúa las condiciones de logros tras completar un tema y otorga
-    los que correspondan. Retorna solo los logros recién desbloqueados
-    en esta llamada (no los que el estudiante ya tenía)."""
     supabase = get_supabase_client()
     desbloqueados: list[LogroDesbloqueado] = []
 
@@ -29,37 +26,60 @@ def evaluar_logros(estudiante_id: str, tema_id: str) -> list[LogroDesbloqueado]:
     if not progreso_tema or not _esta_completo(progreso_tema):
         return desbloqueados
 
-    # Nivel 1: tema completado
-    logro = _intentar_desbloquear(supabase, estudiante_id, "tema_completado")
+    # Nivel 1: tema completado — se otorga una vez por tema (usa tema_id en el UNIQUE)
+    logro = _intentar_desbloquear(
+        supabase, estudiante_id, "tema_completado", tema_id=tema_id
+    )
     if logro:
         desbloqueados.append(logro)
 
-    # Nivel 3 especial: "El Primer Paso"
+    # Especial: El Primer Paso — solo la primera vez que se completa cualquier tema
     if _es_primer_tema_completado(supabase, estudiante_id):
         logro = _intentar_desbloquear(supabase, estudiante_id, "primer_tema")
         if logro:
             desbloqueados.append(logro)
 
-    # Nivel 2: unidad completa (y "Seriamente" si además el grado está completo)
+    # Nivel 2: unidad completa (logro nombrado según orden de la unidad)
     unidad_id = _obtener_unidad_id(supabase, tema_id)
     if unidad_id and _unidad_completa(supabase, estudiante_id, unidad_id):
-        logro = _intentar_desbloquear(supabase, estudiante_id, "unidad_completada")
-        if logro:
-            desbloqueados.append(logro)
+        orden_unidad = _obtener_orden_unidad(supabase, unidad_id)
+        if orden_unidad:
+            logro = _intentar_desbloquear(
+                supabase, estudiante_id, "unidad_completada", valor_condicion=orden_unidad
+            )
+            if logro:
+                desbloqueados.append(logro)
 
+            # Especial: Ojo Alerta (solo al completar la Unidad II)
+            if orden_unidad == 2:
+                logro = _intentar_desbloquear(supabase, estudiante_id, "ojo_alerta")
+                if logro:
+                    desbloqueados.append(logro)
+
+        # Especial: grado completo
         grado_id = _obtener_grado_id(supabase, unidad_id)
         if grado_id and _grado_completo(supabase, estudiante_id, grado_id):
             logro = _intentar_desbloquear(supabase, estudiante_id, "grado_completo")
             if logro:
                 desbloqueados.append(logro)
 
-    # "Constante": racha de días consecutivos en actividad_diaria
-    if _racha_de_dias(supabase, estudiante_id) >= RACHA_DIAS_REQUERIDA:
-        logro = _intentar_desbloquear(
-            supabase, estudiante_id, "racha_dias", RACHA_DIAS_REQUERIDA
-        )
-        if logro:
-            desbloqueados.append(logro)
+            # Especial: Protagonismo de Nicaragua (solo 9no grado)
+            if _es_noveno_grado(supabase, grado_id):
+                logro = _intentar_desbloquear(
+                    supabase, estudiante_id, "protagonismo_nicaragua"
+                )
+                if logro:
+                    desbloqueados.append(logro)
+
+    # Especiales de racha (evalúa los 3 umbrales)
+    racha_actual = _racha_de_dias(supabase, estudiante_id)
+    for umbral in RACHA_UMBRALES:
+        if racha_actual >= umbral:
+            logro = _intentar_desbloquear(
+                supabase, estudiante_id, "racha_dias", valor_condicion=umbral
+            )
+            if logro:
+                desbloqueados.append(logro)
 
     return desbloqueados
 
@@ -110,6 +130,17 @@ def _obtener_unidad_id(supabase: Client, tema_id: str) -> str | None:
     return resultado.data["unidad_id"] if resultado and resultado.data else None
 
 
+def _obtener_orden_unidad(supabase: Client, unidad_id: str) -> int | None:
+    resultado = (
+        supabase.table("unidades")
+        .select("numero_unidad")
+        .eq("id", unidad_id)
+        .maybe_single()
+        .execute()
+    )
+    return resultado.data["numero_unidad"] if resultado and resultado.data else None
+
+
 def _obtener_grado_id(supabase: Client, unidad_id: str) -> int | None:
     resultado = (
         supabase.table("unidades")
@@ -121,8 +152,26 @@ def _obtener_grado_id(supabase: Client, unidad_id: str) -> int | None:
     return resultado.data["grado_id"] if resultado and resultado.data else None
 
 
+def _es_noveno_grado(supabase: Client, grado_id: int) -> bool:
+    resultado = (
+        supabase.table("grados")
+        .select("numero_grado")
+        .eq("id", grado_id)
+        .maybe_single()
+        .execute()
+    )
+    if resultado and resultado.data:
+        return resultado.data.get("numero_grado") == 9
+    return False
+
+
 def _unidad_completa(supabase: Client, estudiante_id: str, unidad_id: str) -> bool:
-    temas = supabase.table("temas").select("id").eq("unidad_id", unidad_id).execute()
+    temas = (
+        supabase.table("temas")
+        .select("id")
+        .eq("unidad_id", unidad_id)
+        .execute()
+    )
     tema_ids = [fila["id"] for fila in temas.data or []]
     if not tema_ids:
         return False
@@ -188,6 +237,7 @@ def _intentar_desbloquear(
     estudiante_id: str,
     tipo_condicion: str,
     valor_condicion: int | None = None,
+    tema_id: str | None = None,
 ) -> LogroDesbloqueado | None:
     query = (
         supabase.table("logros")
@@ -203,23 +253,30 @@ def _intentar_desbloquear(
 
     logro = logro_resultado.data[0]
 
-    ya_desbloqueado = (
+    # Verificar si ya fue desbloqueado (filtrando por tema_id si aplica)
+    check = (
         supabase.table("estudiante_logros")
         .select("id")
         .eq("estudiante_id", estudiante_id)
         .eq("logro_id", logro["id"])
-        .maybe_single()
-        .execute()
     )
+    if tema_id is not None:
+        check = check.eq("tema_id", tema_id)
+    else:
+        check = check.is_("tema_id", "null")
+
+    ya_desbloqueado = check.maybe_single().execute()
     if ya_desbloqueado and ya_desbloqueado.data:
         return None
 
+    # Insertar el logro desbloqueado
+    fila = {"estudiante_id": estudiante_id, "logro_id": logro["id"]}
+    if tema_id is not None:
+        fila["tema_id"] = tema_id
+
     try:
-        supabase.table("estudiante_logros").insert(
-            {"estudiante_id": estudiante_id, "logro_id": logro["id"]}
-        ).execute()
+        supabase.table("estudiante_logros").insert(fila).execute()
     except APIError:
-        # condición de carrera: otra llamada ya lo insertó (UNIQUE constraint)
         return None
 
     return LogroDesbloqueado(**logro)

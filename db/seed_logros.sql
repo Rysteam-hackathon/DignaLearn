@@ -1,35 +1,82 @@
 -- ============================================================
 -- DignaLearn — db/seed_logros.sql
--- Catálogo de logros para el sistema de gamificación.
--- `tipo_condicion` es el identificador que usa
--- backend/app/services/gamification.py para saber qué logro
--- otorgar ante cada condición cumplida — si cambiás estos
--- strings acá, actualizá también el backend (y viceversa).
--- Ejecutar en el SQL Editor de Supabase después de db/schema.sql
--- (que ya siembra la tabla `niveles_logro`).
+-- 13 logros del catálogo MVP.
+-- tipo_condicion debe coincidir exactamente con gamification.py
 -- ============================================================
 
--- Nivel "tema": al completar lectura + actividad + reflexión de un tema
-INSERT INTO logros (titulo, descripcion, nivel_logro_id, tipo_condicion, valor_condicion) VALUES
-    ('¡Tema completado!', 'Completaste la lectura, la actividad y la reflexión de un tema.',
-     (SELECT id FROM niveles_logro WHERE nombre = 'tema'), 'tema_completado', NULL);
+TRUNCATE TABLE logros RESTART IDENTITY CASCADE;
 
--- Nivel "unidad": al completar todos los temas de una unidad
+-- NIVEL TEMA (genérico, se otorga una vez por estudiante)
 INSERT INTO logros (titulo, descripcion, nivel_logro_id, tipo_condicion, valor_condicion) VALUES
-    ('¡Unidad dominada!', 'Completaste todos los temas de una unidad.',
-     (SELECT id FROM niveles_logro WHERE nombre = 'unidad'), 'unidad_completada', NULL);
+('¡Tema completado!',
+ 'Completaste los 3 elementos: lectura, actividad y reflexión.',
+ (SELECT id FROM niveles_logro WHERE nombre = 'tema'),
+ 'tema_completado', NULL);
 
--- Nivel "especial": El Primer Paso — primer tema dominado del estudiante
+-- NIVEL UNIDAD (nombrados por orden 1-4, aplican a 7mo y 9no)
 INSERT INTO logros (titulo, descripcion, nivel_logro_id, tipo_condicion, valor_condicion) VALUES
-    ('El Primer Paso', 'Completaste tu primer tema en DignaLearn.',
-     (SELECT id FROM niveles_logro WHERE nombre = 'especial'), 'primer_tema', NULL);
+('Guardianes de la Dignidad',
+ 'Completaste la Unidad I: Dignidad y Respeto para Vivir en Armonía.',
+ (SELECT id FROM niveles_logro WHERE nombre = 'unidad'),
+ 'unidad_completada', 1);
 
--- Nivel "especial": Constante — 5 días consecutivos de actividad
 INSERT INTO logros (titulo, descripcion, nivel_logro_id, tipo_condicion, valor_condicion) VALUES
-    ('Constante', 'Estudiaste 5 días seguidos sin fallar.',
-     (SELECT id FROM niveles_logro WHERE nombre = 'especial'), 'racha_dias', 5);
+('Conocedores de la Ley',
+ 'Completaste la Unidad II: Viviendo y Practicando Nuestros Derechos.',
+ (SELECT id FROM niveles_logro WHERE nombre = 'unidad'),
+ 'unidad_completada', 2);
 
--- Nivel "especial": Seriamente — las 4 unidades de un grado completas
 INSERT INTO logros (titulo, descripcion, nivel_logro_id, tipo_condicion, valor_condicion) VALUES
-    ('Seriamente', 'Completaste las 4 unidades de tu grado.',
-     (SELECT id FROM niveles_logro WHERE nombre = 'especial'), 'grado_completo', NULL);
+('Defensores de la Equidad',
+ 'Completaste la Unidad III: Relaciones Complementarias con Equidad e Igualdad.',
+ (SELECT id FROM niveles_logro WHERE nombre = 'unidad'),
+ 'unidad_completada', 3);
+
+INSERT INTO logros (titulo, descripcion, nivel_logro_id, tipo_condicion, valor_condicion) VALUES
+('Líderes en Acción',
+ 'Completaste la Unidad IV: Protagonismo y Liderazgo en Unidad.',
+ (SELECT id FROM niveles_logro WHERE nombre = 'unidad'),
+ 'unidad_completada', 4);
+
+-- NIVEL ESPECIAL
+INSERT INTO logros (titulo, descripcion, nivel_logro_id, tipo_condicion, valor_condicion) VALUES
+('El Primer Paso',
+ 'Completaste tu primer tema en DignaLearn.',
+ (SELECT id FROM niveles_logro WHERE nombre = 'especial'),
+ 'primer_tema', NULL);
+
+INSERT INTO logros (titulo, descripcion, nivel_logro_id, tipo_condicion, valor_condicion) VALUES
+('Constante',
+ 'Cinco días seguidos de aprendizaje. La constancia construye el conocimiento.',
+ (SELECT id FROM niveles_logro WHERE nombre = 'especial'),
+ 'racha_dias', 5);
+
+INSERT INTO logros (titulo, descripcion, nivel_logro_id, tipo_condicion, valor_condicion) VALUES
+('Semana Activa',
+ 'Siete días seguidos. Una semana completa dedicada al aprendizaje.',
+ (SELECT id FROM niveles_logro WHERE nombre = 'especial'),
+ 'racha_dias', 7);
+
+INSERT INTO logros (titulo, descripcion, nivel_logro_id, tipo_condicion, valor_condicion) VALUES
+('Imparable',
+ 'Treinta días seguidos. Un mes entero de dedicación constante.',
+ (SELECT id FROM niveles_logro WHERE nombre = 'especial'),
+ 'racha_dias', 30);
+
+INSERT INTO logros (titulo, descripcion, nivel_logro_id, tipo_condicion, valor_condicion) VALUES
+('Ojo Alerta',
+ 'Completaste la Unidad II y conocés tus derechos fundamentales.',
+ (SELECT id FROM niveles_logro WHERE nombre = 'especial'),
+ 'ojo_alerta', NULL);
+
+INSERT INTO logros (titulo, descripcion, nivel_logro_id, tipo_condicion, valor_condicion) VALUES
+('Protagonismo de Nicaragua',
+ 'Completaste el 9no grado y conocés el protagonismo de la mujer nicaragüense.',
+ (SELECT id FROM niveles_logro WHERE nombre = 'especial'),
+ 'protagonismo_nicaragua', NULL);
+
+INSERT INTO logros (titulo, descripcion, nivel_logro_id, tipo_condicion, valor_condicion) VALUES
+('Seriamente',
+ 'Completaste las 4 unidades de tu grado. Un año académico dominado.',
+ (SELECT id FROM niveles_logro WHERE nombre = 'especial'),
+ 'grado_completo', NULL);
