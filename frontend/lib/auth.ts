@@ -56,7 +56,7 @@ export async function loginEstudiante(
     usuario_id: perfil.usuario_id,
     grado_id: perfil.grado_id,
     codigo_acceso: perfil.codigo_acceso,
-    nombre_display: perfil.usuarios?.nombre_display ?? null,
+    nombre_display: (perfil.usuarios as unknown as { nombre_display: string | null } | null)?.nombre_display ?? null,
   };
 
   localStorage.setItem("dignalearn_user", JSON.stringify(perfilEstudiante));
@@ -87,7 +87,7 @@ export async function loginDocente(
     id: perfil?.id ?? data.user.id,
     usuario_id: data.user.id,
     email: data.user.email ?? null,
-    nombre_display: perfil?.usuarios?.nombre_display ?? null,
+    nombre_display: (perfil?.usuarios as unknown as { nombre_display: string | null } | null)?.nombre_display ?? null,
     nombre_escuela: perfil?.nombre_escuela ?? null,
   };
 }
