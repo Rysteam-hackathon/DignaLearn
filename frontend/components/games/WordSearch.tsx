@@ -111,7 +111,7 @@ function getLine(start: Cell, end: Cell): Cell[] | null {
 export default function WordSearch({ config, temaId }: WordSearchProps) {
   const { palabras, pistas, tamaño } = config;
 
-  const { grid, placements } = useMemo(
+  const { grid } = useMemo(
     () => generateGrid(palabras, tamaño),
     [palabras, tamaño]
   );
@@ -168,16 +168,11 @@ export default function WordSearch({ config, temaId }: WordSearchProps) {
     }
   }
 
-  function handleCompletarTodoPrueba() {
-    setFoundWords(palabras);
-    setFoundCells(placements);
-  }
-
   function cellClass(row: number, col: number): string {
     const key = `${row}-${col}`;
-    if (foundCellsSet.has(key)) return "bg-[#A4CDD5]";
-    if (activeCellsSet.has(key)) return "bg-[#F0A8B6]";
-    return "bg-white hover:bg-gray-100";
+    if (foundCellsSet.has(key)) return "bg-[#A4CDD5] border-transparent";
+    if (activeCellsSet.has(key)) return "bg-[#F0A8B6] border-transparent";
+    return "bg-white border-gray-200 hover:bg-[#160B24]/5";
   }
 
   const completado = foundWords.length === palabras.length;
@@ -210,7 +205,7 @@ export default function WordSearch({ config, temaId }: WordSearchProps) {
               key={`${r}-${c}`}
               type="button"
               onClick={() => handleCellClick(r, c)}
-              className={`w-8 h-8 flex items-center justify-center text-sm font-semibold text-gray-900 border border-gray-300 rounded transition-colors ${cellClass(
+              className={`w-8 h-8 flex items-center justify-center text-sm font-semibold text-[#160B24] border rounded transition-colors ${cellClass(
                 r,
                 c
               )}`}
@@ -244,16 +239,6 @@ export default function WordSearch({ config, temaId }: WordSearchProps) {
           <p className="text-sm font-semibold text-emerald-600">
             ¡Completaste la sopa de letras!
           </p>
-        )}
-
-        {process.env.NODE_ENV === "development" && !completado && (
-          <button
-            type="button"
-            onClick={handleCompletarTodoPrueba}
-            className="mt-2 text-xs px-3 py-1.5 rounded border border-dashed border-gray-400 text-gray-500 hover:bg-gray-50"
-          >
-            Completar todo (prueba)
-          </button>
         )}
       </div>
     </div>

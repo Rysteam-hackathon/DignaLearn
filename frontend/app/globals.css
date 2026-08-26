@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&display=swap');
-
 :root {
   --color-purpura: #160B24;
   --color-rosa: #F0A8B6;
@@ -20,12 +18,12 @@
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: 'Nunito', Arial, sans-serif;
+  font-family: var(--font-nunito), Arial, sans-serif;
   transition: background-color 200ms ease, color 200ms ease;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Nunito', Arial, sans-serif;
+  font-family: var(--font-playfair), Georgia, serif;
   font-weight: 700;
 }
 

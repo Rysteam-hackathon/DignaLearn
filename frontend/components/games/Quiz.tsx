@@ -55,14 +55,14 @@ export default function Quiz({ config, temaId }: QuizProps) {
 
     if (!confirmed) {
       return isSelected
-        ? "border-gray-800 bg-gray-100"
-        : "border-gray-300 bg-white hover:bg-gray-50";
+        ? "border-[#F0A8B6] bg-[#F0A8B6]/15"
+        : "border-gray-200 bg-[#160B24]/[0.03] hover:bg-[#160B24]/[0.06]";
     }
 
     const isCorrecta = opcion.id === respuesta_correcta;
     if (isCorrecta) return "border-transparent bg-[#A4CDD5]";
-    if (isSelected && !isCorrecta) return "border-transparent bg-[#F0A8B6]";
-    return "border-gray-300 bg-white opacity-60";
+    if (isSelected && !isCorrecta) return "border-transparent bg-red-400/20";
+    return "border-gray-200 bg-white opacity-50";
   }
 
   return (
@@ -76,7 +76,7 @@ export default function Quiz({ config, temaId }: QuizProps) {
             type="button"
             onClick={() => handleSelect(opcion.id)}
             disabled={confirmed}
-            className={`text-left px-4 py-3 rounded-lg border text-sm transition-colors ${optionClass(
+            className={`text-left px-4 py-3 rounded-lg border text-sm text-[#160B24] transition-colors ${optionClass(
               opcion
             )}`}
           >
@@ -90,7 +90,8 @@ export default function Quiz({ config, temaId }: QuizProps) {
           type="button"
           onClick={handleConfirmar}
           disabled={!selectedId}
-          className="px-4 py-2 rounded-lg bg-gray-800 text-white text-sm disabled:opacity-40 disabled:cursor-not-allowed"
+          className="px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
+          style={{ backgroundColor: "#F0A8B6", color: "#160B24" }}
         >
           Confirmar respuesta
         </button>

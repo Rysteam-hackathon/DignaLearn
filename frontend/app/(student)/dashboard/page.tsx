@@ -16,8 +16,7 @@ function calcularRacha(fechas: string[]): number {
   if (!fechas.length) return 0;
   const dias = Array.from(new Set(fechas))
     .map((f) => new Date(f).toISOString().split("T")[0])
-    .sort()
-    .reverse();
+    .sort().reverse();
   let racha = 1;
   for (let i = 0; i < dias.length - 1; i++) {
     const diff = (new Date(dias[i]).getTime() - new Date(dias[i + 1]).getTime()) / 86400000;
@@ -30,7 +29,7 @@ function calcularRacha(fechas: string[]): number {
 function saludo(nombre: string | null): string {
   const hora = new Date().getHours();
   const momento = hora < 12 ? "Buenos días" : hora < 19 ? "Buenas tardes" : "Buenas noches";
-  return nombre ? `${momento}, ${nombre}` : momento;
+  return nombre ? `${momento}, ${nombre.split(" ")[0]}` : momento;
 }
 
 export default function DashboardPage() {
@@ -46,7 +45,6 @@ export default function DashboardPage() {
     async function cargar() {
       if (!est) return;
       try {
-        // 1. Racha diaria
         const { data: actividad } = await supabase
           .from("actividad_diaria")
           .select("fecha_actividad")
@@ -56,7 +54,6 @@ export default function DashboardPage() {
 
         const racha = calcularRacha(actividad?.map((a) => a.fecha_actividad) ?? []);
 
-        // 2. Último logro desbloqueado
         const { data: logrosData } = await supabase
           .from("estudiante_logros")
           .select("desbloqueado_en, logros(titulo)")
@@ -65,14 +62,11 @@ export default function DashboardPage() {
           .limit(1)
           .maybeSingle();
 
-        const ultimoLogro = logrosData
-          ? {
-              titulo: (logrosData.logros as unknown as { titulo: string } | null)?.titulo ?? "",
-              desbloqueado_en: logrosData.desbloqueado_en,
-            }
-          : null;
+        const ultimoLogro = logrosData ? {
+          titulo: (logrosData.logros as unknown as { titulo: string } | null)?.titulo ?? "",
+          desbloqueado_en: logrosData.desbloqueado_en,
+        } : null;
 
-        // 3. Unidades completadas (logros de nivel unidad)
         const { data: logrosUnidad } = await supabase
           .from("estudiante_logros")
           .select("logros(tipo_condicion)")
@@ -82,7 +76,6 @@ export default function DashboardPage() {
           (l) => (l.logros as unknown as { tipo_condicion: string } | null)?.tipo_condicion === "unidad_completada"
         ).length;
 
-        // 4. Próximo tema a continuar — primera unidad con temas
         const { data: unidades } = await supabase
           .from("unidades")
           .select("id, titulo, numero_unidad")
@@ -99,7 +92,6 @@ export default function DashboardPage() {
             .order("orden", { ascending: true });
 
           if (!temas?.length) continue;
-
           const temaIds = temas.map((t) => t.id);
 
           const { data: progresos } = await supabase
@@ -116,143 +108,155 @@ export default function DashboardPage() {
 
           const pendiente = temas.find((t) => !completados.has(t.id));
           if (pendiente) {
-            continuarTema = {
-              titulo: pendiente.titulo,
-              unidadTitulo: unidad.titulo,
-              temaId: pendiente.id,
-              unidadId: unidad.id,
-            };
+            continuarTema = { titulo: pendiente.titulo, unidadTitulo: unidad.titulo, temaId: pendiente.id, unidadId: unidad.id };
             break;
           }
         }
 
         setDatos({ racha, continuarTema, ultimoLogro, unidadesCompletadas });
       } catch {
-        // Si falla algo, mostramos el dashboard sin datos opcionales
         setDatos({ racha: 0, continuarTema: null, ultimoLogro: null, unidadesCompletadas: 0 });
       } finally {
         setCargando(false);
       }
     }
-
     cargar();
   }, []);
 
-  if (cargando) {
-    return (
-      <div className="p-6">
-        <p className="text-sm text-gray-400">Cargando...</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="p-5 max-w-3xl mx-auto">
+    <div className="min-h-screen p-5 max-w-3xl mx-auto">
+      <style>{`
+        @keyframes entrar {
+          from { opacity: 0; transform: translateY(24px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulso-racha {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.05); }
+        }
+        .card-hover {
+          transition: transform 220ms ease, box-shadow 220ms ease;
+        }
+        .card-hover:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 12px 32px rgba(240,168,182,0.12);
+        }
+        .btn-continuar {
+          transition: transform 150ms ease, opacity 150ms ease;
+        }
+        .btn-continuar:hover {
+          transform: translateY(-1px);
+          opacity: 0.9;
+        }
+      `}</style>
+
       {/* Saludo */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold" style={{ color: "#160B24" }}>
+      <div style={{ animation: "entrar 500ms ease forwards" }} className="mb-8">
+        {datos?.racha && datos.racha > 0 ? (
+          <div className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 mb-3 text-xs font-bold"
+            style={{ backgroundColor: "rgba(240,168,182,0.15)", color: "#F0A8B6", border: "1px solid rgba(240,168,182,0.3)", animation: "pulso-racha 2s ease-in-out infinite" }}>
+            🔥 {datos.racha} {datos.racha === 1 ? "día" : "días"} seguidos
+          </div>
+        ) : null}
+        <h1 className="text-3xl font-bold" style={{ color: "#160B24" }}>
           {saludo(estudiante?.nombre_display ?? null)}
         </h1>
-        {datos && datos.racha > 0 && (
-          <p className="text-sm mt-1" style={{ color: "#F0A8B6" }}>
-            🔥 Llevas {datos.racha} {datos.racha === 1 ? "día" : "días"} seguidos — ¡seguí así!
-          </p>
-        )}
+        <p className="text-sm text-gray-400 mt-1">¿Qué aprendemos hoy?</p>
       </div>
 
-      {/* Layout responsive */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-        {/* Tarjeta principal — Continuar */}
-        <div
-          className="md:col-span-2 rounded-2xl p-6"
-          style={{ backgroundColor: "#160B24" }}
-        >
-          {datos?.continuarTema ? (
-            <>
-              <p className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: "#A4CDD5" }}>
-                Continuar donde quedaste
-              </p>
-              <p className="text-white text-lg font-semibold mb-1">
-                {datos.continuarTema.titulo}
-              </p>
-              <p className="text-sm mb-5" style={{ color: "#A4CDD5" }}>
-                {datos.continuarTema.unidadTitulo}
-              </p>
-              <Link
-                href={`/niveles/${datos.continuarTema.unidadId}/${datos.continuarTema.temaId}`}
-                className="inline-block rounded-xl px-5 py-2.5 text-sm font-semibold transition-opacity hover:opacity-90"
-                style={{ backgroundColor: "#F0A8B6", color: "#160B24" }}
-              >
-                Continuar →
-              </Link>
-            </>
-          ) : (
-            <>
-              <p className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: "#A4CDD5" }}>
-                ¡Bienvenido a DignaLearn!
-              </p>
-              <p className="text-white text-lg font-semibold mb-1">
-                Comenzá tu primer tema
-              </p>
-              <p className="text-sm mb-5" style={{ color: "#A4CDD5" }}>
-                Dignidad y Respeto para Vivir en Armonía
-              </p>
-              <Link
-                href="/niveles"
-                className="inline-block rounded-xl px-5 py-2.5 text-sm font-semibold transition-opacity hover:opacity-90"
-                style={{ backgroundColor: "#F0A8B6", color: "#160B24" }}
-              >
-                Comenzar →
-              </Link>
-            </>
-          )}
-        </div>
-
-        {/* Último logro */}
-        <div className="rounded-2xl border border-gray-100 bg-white p-5">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">
-            Último logro
-          </p>
-          {datos?.ultimoLogro ? (
-            <>
-              <p className="text-2xl mb-2" aria-hidden>🏆</p>
-              <p className="font-semibold text-gray-900 text-sm">{datos.ultimoLogro.titulo}</p>
-            </>
-          ) : (
-            <>
-              <p className="text-2xl mb-2 opacity-30" aria-hidden>🏆</p>
-              <p className="text-sm text-gray-400">Aún no desbloqueaste logros</p>
-            </>
-          )}
-        </div>
-
-        {/* Progreso de unidades */}
-        <div className="rounded-2xl border border-gray-100 bg-white p-5">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">
-            Unidades completadas
-          </p>
-          <div className="flex items-end gap-2 mb-3">
-            <span className="text-3xl font-bold" style={{ color: "#160B24" }}>
-              {datos?.unidadesCompletadas ?? 0}
-            </span>
-            <span className="text-gray-400 text-sm mb-1">de 4</span>
+      {cargando ? (
+        <div className="flex flex-col gap-4">
+          <div className="rounded-3xl h-44 animate-pulse" style={{ backgroundColor: "rgba(22,11,36,0.08)" }} />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="rounded-2xl h-32 animate-pulse" style={{ backgroundColor: "rgba(22,11,36,0.06)" }} />
+            <div className="rounded-2xl h-32 animate-pulse" style={{ backgroundColor: "rgba(22,11,36,0.06)" }} />
           </div>
-          <div className="flex gap-1.5">
-            {[1, 2, 3, 4].map((n) => (
-              <div
-                key={n}
-                className="flex-1 h-2 rounded-full"
-                style={{
-                  backgroundColor:
-                    n <= (datos?.unidadesCompletadas ?? 0) ? "#F0A8B6" : "#F3F4F6",
-                }}
-              />
+        </div>
+      ) : (
+        <div className="flex flex-col gap-4">
+          {/* Tarjeta continuar */}
+          <div
+            className="rounded-3xl p-7 relative overflow-hidden"
+            style={{ backgroundColor: "#160B24", animation: "entrar 500ms ease 100ms both" }}
+          >
+            <div className="absolute top-0 right-0 w-40 h-40 rounded-full opacity-10 -translate-y-10 translate-x-10"
+              style={{ backgroundColor: "#F0A8B6" }} />
+            <div className="absolute bottom-0 left-20 w-24 h-24 rounded-full opacity-5"
+              style={{ backgroundColor: "#A4CDD5" }} />
+            <div className="relative z-10">
+              <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: "#A4CDD5" }}>
+                {datos?.continuarTema ? "Continuar donde quedaste" : "¡Bienvenido a DignaLearn!"}
+              </p>
+              <p className="text-white text-xl font-bold mb-1">
+                {datos?.continuarTema?.titulo ?? "Comenzá tu primer tema"}
+              </p>
+              <p className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.5)" }}>
+                {datos?.continuarTema?.unidadTitulo ?? "Dignidad y Respeto para Vivir en Armonía"}
+              </p>
+              <Link
+                href={datos?.continuarTema ? `/niveles/${datos.continuarTema.unidadId}/${datos.continuarTema.temaId}` : "/niveles"}
+                className="btn-continuar inline-block rounded-2xl px-6 py-3 text-sm font-bold"
+                style={{ backgroundColor: "#F0A8B6", color: "#160B24" }}
+              >
+                {datos?.continuarTema ? "Continuar →" : "Comenzar →"}
+              </Link>
+            </div>
+          </div>
+
+          {/* Tarjetas métricas */}
+          <div className="grid grid-cols-2 gap-4" style={{ animation: "entrar 500ms ease 200ms both" }}>
+            {/* Último logro */}
+            <div className="card-hover rounded-2xl p-5" style={{ border: "1.5px solid rgba(240,168,182,0.2)", backgroundColor: "rgba(240,168,182,0.04)" }}>
+              <p className="text-xs font-bold uppercase tracking-wider mb-3 text-gray-400">Último logro</p>
+              {datos?.ultimoLogro ? (
+                <>
+                  <p className="text-3xl mb-2" aria-hidden>🏆</p>
+                  <p className="font-bold text-sm" style={{ color: "#160B24" }}>{datos.ultimoLogro.titulo}</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-3xl mb-2 opacity-20" aria-hidden>🏆</p>
+                  <p className="text-xs text-gray-400">Completá tu primer tema</p>
+                </>
+              )}
+            </div>
+
+            {/* Unidades */}
+            <div className="card-hover rounded-2xl p-5" style={{ border: "1.5px solid rgba(164,205,213,0.2)", backgroundColor: "rgba(164,205,213,0.04)" }}>
+              <p className="text-xs font-bold uppercase tracking-wider mb-3 text-gray-400">Unidades</p>
+              <p className="text-4xl font-bold mb-1" style={{ color: "#160B24" }}>
+                {datos?.unidadesCompletadas ?? 0}
+              </p>
+              <p className="text-xs text-gray-400 mb-3">de 4 completadas</p>
+              <div className="flex gap-1">
+                {[1,2,3,4].map((n) => (
+                  <div key={n} className="flex-1 h-1.5 rounded-full"
+                    style={{ backgroundColor: n <= (datos?.unidadesCompletadas ?? 0) ? "#F0A8B6" : "rgba(0,0,0,0.08)" }} />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Accesos rápidos */}
+          <div className="grid grid-cols-3 gap-3" style={{ animation: "entrar 500ms ease 300ms both" }}>
+            {[
+              { href: "/niveles", emoji: "📖", label: "Niveles" },
+              { href: "/logros", emoji: "🏆", label: "Logros" },
+              { href: "/historia", emoji: "🎭", label: "Historia" },
+            ].map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="card-hover rounded-2xl p-4 text-center"
+                style={{ border: "1.5px solid rgba(22,11,36,0.08)", backgroundColor: "rgba(22,11,36,0.03)" }}
+              >
+                <p className="text-2xl mb-1" aria-hidden>{item.emoji}</p>
+                <p className="text-xs font-semibold" style={{ color: "#160B24" }}>{item.label}</p>
+              </Link>
             ))}
           </div>
         </div>
-
-      </div>
+      )}
     </div>
   );
 }
