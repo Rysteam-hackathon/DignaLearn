@@ -281,7 +281,11 @@ def _intentar_desbloquear(
 
     try:
         supabase.table("estudiante_logros").insert(fila).execute()
-    except APIError:
+    except APIError as e:
+        error_msg = str(e)
+        if "duplicate key" in error_msg or "unique" in error_msg.lower():
+            return None  # Ya desbloqueado — comportamiento esperado
+        print(f"[gamification] Error inesperado al insertar logro: {e}")
         return None
 
     nivel_data = logro.pop("niveles_logro", None)

@@ -140,6 +140,19 @@ def crear_estudiante(body: CrearEstudianteRequest) -> dict:
     perfil_docente = _obtener_perfil_docente(supabase, body.docente_usuario_id)
     rol_estudiante_id = _obtener_rol_id(supabase, "student")
 
+    # Resolver numero_grado → id real en tabla grados (antes de crear nada)
+    grado_resultado = (
+        supabase.table("grados")
+        .select("id")
+        .eq("numero_grado", body.grado_id)
+        .eq("nivel", "secundaria")
+        .maybe_single()
+        .execute()
+    )
+    if not grado_resultado or not grado_resultado.data:
+        raise HTTPException(status_code=400, detail="Grado no válido.")
+    grado_id_real = grado_resultado.data["id"]
+
     for _ in range(10):
         codigo = _generar_codigo()
         existe = (
@@ -164,35 +177,26 @@ def crear_estudiante(body: CrearEstudianteRequest) -> dict:
         "rol_id": rol_estudiante_id,
     }).execute()
 
-    # Resolver numero_grado → id real en tabla grados
-    grado_resultado = (
-        supabase.table("grados")
-        .select("id")
-        .eq("numero_grado", body.grado_id)
-        .eq("nivel", "secundaria")
-        .maybe_single()
-        .execute()
-    )
-    if not grado_resultado or not grado_resultado.data:
-        raise HTTPException(status_code=400, detail="Grado no válido.")
-    grado_id_real = grado_resultado.data["id"]
+    try:
+        perfil_resultado = (
+            supabase.table("perfiles_estudiante")
+            .insert({
+                "usuario_id": usuario_id,
+                "grado_id": grado_id_real,
+                "codigo_acceso": codigo,
+                "pin_hash": pin_hash,
+            })
+            .execute()
+        )
+        estudiante_id = perfil_resultado.data[0]["id"]
 
-    perfil_resultado = (
-        supabase.table("perfiles_estudiante")
-        .insert({
-            "usuario_id": usuario_id,
-            "grado_id": grado_id_real,
-            "codigo_acceso": codigo,
-            "pin_hash": pin_hash,
-        })
-        .execute()
-    )
-    estudiante_id = perfil_resultado.data[0]["id"]
-
-    supabase.table("docente_estudiantes").insert({
-        "docente_id": perfil_docente["id"],
-        "estudiante_id": estudiante_id,
-    }).execute()
+        supabase.table("docente_estudiantes").insert({
+            "docente_id": perfil_docente["id"],
+            "estudiante_id": estudiante_id,
+        }).execute()
+    except Exception:
+        supabase.table("usuarios").delete().eq("id", usuario_id).execute()
+        raise
 
     return {"estudiante_id": estudiante_id, "codigo_acceso": codigo}
 
