@@ -1,11 +1,61 @@
 "use client";
 
+import { useState, useEffect } from "react";
+
 export default function ExtrasPage() {
+  const [modoOscuro, setModoOscuro] = useState(false);
+
+  useEffect(() => {
+    const guardado = localStorage.getItem("dignalearn_tema");
+    setModoOscuro(guardado === "dark");
+  }, []);
+
+  function toggleTema() {
+    const nuevo = !modoOscuro;
+    setModoOscuro(nuevo);
+    if (nuevo) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("dignalearn_tema", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("dignalearn_tema", "light");
+    }
+  }
+
   return (
     <div className="p-5 max-w-3xl mx-auto">
       <h1 className="text-2xl font-bold mb-6" style={{ color: "#160B24" }}>
         Extras
       </h1>
+
+      {/* Configuración */}
+      <div className="rounded-2xl border border-gray-100 bg-white dark:bg-white/5 dark:border-white/10 p-6 mb-4">
+        <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4">
+          Configuración
+        </h2>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-gray-900 dark:text-white">
+              Modo oscuro
+            </p>
+            <p className="text-xs text-gray-400 mt-0.5">
+              Cambia la apariencia de la plataforma
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={toggleTema}
+            className="relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none"
+            style={{ backgroundColor: modoOscuro ? "#F0A8B6" : "#D1D5DB" }}
+            aria-label={modoOscuro ? "Desactivar modo oscuro" : "Activar modo oscuro"}
+          >
+            <span
+              className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200"
+              style={{ transform: modoOscuro ? "translateX(20px)" : "translateX(0)" }}
+            />
+          </button>
+        </div>
+      </div>
 
       {/* Acerca de */}
       <div className="rounded-2xl border border-gray-100 bg-white p-6 mb-4">
@@ -13,7 +63,7 @@ export default function ExtrasPage() {
           Acerca de DignaLearn
         </h2>
         <p className="text-sm text-gray-600 mb-4">
-          Plataforma educativa gamificada para la asignatura "Derechos y Dignidad de la Mujer" del MINED Nicaragua. Fortalecemos el proceso de enseñanza-aprendizaje mediante herramientas tecnológicas que permiten al estudiante y al docente comprender la asignatura.
+          Plataforma educativa gamificada para la asignatura &quot;Derechos y Dignidad de la Mujer&quot; del MINED Nicaragua. Fortalecemos el proceso de enseñanza-aprendizaje mediante herramientas tecnológicas que permiten al estudiante y al docente comprender la asignatura.
         </p>
         <p className="text-xs text-gray-400">
           Contenido educativo basado en documentos oficiales del MINED Nicaragua.

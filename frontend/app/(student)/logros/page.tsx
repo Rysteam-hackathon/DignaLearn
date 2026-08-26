@@ -51,16 +51,25 @@ export default function LogrosPage() {
         .eq("estudiante_id", estudiante.id)
         .order("desbloqueado_en", { ascending: false });
 
-      const formateados: LogroDesbloqueado[] = (data ?? []).map((item: any) => ({
-        id: item.id,
-        desbloqueado_en: item.desbloqueado_en,
-        logro: {
-          titulo: item.logros?.titulo ?? "",
-          descripcion: item.logros?.descripcion ?? null,
-          tipo_condicion: item.logros?.tipo_condicion ?? "",
-          nivel: item.logros?.niveles_logro?.nombre ?? "tema",
-        },
-      }));
+      const formateados: LogroDesbloqueado[] = (data ?? []).map((item) => {
+        const logroRaw = item.logros as unknown as {
+          titulo: string;
+          descripcion: string | null;
+          tipo_condicion: string;
+          niveles_logro: { nombre: string } | null;
+        } | null;
+
+        return {
+          id: item.id,
+          desbloqueado_en: item.desbloqueado_en,
+          logro: {
+            titulo: logroRaw?.titulo ?? "",
+            descripcion: logroRaw?.descripcion ?? null,
+            tipo_condicion: logroRaw?.tipo_condicion ?? "",
+            nivel: logroRaw?.niveles_logro?.nombre ?? "tema",
+          },
+        };
+      });
 
       setLogros(formateados);
       setCargando(false);

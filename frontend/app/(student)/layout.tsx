@@ -22,6 +22,14 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
     if (!estudiante) {
       router.replace("/login");
     }
+
+    // Aplicar tema guardado
+    const temaGuardado = localStorage.getItem("dignalearn_tema");
+    if (temaGuardado === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
   }, [router]);
 
   return (

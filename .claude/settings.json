@@ -10,7 +10,9 @@
       "Bash(venv/Scripts/python -c \"from app.routers.docente import router; print\\('OK'\\)\")",
       "Bash(venv/Scripts/python -c ' *)",
       "Bash(awk '{print $1}')",
-      "Bash(code \"C:\\\\Users\\\\DELL\\\\Desktop\\\\DignaLearn\\\\db\\\\seed_actividades_completo.sql\")"
+      "Bash(code \"C:\\\\Users\\\\DELL\\\\Desktop\\\\DignaLearn\\\\db\\\\seed_actividades_completo.sql\")",
+      "Bash(npx next *)",
+      "Bash(git add *)"
     ]
   }
 }
