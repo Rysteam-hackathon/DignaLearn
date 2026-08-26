@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import WordSearch from "@/components/games/WordSearch";
@@ -25,91 +28,183 @@ interface ReflexionConfig {
   dato_extra: string;
 }
 
-export default async function TemaPage({
+interface TemaData {
+  titulo: string;
+  contenido_lectura: string | null;
+}
+
+function Separador({ emoji, esOscuro }: { emoji: string; esOscuro: boolean }) {
+  const lineColor = esOscuro ? "rgba(255,255,255,0.12)" : "rgba(22,11,36,0.12)";
+  return (
+    <div className="flex items-center gap-3 my-3">
+      <div className="flex-1 h-px" style={{ backgroundColor: lineColor }} />
+      <span className="text-xl" aria-hidden>{emoji}</span>
+      <div className="flex-1 h-px" style={{ backgroundColor: lineColor }} />
+    </div>
+  );
+}
+
+export default function TemaPage({
   params,
 }: {
   params: { unitId: string; topicId: string };
 }) {
-  const { data: tema } = await supabase
-    .from("temas")
-    .select("titulo, contenido_lectura")
-    .eq("id", params.topicId)
-    .single();
+  const [esOscuro, setEsOscuro] = useState(false);
+  useEffect(() => {
+    const actualizar = () => setEsOscuro(document.documentElement.classList.contains('dark'));
+    actualizar();
+    const obs = new MutationObserver(actualizar);
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => obs.disconnect();
+  }, []);
 
-  const { data: actividades } = await supabase
-    .from("actividades")
-    .select("config_json, tipos_actividad!inner(nombre)")
-    .eq("tema_id", params.topicId)
-    .eq("tipos_actividad.nombre", "sopa_letras");
+  const [tema, setTema] = useState<TemaData | null>(null);
+  const [sopaConfig, setSopaConfig] = useState<SopaLetrasConfig | undefined>();
+  const [quizConfig, setQuizConfig] = useState<QuizConfig | undefined>();
+  const [reflexionConfig, setReflexionConfig] = useState<ReflexionConfig | undefined>();
+  const [cargando, setCargando] = useState(true);
 
-  const actividad =
-    actividades && actividades.length > 0
-      ? actividades[Math.floor(Math.random() * actividades.length)]
-      : null;
+  useEffect(() => {
+    async function cargar() {
+      const { data: temaData } = await supabase
+        .from("temas")
+        .select("titulo, contenido_lectura")
+        .eq("id", params.topicId)
+        .maybeSingle();
+      setTema(temaData);
 
-  const sopaConfig = actividad?.config_json as SopaLetrasConfig | undefined;
+      const { data: actividades } = await supabase
+        .from("actividades")
+        .select("config_json, tipos_actividad!inner(nombre)")
+        .eq("tema_id", params.topicId)
+        .eq("tipos_actividad.nombre", "sopa_letras");
 
-  const { data: quizActividades } = await supabase
-    .from("actividades")
-    .select("config_json, tipos_actividad!inner(nombre)")
-    .eq("tema_id", params.topicId)
-    .eq("tipos_actividad.nombre", "quiz");
+      const actividad =
+        actividades && actividades.length > 0
+          ? actividades[Math.floor(Math.random() * actividades.length)]
+          : null;
+      setSopaConfig(actividad?.config_json as SopaLetrasConfig | undefined);
 
-  const quizActividad =
-    quizActividades && quizActividades.length > 0
-      ? quizActividades[Math.floor(Math.random() * quizActividades.length)]
-      : null;
+      const { data: quizActividades } = await supabase
+        .from("actividades")
+        .select("config_json, tipos_actividad!inner(nombre)")
+        .eq("tema_id", params.topicId)
+        .eq("tipos_actividad.nombre", "quiz");
 
-  const quizConfig = quizActividad?.config_json as QuizConfig | undefined;
+      const quizActividad =
+        quizActividades && quizActividades.length > 0
+          ? quizActividades[Math.floor(Math.random() * quizActividades.length)]
+          : null;
+      setQuizConfig(quizActividad?.config_json as QuizConfig | undefined);
 
-  const { data: scenarioActividades } = await supabase
-    .from("actividades")
-    .select("config_json, tipos_actividad!inner(nombre)")
-    .eq("tema_id", params.topicId)
-    .eq("tipos_actividad.nombre", "scenario");
+      const { data: scenarioActividades } = await supabase
+        .from("actividades")
+        .select("config_json, tipos_actividad!inner(nombre)")
+        .eq("tema_id", params.topicId)
+        .eq("tipos_actividad.nombre", "scenario");
 
-  const scenarioActividad =
-    scenarioActividades && scenarioActividades.length > 0
-      ? scenarioActividades[Math.floor(Math.random() * scenarioActividades.length)]
-      : null;
+      const scenarioActividad =
+        scenarioActividades && scenarioActividades.length > 0
+          ? scenarioActividades[Math.floor(Math.random() * scenarioActividades.length)]
+          : null;
+      setReflexionConfig(scenarioActividad?.config_json as ReflexionConfig | undefined);
 
-  const reflexionConfig = scenarioActividad?.config_json as ReflexionConfig | undefined;
+      setCargando(false);
+    }
+    cargar();
+  }, [params.topicId]);
+
+  const colorTitulo = esOscuro ? "#ffffff" : "#160B24";
+  const colorSecundario = esOscuro ? "rgba(255,255,255,0.6)" : "rgba(22,11,36,0.55)";
+  const cardBg = esOscuro ? "rgba(255,255,255,0.05)" : "rgba(22,11,36,0.03)";
+  const cardBorder = esOscuro ? "rgba(255,255,255,0.08)" : "rgba(22,11,36,0.08)";
 
   return (
     <main className="max-w-2xl mx-auto p-6">
-      <Link
-        href={`/niveles/${params.unitId}`}
-        className="text-sm text-gray-500 hover:underline"
-      >
-        ← Volver a Temas
-      </Link>
-      <h1 className="text-2xl font-bold mt-2 mb-3">{tema?.titulo}</h1>
+      <style>{`
+        @keyframes tema-entrar {
+          from { opacity: 0; transform: translateY(18px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .tema-seccion {
+          animation: tema-entrar 450ms ease forwards;
+          opacity: 0;
+        }
+      `}</style>
 
-      <ProgresoLectura temaId={params.topicId} />
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-1.5 text-sm mb-4 flex-wrap" style={{ color: colorSecundario }}>
+        <Link href="/niveles" className="hover:underline" style={{ color: "#A4CDD5" }}>
+          Niveles
+        </Link>
+        <span aria-hidden>/</span>
+        <Link href={`/niveles/${params.unitId}`} className="hover:underline" style={{ color: "#A4CDD5" }}>
+          Temas
+        </Link>
+        <span aria-hidden>/</span>
+        <span className="truncate max-w-[160px]" style={{ color: colorSecundario }}>
+          {tema?.titulo ?? "..."}
+        </span>
+      </nav>
 
-      <p className="text-base leading-relaxed whitespace-pre-line">
-        {tema?.contenido_lectura}
-      </p>
+      {cargando ? (
+        <p className="text-sm" style={{ color: colorSecundario }}>Cargando tema...</p>
+      ) : (
+        <>
+          <h1
+            className="tema-seccion text-3xl font-bold mb-4"
+            style={{ color: colorTitulo, animationDelay: "0ms" }}
+          >
+            {tema?.titulo}
+          </h1>
 
-      {sopaConfig && (
-        <div className="mt-10">
-          <h2 className="text-lg font-semibold mb-4">Sopa de letras</h2>
-          <WordSearch config={sopaConfig} temaId={params.topicId} />
-        </div>
-      )}
+          <div className="tema-seccion" style={{ animationDelay: "60ms" }}>
+            <ProgresoLectura temaId={params.topicId} />
+          </div>
 
-      {quizConfig && (
-        <div className="mt-10">
-          <h2 className="text-lg font-semibold mb-4">Quiz</h2>
-          <Quiz config={quizConfig} temaId={params.topicId} />
-        </div>
-      )}
+          {/* Lectura */}
+          <div
+            className="tema-seccion rounded-2xl p-6"
+            style={{ backgroundColor: cardBg, border: `1px solid ${cardBorder}`, animationDelay: "120ms" }}
+          >
+            <p
+              className="text-lg leading-relaxed whitespace-pre-line"
+              style={{ color: colorTitulo }}
+            >
+              {tema?.contenido_lectura}
+            </p>
+          </div>
 
-      {reflexionConfig && (
-        <div className="mt-10">
-          <h2 className="text-lg font-semibold mb-4">Reflexión</h2>
-          <Reflexion config={reflexionConfig} temaId={params.topicId} />
-        </div>
+          {sopaConfig && (
+            <div className="tema-seccion mt-4" style={{ animationDelay: "180ms" }}>
+              <Separador emoji="🔤" esOscuro={esOscuro} />
+              <h2 className="text-xl font-bold mb-4" style={{ color: colorTitulo }}>
+                Sopa de letras
+              </h2>
+              <WordSearch config={sopaConfig} temaId={params.topicId} />
+            </div>
+          )}
+
+          {quizConfig && (
+            <div className="tema-seccion mt-4" style={{ animationDelay: "240ms" }}>
+              <Separador emoji="❓" esOscuro={esOscuro} />
+              <h2 className="text-xl font-bold mb-4" style={{ color: colorTitulo }}>
+                Quiz
+              </h2>
+              <Quiz config={quizConfig} temaId={params.topicId} />
+            </div>
+          )}
+
+          {reflexionConfig && (
+            <div className="tema-seccion mt-4" style={{ animationDelay: "300ms" }}>
+              <Separador emoji="💭" esOscuro={esOscuro} />
+              <h2 className="text-xl font-bold mb-4" style={{ color: colorTitulo }}>
+                Reflexión
+              </h2>
+              <Reflexion config={reflexionConfig} temaId={params.topicId} />
+            </div>
+          )}
+        </>
       )}
     </main>
   );

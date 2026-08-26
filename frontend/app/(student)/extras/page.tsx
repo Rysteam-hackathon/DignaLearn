@@ -4,10 +4,19 @@ import { useState, useEffect } from "react";
 
 export default function ExtrasPage() {
   const [modoOscuro, setModoOscuro] = useState(false);
+  const [esModoOscuro, setEsModoOscuro] = useState(false);
 
   useEffect(() => {
     const guardado = localStorage.getItem("dignalearn_tema");
     setModoOscuro(guardado === "dark");
+  }, []);
+
+  useEffect(() => {
+    const actualizar = () => setEsModoOscuro(document.documentElement.classList.contains('dark'));
+    actualizar();
+    const observer = new MutationObserver(actualizar);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
   }, []);
 
   function toggleTema() {
@@ -22,23 +31,48 @@ export default function ExtrasPage() {
     }
   }
 
+  const cardBg = esModoOscuro ? "rgba(255,255,255,0.06)" : "rgba(22,11,36,0.03)";
+  const cardBorder = esModoOscuro ? "rgba(255,255,255,0.1)" : "rgba(22,11,36,0.08)";
+  const textoSecundario = esModoOscuro ? "rgba(255,255,255,0.6)" : "rgba(22,11,36,0.5)";
+  const avatarBg = esModoOscuro ? "rgba(240,168,182,0.15)" : "rgba(22,11,36,0.08)";
+  const avatarTexto = esModoOscuro ? "#F0A8B6" : "#160B24";
+
+  const cardStyle = { backgroundColor: cardBg, border: `1px solid ${cardBorder}` };
+
   return (
-    <div className="p-5 max-w-3xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6" style={{ color: "#160B24" }}>
+    <div className="p-5 max-w-3xl mx-auto" style={{ backgroundColor: "var(--background)" }}>
+      <style>{`
+        @keyframes extras-entrar {
+          from { opacity: 0; transform: translateY(16px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .extras-card {
+          transition: transform 200ms ease, box-shadow 200ms ease;
+        }
+        .extras-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 12px 28px rgba(240, 168, 182, 0.12);
+        }
+      `}</style>
+
+      <h1 className="text-2xl font-bold mb-6" style={{ color: "var(--foreground)" }}>
         Extras
       </h1>
 
       {/* Configuración */}
-      <div className="rounded-2xl border border-gray-100 bg-white dark:bg-white/5 dark:border-white/10 p-6 mb-4">
-        <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4">
+      <div
+        className="extras-card rounded-2xl p-6 mb-4"
+        style={{ ...cardStyle, animation: "extras-entrar 400ms ease forwards" }}
+      >
+        <h2 className="text-base font-semibold mb-4" style={{ color: "var(--foreground)" }}>
           Configuración
         </h2>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-900 dark:text-white">
+            <p className="text-sm font-medium" style={{ color: "var(--foreground)" }}>
               Modo oscuro
             </p>
-            <p className="text-xs text-gray-400 mt-0.5">
+            <p className="text-xs mt-0.5" style={{ color: textoSecundario }}>
               Cambia la apariencia de la plataforma
             </p>
           </div>
@@ -58,21 +92,27 @@ export default function ExtrasPage() {
       </div>
 
       {/* Acerca de */}
-      <div className="rounded-2xl border border-gray-100 bg-white p-6 mb-4">
-        <h2 className="text-base font-semibold text-gray-900 mb-3">
+      <div
+        className="extras-card rounded-2xl p-6 mb-4"
+        style={{ ...cardStyle, animation: "extras-entrar 400ms ease 80ms forwards", opacity: 0, animationFillMode: "forwards" }}
+      >
+        <h2 className="text-base font-semibold mb-3" style={{ color: "var(--foreground)" }}>
           Acerca de DignaLearn
         </h2>
-        <p className="text-sm text-gray-600 mb-4">
+        <p className="text-sm mb-4" style={{ color: textoSecundario }}>
           Plataforma educativa gamificada para la asignatura &quot;Derechos y Dignidad de la Mujer&quot; del MINED Nicaragua. Fortalecemos el proceso de enseñanza-aprendizaje mediante herramientas tecnológicas que permiten al estudiante y al docente comprender la asignatura.
         </p>
-        <p className="text-xs text-gray-400">
+        <p className="text-xs" style={{ color: textoSecundario }}>
           Contenido educativo basado en documentos oficiales del MINED Nicaragua.
         </p>
       </div>
 
       {/* Equipo */}
-      <div className="rounded-2xl border border-gray-100 bg-white p-6 mb-4">
-        <h2 className="text-base font-semibold text-gray-900 mb-4">
+      <div
+        className="extras-card rounded-2xl p-6 mb-4"
+        style={{ ...cardStyle, animation: "extras-entrar 400ms ease 160ms forwards", opacity: 0, animationFillMode: "forwards" }}
+      >
+        <h2 className="text-base font-semibold mb-4" style={{ color: "var(--foreground)" }}>
           Equipo Rysteam
         </h2>
         <div className="flex flex-col gap-3">
@@ -86,52 +126,55 @@ export default function ExtrasPage() {
             <div key={miembro.nombre} className="flex items-center gap-3">
               <div
                 className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
-                style={{ backgroundColor: "#F0A8B620", color: "#160B24" }}
+                style={{ backgroundColor: avatarBg, color: avatarTexto }}
               >
                 {miembro.nombre[0]}
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900">{miembro.nombre}</p>
-                <p className="text-xs text-gray-400">{miembro.rol}</p>
+                <p className="text-sm font-medium" style={{ color: "var(--foreground)" }}>{miembro.nombre}</p>
+                <p className="text-xs" style={{ color: textoSecundario }}>{miembro.rol}</p>
               </div>
             </div>
           ))}
         </div>
-        <p className="text-xs text-gray-400 mt-4 text-center">
+        <p className="text-xs mt-4 text-center" style={{ color: textoSecundario }}>
           Hecho con ❤️ en Nicaragua · Hackathon Nicaragua 2026
         </p>
       </div>
 
       {/* Política de privacidad */}
-      <div className="rounded-2xl border border-gray-100 bg-white p-6">
-        <h2 className="text-base font-semibold text-gray-900 mb-3">
+      <div
+        className="extras-card rounded-2xl p-6"
+        style={{ ...cardStyle, animation: "extras-entrar 400ms ease 240ms forwards", opacity: 0, animationFillMode: "forwards" }}
+      >
+        <h2 className="text-base font-semibold mb-3" style={{ color: "var(--foreground)" }}>
           Política de privacidad
         </h2>
-        <div className="flex flex-col gap-3 text-sm text-gray-600">
+        <div className="flex flex-col gap-3 text-sm" style={{ color: textoSecundario }}>
           <p>
-            <span className="font-medium text-gray-900">Datos que recopilamos:</span>{" "}
+            <span className="font-medium" style={{ color: "var(--foreground)" }}>Datos que recopilamos:</span>{" "}
             nombre para mostrar, código de acceso y progreso académico dentro de la plataforma.
           </p>
           <p>
-            <span className="font-medium text-gray-900">Lo que NO recopilamos:</span>{" "}
+            <span className="font-medium" style={{ color: "var(--foreground)" }}>Lo que NO recopilamos:</span>{" "}
             datos personales sensibles de menores, correo electrónico de estudiantes, ni información financiera.
           </p>
           <p>
-            <span className="font-medium text-gray-900">Uso de datos:</span>{" "}
+            <span className="font-medium" style={{ color: "var(--foreground)" }}>Uso de datos:</span>{" "}
             los datos se utilizan exclusivamente para mostrar el progreso del estudiante y permitir que el docente acompañe el aprendizaje. No se venden ni comparten con terceros.
           </p>
           <p>
-            <span className="font-medium text-gray-900">Alineado con:</span>{" "}
+            <span className="font-medium" style={{ color: "var(--foreground)" }}>Alineado con:</span>{" "}
             Ley N° 787 de Protección de Datos Personales de Nicaragua.
           </p>
         </div>
-        <p className="text-xs text-gray-400 mt-4">
+        <p className="text-xs mt-4" style={{ color: textoSecundario }}>
           Consultas: contacto@dignalearn.com
         </p>
       </div>
 
       {/* Footer */}
-      <p className="text-center text-xs text-gray-400 mt-6">
+      <p className="text-center text-xs mt-6" style={{ color: textoSecundario }}>
         © 2026 DignaLearn — Equipo Rysteam · Hackathon Nicaragua 2026
       </p>
     </div>

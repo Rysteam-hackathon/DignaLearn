@@ -21,6 +21,15 @@ export default function UnidadPage({ params }: { params: { unitId: string } }) {
   const [temas, setTemas] = useState<Tema[]>([]);
   const [completados, setCompletados] = useState<Set<string>>(new Set());
   const [cargando, setCargando] = useState(true);
+  const [esOscuro, setEsOscuro] = useState(false);
+
+  useEffect(() => {
+    const detectar = () => setEsOscuro(document.documentElement.classList.contains("dark"));
+    detectar();
+    const observer = new MutationObserver(detectar);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     async function cargar() {
@@ -64,6 +73,11 @@ export default function UnidadPage({ params }: { params: { unitId: string } }) {
     cargar();
   }, [params.unitId]);
 
+  const colorTitulo = esOscuro ? "#ffffff" : "#160B24";
+  const cardBg = esOscuro ? "rgba(255,255,255,0.05)" : "rgba(22,11,36,0.03)";
+  const cardBorder = esOscuro ? "rgba(255,255,255,0.08)" : "rgba(22,11,36,0.1)";
+  const skeletonBg = esOscuro ? "rgba(255,255,255,0.06)" : "rgba(22,11,36,0.06)";
+
   return (
     <main className="min-h-screen p-6 max-w-2xl mx-auto">
       <style>{`
@@ -92,7 +106,7 @@ export default function UnidadPage({ params }: { params: { unitId: string } }) {
         <p className="text-sm font-semibold uppercase tracking-widest mb-1" style={{ color: "#F0A8B6" }}>
           {unidad ? `Unidad ${unidad.numero_unidad}` : "Cargando..."}
         </p>
-        <h1 className="text-3xl font-bold" style={{ color: "#160B24" }}>
+        <h1 className="text-3xl font-bold" style={{ color: colorTitulo }}>
           {unidad?.titulo ?? "Temas"}
         </h1>
       </div>
@@ -100,7 +114,7 @@ export default function UnidadPage({ params }: { params: { unitId: string } }) {
       {cargando ? (
         <div className="flex flex-col gap-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="rounded-2xl h-24 animate-pulse" style={{ backgroundColor: "rgba(22,11,36,0.06)" }} />
+            <div key={i} className="rounded-2xl h-24 animate-pulse" style={{ backgroundColor: skeletonBg }} />
           ))}
         </div>
       ) : (
@@ -113,8 +127,8 @@ export default function UnidadPage({ params }: { params: { unitId: string } }) {
                 href={`/niveles/${params.unitId}/${tema.id}`}
                 className="tema-card block rounded-2xl p-5"
                 style={{
-                  backgroundColor: completado ? "rgba(164,205,213,0.1)" : "rgba(22,11,36,0.03)",
-                  border: `1.5px solid ${completado ? "rgba(164,205,213,0.35)" : "rgba(22,11,36,0.08)"}`,
+                  backgroundColor: cardBg,
+                  border: `1px solid ${cardBorder}`,
                   animation: `entrar ${400 + idx * 100}ms ease forwards`,
                   opacity: 0,
                 }}
@@ -122,23 +136,23 @@ export default function UnidadPage({ params }: { params: { unitId: string } }) {
                 <div className="flex items-center gap-4">
                   <div
                     className="w-11 h-11 rounded-xl flex items-center justify-center text-sm font-bold shrink-0"
-                    style={{
-                      backgroundColor: completado ? "#A4CDD5" : "#F0A8B6",
-                      color: "#160B24",
-                    }}
+                    style={{ backgroundColor: "#F0A8B6", color: "#160B24" }}
                   >
                     {tema.orden}
                   </div>
                   <div className="flex-1">
-                    <h2 className="text-base font-bold" style={{ color: "#160B24" }}>
+                    <h2 className="text-base font-bold" style={{ color: colorTitulo }}>
                       {tema.titulo}
                     </h2>
-                    <p
-                      className="text-xs font-semibold mt-0.5"
-                      style={{ color: completado ? "#0F6E56" : "#9CA3AF" }}
+                    <span
+                      className="inline-block text-xs font-semibold mt-1 px-2 py-0.5 rounded-full"
+                      style={{
+                        backgroundColor: completado ? "rgba(164,205,213,0.2)" : "rgba(240,168,182,0.15)",
+                        color: completado ? "#A4CDD5" : "#F0A8B6",
+                      }}
                     >
                       {completado ? "✓ Completado" : "Pendiente"}
-                    </p>
+                    </span>
                   </div>
                 </div>
               </Link>

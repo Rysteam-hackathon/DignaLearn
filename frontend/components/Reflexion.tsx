@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, type CSSProperties } from "react";
 import { getEstudianteLocal } from "@/lib/auth";
 import {
   marcarElementoCompletado,
@@ -38,8 +38,31 @@ interface LogroApiResponse {
   nivel_nombre: string | null;
 }
 
+function useModoOscuro(): boolean {
+  const [esOscuro, setEsOscuro] = useState(false);
+
+  useEffect(() => {
+    const detectar = () => setEsOscuro(document.documentElement.classList.contains("dark"));
+    detectar();
+
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    mq.addEventListener("change", detectar);
+
+    const observer = new MutationObserver(detectar);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+
+    return () => {
+      mq.removeEventListener("change", detectar);
+      observer.disconnect();
+    };
+  }, []);
+
+  return esOscuro;
+}
+
 export default function Reflexion({ temaId, config }: ReflexionProps) {
   const { pregunta, opciones, respuesta_correcta, dato_extra } = config;
+  const esOscuro = useModoOscuro();
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [respondida, setRespondida] = useState(false);
@@ -114,19 +137,39 @@ export default function Reflexion({ temaId, config }: ReflexionProps) {
       .catch(() => {});
   }
 
-  function optionClass(opcion: ReflexionOption): string {
+  function optionStyle(opcion: ReflexionOption): CSSProperties {
     const isSelected = selectedId === opcion.id;
 
     if (!respondida) {
-      return isSelected
-        ? "border-gray-800 bg-gray-100"
-        : "border-gray-300 bg-white hover:bg-gray-50";
+      if (isSelected) {
+        return {
+          backgroundColor: "rgba(240,168,182,0.2)",
+          borderColor: "#F0A8B6",
+          color: esOscuro ? "#ffffff" : "#160B24",
+        };
+      }
+      return esOscuro
+        ? { backgroundColor: "rgba(255,255,255,0.08)", borderColor: "rgba(255,255,255,0.15)", color: "#ffffff" }
+        : { backgroundColor: "rgba(22,11,36,0.05)", borderColor: "rgba(22,11,36,0.15)", color: "#160B24" };
     }
 
     const isCorrecta = opcion.id === respuesta_correcta;
-    if (isCorrecta) return "border-transparent bg-[#A4CDD5]";
-    if (isSelected && !isCorrecta) return "border-transparent bg-[#F0A8B6]";
-    return "border-gray-300 bg-white opacity-60";
+    if (isCorrecta) {
+      return { backgroundColor: "#A4CDD5", borderColor: "transparent", color: "#160B24" };
+    }
+    if (isSelected && !isCorrecta) {
+      return {
+        backgroundColor: "rgba(239,68,68,0.15)",
+        borderColor: "rgba(239,68,68,0.3)",
+        color: esOscuro ? "#ffffff" : "#160B24",
+      };
+    }
+    return {
+      backgroundColor: esOscuro ? "rgba(255,255,255,0.08)" : "rgba(22,11,36,0.05)",
+      borderColor: esOscuro ? "rgba(255,255,255,0.15)" : "rgba(22,11,36,0.15)",
+      color: esOscuro ? "#ffffff" : "#160B24",
+      opacity: esOscuro ? 0.35 : 0.4,
+    };
   }
 
   return (
@@ -140,18 +183,30 @@ export default function Reflexion({ temaId, config }: ReflexionProps) {
       )}
 
       <div className="max-w-xl">
-        <p className="text-base font-medium mb-4">{pregunta}</p>
+        <style>{`
+          @keyframes reflexion-entrar {
+            from { opacity: 0; transform: translateY(14px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          .reflexion-opcion {
+            animation: reflexion-entrar 350ms ease forwards;
+            opacity: 0;
+          }
+        `}</style>
+
+        <p className="text-base font-medium mb-4" style={{ color: esOscuro ? "#ffffff" : "#160B24" }}>
+          {pregunta}
+        </p>
 
         <div className="flex flex-col gap-2 mb-4">
-          {opciones.map((opcion) => (
+          {opciones.map((opcion, idx) => (
             <button
               key={opcion.id}
               type="button"
               onClick={() => handleSelect(opcion.id)}
               disabled={respondida}
-              className={`text-left px-4 py-3 rounded-lg border text-sm transition-colors ${optionClass(
-                opcion
-              )}`}
+              className="reflexion-opcion text-left px-4 py-3 rounded-lg border text-sm transition-colors"
+              style={{ ...optionStyle(opcion), animationDelay: `${idx * 80}ms` }}
             >
               {opcion.texto}
             </button>
@@ -163,7 +218,8 @@ export default function Reflexion({ temaId, config }: ReflexionProps) {
             type="button"
             onClick={handleResponder}
             disabled={!selectedId}
-            className="px-4 py-2 rounded-lg bg-gray-800 text-white text-sm disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{ backgroundColor: "#F0A8B6", color: "#160B24" }}
           >
             Responder
           </button>
@@ -178,11 +234,22 @@ export default function Reflexion({ temaId, config }: ReflexionProps) {
               </p>
             </div>
 
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-              <p className="text-xs font-semibold text-gray-500 mb-1">
+            <div
+              className="rounded-lg p-4"
+              style={{
+                backgroundColor: esOscuro ? "rgba(255,255,255,0.06)" : "rgba(22,11,36,0.03)",
+                border: esOscuro ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(22,11,36,0.08)",
+              }}
+            >
+              <p
+                className="text-xs font-semibold mb-1"
+                style={{ color: esOscuro ? "rgba(255,255,255,0.5)" : "rgba(22,11,36,0.4)" }}
+              >
                 Dato extra
               </p>
-              <p className="text-sm text-gray-800">{dato_extra}</p>
+              <p className="text-sm" style={{ color: esOscuro ? "#ffffff" : "#160B24" }}>
+                {dato_extra}
+              </p>
             </div>
 
             {temaDominado && (

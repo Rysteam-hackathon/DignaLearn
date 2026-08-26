@@ -111,6 +111,15 @@ function getLine(start: Cell, end: Cell): Cell[] | null {
 export default function WordSearch({ config, temaId }: WordSearchProps) {
   const { palabras, pistas, tamaño } = config;
 
+  const [esOscuro, setEsOscuro] = useState(false);
+  useEffect(() => {
+    const actualizar = () => setEsOscuro(document.documentElement.classList.contains('dark'));
+    actualizar();
+    const obs = new MutationObserver(actualizar);
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => obs.disconnect();
+  }, []);
+
   const { grid } = useMemo(
     () => generateGrid(palabras, tamaño),
     [palabras, tamaño]
@@ -205,7 +214,7 @@ export default function WordSearch({ config, temaId }: WordSearchProps) {
               key={`${r}-${c}`}
               type="button"
               onClick={() => handleCellClick(r, c)}
-              className={`w-8 h-8 flex items-center justify-center text-sm font-semibold text-[#160B24] border rounded transition-colors ${cellClass(
+              className={`w-8 h-8 flex items-center justify-center text-sm font-semibold text-[#160B24] border rounded-xl transition-colors duration-200 ${cellClass(
                 r,
                 c
               )}`}
@@ -217,24 +226,38 @@ export default function WordSearch({ config, temaId }: WordSearchProps) {
       </div>
 
       <div className="flex-1 min-w-[220px]">
-        <p className="text-sm text-gray-500 mb-2">
+        <style>{`
+          @keyframes chip-pop {
+            0% { transform: scale(0.85); }
+            60% { transform: scale(1.06); }
+            100% { transform: scale(1); }
+          }
+        `}</style>
+        <p className="text-sm mb-3" style={{ color: esOscuro ? "rgba(255,255,255,0.6)" : "rgba(22,11,36,0.5)" }}>
           {foundWords.length} de {palabras.length} palabras encontradas
         </p>
-        <ul className="space-y-1 mb-4">
+        <div className="flex flex-wrap gap-2 mb-4">
           {palabras.map((palabra, i) => {
             const encontrada = foundWords.includes(palabra);
             return (
-              <li
+              <span
                 key={palabra}
-                className={`text-sm ${
-                  encontrada ? "line-through text-gray-400" : "text-gray-800"
-                }`}
+                className={`text-sm px-3 py-1.5 rounded-full border transition-colors ${encontrada ? "line-through" : ""}`}
+                style={
+                  encontrada
+                    ? { backgroundColor: "#A4CDD5", borderColor: "transparent", color: "#160B24", animation: "chip-pop 400ms ease" }
+                    : {
+                        backgroundColor: "transparent",
+                        borderColor: esOscuro ? "rgba(255,255,255,0.2)" : "rgba(22,11,36,0.15)",
+                        color: esOscuro ? "#ffffff" : "#160B24",
+                      }
+                }
               >
                 {pistas[i] ?? palabra}
-              </li>
+              </span>
             );
           })}
-        </ul>
+        </div>
         {completado && (
           <p className="text-sm font-semibold text-emerald-600">
             ¡Completaste la sopa de letras!

@@ -24,6 +24,15 @@ export default function ProgresoLectura({ temaId }: ProgresoLecturaProps) {
   const [estudianteId, setEstudianteId] = useState<string | null>(null);
   const [progreso, setProgreso] = useState<ProgresoTema | null>(null);
   const [guardando, setGuardando] = useState(false);
+  const [esOscuro, setEsOscuro] = useState(false);
+
+  useEffect(() => {
+    const actualizar = () => setEsOscuro(document.documentElement.classList.contains('dark'));
+    actualizar();
+    const obs = new MutationObserver(actualizar);
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => obs.disconnect();
+  }, []);
 
   useEffect(() => {
     const raw = localStorage.getItem("dignalearn_user");
@@ -72,13 +81,16 @@ export default function ProgresoLectura({ temaId }: ProgresoLecturaProps) {
       ].filter(Boolean).length
     : 0;
 
+  const colorSecundario = esOscuro ? "rgba(255,255,255,0.6)" : "rgba(22,11,36,0.5)";
+  const trackBg = esOscuro ? "rgba(255,255,255,0.1)" : "rgba(22,11,36,0.08)";
+
   return (
     <div className="mb-6">
-      <p className="text-sm text-gray-500 mb-1">{completados} de 3 elementos</p>
-      <div className="w-full h-2 rounded-full bg-gray-200">
+      <p className="text-sm mb-1" style={{ color: colorSecundario }}>{completados} de 3 elementos</p>
+      <div className="w-full h-2 rounded-full" style={{ backgroundColor: trackBg }}>
         <div
-          className="h-2 rounded-full bg-blue-500 transition-all"
-          style={{ width: `${(completados / 3) * 100}%` }}
+          className="h-2 rounded-full transition-all"
+          style={{ width: `${(completados / 3) * 100}%`, backgroundColor: "#F0A8B6" }}
         />
       </div>
 
@@ -87,7 +99,8 @@ export default function ProgresoLectura({ temaId }: ProgresoLecturaProps) {
           type="button"
           onClick={handleMarcarLectura}
           disabled={guardando || progreso?.lectura_completada}
-          className="mt-3 rounded-lg bg-gray-900 text-white text-sm px-4 py-2 disabled:opacity-50"
+          className="mt-3 rounded-lg text-sm font-semibold px-4 py-2 disabled:opacity-50"
+          style={{ backgroundColor: "#F0A8B6", color: "#160B24" }}
         >
           {progreso?.lectura_completada
             ? "Lectura completada"
@@ -96,7 +109,7 @@ export default function ProgresoLectura({ temaId }: ProgresoLecturaProps) {
             : "Marcar lectura como completada"}
         </button>
       ) : (
-        <p className="mt-3 text-sm text-gray-400">
+        <p className="mt-3 text-sm" style={{ color: colorSecundario }}>
           Iniciá sesión como estudiante para guardar tu progreso.
         </p>
       )}
