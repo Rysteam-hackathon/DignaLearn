@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { getEstudianteLocal } from "@/lib/auth";
+import LogroIcono from "@/components/LogroIcono";
 
 interface LogroDesbloqueado {
   id: string;
@@ -112,7 +113,7 @@ export default function LogrosPage() {
                 className="w-10 h-10 rounded-full flex items-center justify-center text-lg shrink-0"
                 style={{ backgroundColor: NIVEL_COLORES[item.logro.nivel] + "25" }}
               >
-                🏆
+                <LogroIcono tipo_condicion={item.logro.tipo_condicion} nivel={item.logro.nivel} size={40} />
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-0.5">

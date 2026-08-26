@@ -16,6 +16,8 @@ class LogroDesbloqueado(BaseModel):
     descripcion: str | None = None
     icono_url: str | None = None
     nivel_logro_id: int
+    tipo_condicion: str
+    nivel_nombre: str | None = None
 
 
 def evaluar_logros(estudiante_id: str, tema_id: str) -> list[LogroDesbloqueado]:
@@ -241,7 +243,10 @@ def _intentar_desbloquear(
 ) -> LogroDesbloqueado | None:
     query = (
         supabase.table("logros")
-        .select("id, titulo, descripcion, icono_url, nivel_logro_id")
+        .select(
+            "id, titulo, descripcion, icono_url, nivel_logro_id, tipo_condicion,"
+            " niveles_logro(nombre)"
+        )
         .eq("tipo_condicion", tipo_condicion)
     )
     if valor_condicion is not None:
@@ -279,4 +284,6 @@ def _intentar_desbloquear(
     except APIError:
         return None
 
-    return LogroDesbloqueado(**logro)
+    nivel_data = logro.pop("niveles_logro", None)
+    nivel_nombre = nivel_data.get("nombre") if nivel_data else None
+    return LogroDesbloqueado(**logro, nivel_nombre=nivel_nombre)

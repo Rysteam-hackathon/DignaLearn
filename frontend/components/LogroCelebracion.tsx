@@ -2,12 +2,15 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import LogroIcono from "./LogroIcono";
 
 export interface Logro {
   id: string;
   titulo: string;
   descripcion: string | null;
   icono_url: string | null;
+  tipo_condicion: string;
+  nivel: string;
 }
 
 interface LogroCelebracionProps {
@@ -45,9 +48,7 @@ export default function LogroCelebracion({ logro, onClose }: LogroCelebracionPro
               className="w-24 h-24 object-contain"
             />
           ) : (
-            <span className="text-7xl" aria-hidden>
-              🏆
-            </span>
+            <LogroIcono tipo_condicion={logro.tipo_condicion ?? ""} nivel={logro.nivel ?? "tema"} size={96} />
           )}
         </div>
 

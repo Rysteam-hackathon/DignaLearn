@@ -29,6 +29,15 @@ interface ReflexionProps {
   config: ReflexionConfig;
 }
 
+interface LogroApiResponse {
+  id: string;
+  titulo: string;
+  descripcion: string | null;
+  icono_url: string | null;
+  tipo_condicion: string;
+  nivel_nombre: string | null;
+}
+
 export default function Reflexion({ temaId, config }: ReflexionProps) {
   const { pregunta, opciones, respuesta_correcta, dato_extra } = config;
 
@@ -61,7 +70,15 @@ export default function Reflexion({ temaId, config }: ReflexionProps) {
         }
       );
       if (!res.ok) return;
-      const logros: Logro[] = await res.json();
+      const data: LogroApiResponse[] = await res.json();
+      const logros: Logro[] = data.map((item) => ({
+        id: item.id,
+        titulo: item.titulo,
+        descripcion: item.descripcion,
+        icono_url: item.icono_url,
+        tipo_condicion: item.tipo_condicion,
+        nivel: item.nivel_nombre ?? "tema",
+      }));
       if (logros.length > 0) {
         setLogrosQueue(logros);
       }

@@ -12,7 +12,10 @@
       "Bash(awk '{print $1}')",
       "Bash(code \"C:\\\\Users\\\\DELL\\\\Desktop\\\\DignaLearn\\\\db\\\\seed_actividades_completo.sql\")",
       "Bash(npx next *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(git remote *)"
     ]
   }
 }
