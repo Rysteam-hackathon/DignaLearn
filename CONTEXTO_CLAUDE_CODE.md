@@ -89,8 +89,9 @@ Todos los archivos de seed y las 3 migraciones (`001`, `002`, `003`) están apli
 
 ## 4. Estado al cierre de sesión — pendientes para la próxima sesión
 
-- Dark/light mode toggle (en `/extras` o layout del estudiante, usando clase CSS en `html` + `localStorage`)
-- Pulido visual completo con branding de Sharis (fuentes Sitka Small Semibold + Nunito en `tailwind.config.ts`, revisar consistencia de colores en todas las páginas)
-- Integración Modo Historia de Sidar (rutas en `frontend/app/(student)/historia/`, componentes en `frontend/components/story/`)
-- README técnico completo
-- Hacer commit de `seed_actividades_completo.sql` (está sin commitear — `git status` lo muestra como untracked, aunque ya está ejecutado y verificado en Supabase)
+- **Dark/light mode toggle**: COMPLETADO — `darkMode: "class"` en `tailwind.config.ts`, toggle en `/extras` (`localStorage.dignalearn_tema`), aplicado en `(student)/layout.tsx`.
+- **Íconos SVG por tipo de logro**: COMPLETADO — `frontend/components/LogroIcono.tsx`, usado en `/logros` y en `LogroCelebracion.tsx`; backend expone `tipo_condicion`/`nivel_nombre` en `LogroDesbloqueado`.
+- **Pulido visual con branding de Sharis**: EN PROCESO — faltan tipografías (Sitka Small Semibold + Nunito en `tailwind.config.ts`), clases `dark:` en todas las páginas (hoy solo `/extras` las tiene), y branding en `/login`.
+- **Integración Modo Historia de Sidar**: PENDIENTE — rutas en `frontend/app/(student)/historia/`, componentes en `frontend/components/story/`. Cuando llegue, verificar compatibilidad con Next.js sin romper lo existente.
+- **Mascota guía**: PENDIENTE — implementar como componente fijo en esquina inferior derecha, con burbuja de diálogo para pistas por tema, animación de 2-3 frames CSS, y chat básico pregrabado.
+- **README técnico**: PENDIENTE.
