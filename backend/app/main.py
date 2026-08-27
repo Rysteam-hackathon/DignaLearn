@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import docente, gamification
+from app.routers import auth, docente, gamification
 
 load_dotenv()
 
@@ -18,6 +18,7 @@ app.add_middleware(
 
 app.include_router(gamification.router)
 app.include_router(docente.router)
+app.include_router(auth.router)
 
 
 @app.get("/")
