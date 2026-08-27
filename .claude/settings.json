@@ -18,7 +18,11 @@
       "Bash(git remote *)",
       "Bash(PYTHONIOENCODING=utf-8 venv/Scripts/python -c ' *)",
       "Bash(findstr /v Warning)",
-      "Bash(findstr /v Deprecation)"
+      "Bash(findstr /v Deprecation)",
+      "Bash(venv/Scripts/activate)",
+      "Bash(uvicorn app.main:app --reload)",
+      "Bash(npm run *)",
+      "Bash(venv/Scripts/uvicorn.exe app.main:app --reload)"
     ]
   }
 }
