@@ -33,6 +33,15 @@ function calcularPorcentaje(temas: number): number {
   return Math.round((temas / TEMAS_POR_GRADO) * 100);
 }
 
+async function obtenerTokenDocente(): Promise<string> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) {
+    throw new Error("Sesión no encontrada");
+  }
+  return token;
+}
+
 export default function DocentePage() {
   const router = useRouter();
   const [docente, setDocente] = useState<DocenteSession | null>(null);
@@ -69,7 +78,10 @@ export default function DocentePage() {
     if (!docente) return;
     setCargando(true);
     try {
-      const res = await fetch(`${BACKEND_URL}/api/docente/estudiantes/${docente.usuario_id}`);
+      const token = await obtenerTokenDocente();
+      const res = await fetch(`${BACKEND_URL}/api/docente/estudiantes/${docente.usuario_id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (!res.ok) throw new Error();
       const data: EstudianteResumen[] = await res.json();
       setEstudiantes(data);
@@ -91,9 +103,13 @@ export default function DocentePage() {
     if (!docente) return;
     setCreando(true);
     try {
+      const token = await obtenerTokenDocente();
       const res = await fetch(`${BACKEND_URL}/api/docente/estudiantes`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
           docente_usuario_id: docente.usuario_id,
           nombre_display: nuevoNombre.trim(),

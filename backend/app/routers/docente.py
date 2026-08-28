@@ -3,7 +3,7 @@ import secrets
 import string
 
 import bcrypt
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel
 
 from app.supabase_client import get_supabase_client
@@ -16,6 +16,23 @@ CODIGO_CHARS = string.ascii_uppercase + string.digits
 def _generar_codigo() -> str:
     sufijo = "".join(secrets.choice(CODIGO_CHARS) for _ in range(4))
     return f"DL-{sufijo}"
+
+
+def _verificar_docente_autenticado(authorization: str | None, docente_usuario_id: str) -> None:
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Falta el token de autenticación.")
+
+    token = authorization.removeprefix("Bearer ").strip()
+    supabase = get_supabase_client()
+
+    try:
+        respuesta = supabase.auth.get_user(token)
+    except Exception:
+        raise HTTPException(status_code=401, detail="Token inválido o expirado.")
+
+    usuario = respuesta.user if respuesta else None
+    if not usuario or usuario.id != docente_usuario_id:
+        raise HTTPException(status_code=401, detail="El token no corresponde a este docente.")
 
 
 def _obtener_perfil_docente(supabase, usuario_id: str) -> dict:
@@ -67,7 +84,12 @@ class EstudianteResumen(BaseModel):
 
 
 @router.get("/estudiantes/{docente_usuario_id}", response_model=list[EstudianteResumen])
-def listar_estudiantes(docente_usuario_id: str) -> list[EstudianteResumen]:
+def listar_estudiantes(
+    docente_usuario_id: str,
+    authorization: str | None = Header(default=None),
+) -> list[EstudianteResumen]:
+    _verificar_docente_autenticado(authorization, docente_usuario_id)
+
     supabase = get_supabase_client()
     perfil_docente = _obtener_perfil_docente(supabase, docente_usuario_id)
 
@@ -135,7 +157,12 @@ def listar_estudiantes(docente_usuario_id: str) -> list[EstudianteResumen]:
 
 
 @router.post("/estudiantes", status_code=201)
-def crear_estudiante(body: CrearEstudianteRequest) -> dict:
+def crear_estudiante(
+    body: CrearEstudianteRequest,
+    authorization: str | None = Header(default=None),
+) -> dict:
+    _verificar_docente_autenticado(authorization, body.docente_usuario_id)
+
     supabase = get_supabase_client()
     perfil_docente = _obtener_perfil_docente(supabase, body.docente_usuario_id)
     rol_estudiante_id = _obtener_rol_id(supabase, "student")
@@ -202,7 +229,12 @@ def crear_estudiante(body: CrearEstudianteRequest) -> dict:
 
 
 @router.post("/resetear-pin")
-def resetear_pin(body: ResetearPinRequest) -> dict:
+def resetear_pin(
+    body: ResetearPinRequest,
+    authorization: str | None = Header(default=None),
+) -> dict:
+    _verificar_docente_autenticado(authorization, body.docente_usuario_id)
+
     supabase = get_supabase_client()
     perfil_docente = _obtener_perfil_docente(supabase, body.docente_usuario_id)
 
