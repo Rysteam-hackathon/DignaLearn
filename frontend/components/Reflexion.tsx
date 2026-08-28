@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, type CSSProperties } from "react";
 import { getEstudianteLocal } from "@/lib/auth";
+import { apiFetch } from "@/lib/api";
 import {
   marcarElementoCompletado,
   registrarActividadDiaria,
@@ -9,8 +10,6 @@ import {
   type ProgresoTema,
 } from "@/lib/progress";
 import LogroCelebracion, { type Logro } from "@/components/LogroCelebracion";
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:8000";
 
 interface ReflexionOption {
   id: string;
@@ -84,11 +83,10 @@ export default function Reflexion({ temaId, config }: ReflexionProps) {
 
   async function evaluarLogros(estudianteId: string) {
     try {
-      const res = await fetch(
-        `${BACKEND_URL}/api/gamification/evaluar/${estudianteId}`,
+      const res = await apiFetch(
+        `/api/gamification/evaluar/${estudianteId}`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ tema_id: temaId }),
         }
       );

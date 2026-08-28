@@ -1,20 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { getEstudianteLocal } from "@/lib/auth";
 import {
   marcarElementoCompletado,
   obtenerProgresoPorTema,
   PROGRESO_ACTUALIZADO_EVENT,
   type ProgresoTema,
 } from "@/lib/progress";
-
-interface EstudianteLocal {
-  id: string;
-  usuario_id: string;
-  grado_id: number;
-  codigo_acceso: string;
-  nombre_display: string | null;
-}
 
 interface ProgresoLecturaProps {
   temaId: string;
@@ -35,14 +28,9 @@ export default function ProgresoLectura({ temaId }: ProgresoLecturaProps) {
   }, []);
 
   useEffect(() => {
-    const raw = localStorage.getItem("dignalearn_user");
-    if (!raw) return;
-
-    try {
-      const estudiante = JSON.parse(raw) as EstudianteLocal;
+    const estudiante = getEstudianteLocal();
+    if (estudiante) {
       setEstudianteId(estudiante.id);
-    } catch {
-      // dignalearn_user corrupto o de otro flujo (docente): se ignora
     }
   }, []);
 
