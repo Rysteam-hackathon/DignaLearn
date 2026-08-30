@@ -10,6 +10,9 @@ __pycache__/
 .env  
 .env.local
 
-# Sistema operativo  
-.DS_Store  
+# Sistema operativo
+.DS_Store
 Thumbs.db
+
+# Configuración local de Claude Code
+.claude/
