@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabase";
 import { getEstudianteLocal } from "@/lib/auth";
 
@@ -22,6 +23,8 @@ export default function UnidadPage({ params }: { params: { unitId: string } }) {
   const [completados, setCompletados] = useState<Set<string>>(new Set());
   const [cargando, setCargando] = useState(true);
   const [esOscuro, setEsOscuro] = useState(false);
+  const [temaShakeId, setTemaShakeId] = useState<string | null>(null);
+  const shakeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const detectar = () => setEsOscuro(document.documentElement.classList.contains("dark"));
@@ -73,10 +76,27 @@ export default function UnidadPage({ params }: { params: { unitId: string } }) {
     cargar();
   }, [params.unitId]);
 
+  useEffect(() => {
+    return () => {
+      if (shakeTimeoutRef.current) clearTimeout(shakeTimeoutRef.current);
+    };
+  }, []);
+
+  function handleTemaBloqueadoClick(temaId: string) {
+    if (shakeTimeoutRef.current) clearTimeout(shakeTimeoutRef.current);
+    setTemaShakeId(temaId);
+    shakeTimeoutRef.current = setTimeout(() => setTemaShakeId(null), 1500);
+  }
+
   const colorTitulo = esOscuro ? "#ffffff" : "#160B24";
   const cardBg = esOscuro ? "rgba(255,255,255,0.05)" : "rgba(22,11,36,0.03)";
   const cardBorder = esOscuro ? "rgba(255,255,255,0.08)" : "rgba(22,11,36,0.1)";
   const skeletonBg = esOscuro ? "rgba(255,255,255,0.06)" : "rgba(22,11,36,0.06)";
+
+  const colorTituloBloqueado = esOscuro ? "rgba(255,255,255,0.35)" : "rgba(22,11,36,0.35)";
+  const cardBgBloqueado = esOscuro ? "rgba(255,255,255,0.02)" : "rgba(22,11,36,0.02)";
+  const cardBorderBloqueado = esOscuro ? "rgba(255,255,255,0.05)" : "rgba(22,11,36,0.06)";
+  const lockBadgeBg = esOscuro ? "rgba(255,255,255,0.06)" : "rgba(22,11,36,0.06)";
 
   return (
     <main className="min-h-screen p-6 max-w-2xl mx-auto">
@@ -121,6 +141,68 @@ export default function UnidadPage({ params }: { params: { unitId: string } }) {
         <div className="flex flex-col gap-4">
           {temas.map((tema, idx) => {
             const completado = completados.has(tema.id);
+            const bloqueado = idx > 0 && !completados.has(temas[idx - 1].id);
+
+            if (bloqueado) {
+              return (
+                <div key={tema.id} className="relative">
+                  <motion.div
+                    role="button"
+                    aria-disabled="true"
+                    tabIndex={0}
+                    onClick={() => handleTemaBloqueadoClick(tema.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") handleTemaBloqueadoClick(tema.id);
+                    }}
+                    animate={temaShakeId === tema.id ? { x: [0, -8, 8, -8, 8, -4, 4, 0] } : { x: 0 }}
+                    transition={{ duration: 0.45, ease: "easeInOut" }}
+                    className="tema-card block rounded-2xl p-5 cursor-not-allowed select-none"
+                    style={{
+                      backgroundColor: cardBgBloqueado,
+                      border: `1px solid ${cardBorderBloqueado}`,
+                      animation: `entrar ${400 + idx * 100}ms ease forwards`,
+                      opacity: 0,
+                    }}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div
+                        className="w-11 h-11 rounded-xl flex items-center justify-center text-lg shrink-0"
+                        style={{ backgroundColor: lockBadgeBg, color: colorTituloBloqueado }}
+                      >
+                        🔒
+                      </div>
+                      <div className="flex-1">
+                        <h2 className="text-base font-bold" style={{ color: colorTituloBloqueado }}>
+                          {tema.titulo}
+                        </h2>
+                        <span
+                          className="inline-block text-xs font-semibold mt-1 px-2 py-0.5 rounded-full"
+                          style={{ backgroundColor: lockBadgeBg, color: colorTituloBloqueado }}
+                        >
+                          🔒 Bloqueado
+                        </span>
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  <AnimatePresence>
+                    {temaShakeId === tema.id && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -6 }}
+                        transition={{ duration: 0.2 }}
+                        className="absolute left-1/2 -translate-x-1/2 top-full mt-2 text-xs font-medium px-3 py-1.5 rounded-lg shadow-lg z-10 whitespace-nowrap"
+                        style={{ backgroundColor: "#160B24", color: "#ffffff" }}
+                      >
+                        Completá el tema anterior primero
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            }
+
             return (
               <Link
                 key={tema.id}

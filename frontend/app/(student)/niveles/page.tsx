@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabase";
 import { getEstudianteLocal } from "@/lib/auth";
 
@@ -21,8 +22,11 @@ const COLORES_UNIDAD = [
 
 export default function NivelesPage() {
   const [unidades, setUnidades] = useState<Unidad[]>([]);
+  const [unidadesCompletas, setUnidadesCompletas] = useState<Set<string>>(new Set());
   const [cargando, setCargando] = useState(true);
   const [gradoNombre, setGradoNombre] = useState<string>("");
+  const [unidadShakeId, setUnidadShakeId] = useState<string | null>(null);
+  const shakeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     async function cargarUnidades() {
@@ -44,7 +48,44 @@ export default function NivelesPage() {
           .eq("grado_id", estudiante.grado_id)
           .order("numero_unidad", { ascending: true });
 
-        setUnidades(data ?? []);
+        const unidadesData = data ?? [];
+        setUnidades(unidadesData);
+
+        if (unidadesData.length) {
+          const unidadIds = unidadesData.map((u) => u.id);
+          const { data: temasData } = await supabase
+            .from("temas")
+            .select("id, unidad_id")
+            .in("unidad_id", unidadIds);
+
+          const temas = temasData ?? [];
+          const temaIds = temas.map((t) => t.id);
+
+          let temasCompletados = new Set<string>();
+          if (temaIds.length) {
+            const { data: progresos } = await supabase
+              .from("progreso_estudiante")
+              .select("tema_id, lectura_completada, actividad_completada, reflexion_respondida")
+              .eq("estudiante_id", estudiante.id)
+              .in("tema_id", temaIds);
+
+            temasCompletados = new Set(
+              (progresos ?? [])
+                .filter((p) => p.lectura_completada && p.actividad_completada && p.reflexion_respondida)
+                .map((p) => p.tema_id)
+            );
+          }
+
+          const completas = new Set<string>();
+          for (const unidadId of unidadIds) {
+            const temasDeUnidad = temas.filter((t) => t.unidad_id === unidadId);
+            const todosCompletados =
+              temasDeUnidad.length === 0 ||
+              temasDeUnidad.every((t) => temasCompletados.has(t.id));
+            if (todosCompletados) completas.add(unidadId);
+          }
+          setUnidadesCompletas(completas);
+        }
       } catch {
         // si falla la red, no dejamos la página colgada en skeleton infinito
         setUnidades([]);
@@ -54,6 +95,18 @@ export default function NivelesPage() {
     }
     cargarUnidades();
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (shakeTimeoutRef.current) clearTimeout(shakeTimeoutRef.current);
+    };
+  }, []);
+
+  function handleUnidadBloqueadaClick(unidadId: string) {
+    if (shakeTimeoutRef.current) clearTimeout(shakeTimeoutRef.current);
+    setUnidadShakeId(unidadId);
+    shakeTimeoutRef.current = setTimeout(() => setUnidadShakeId(null), 1500);
+  }
 
   return (
     <div className="min-h-screen p-6 max-w-3xl mx-auto">
@@ -96,6 +149,65 @@ export default function NivelesPage() {
           {unidades.map((unidad, idx) => {
             const color = COLORES_UNIDAD[idx % COLORES_UNIDAD.length];
             const icono = ICONOS_UNIDAD[idx % ICONOS_UNIDAD.length];
+            const bloqueada = idx > 0 && !unidadesCompletas.has(unidades[idx - 1].id);
+
+            if (bloqueada) {
+              return (
+                <div key={unidad.id} className="relative">
+                  <motion.div
+                    role="button"
+                    aria-disabled="true"
+                    tabIndex={0}
+                    onClick={() => handleUnidadBloqueadaClick(unidad.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") handleUnidadBloqueadaClick(unidad.id);
+                    }}
+                    animate={unidadShakeId === unidad.id ? { x: [0, -8, 8, -8, 8, -4, 4, 0] } : { x: 0 }}
+                    transition={{ duration: 0.45, ease: "easeInOut" }}
+                    className="unidad-card block rounded-2xl p-6 cursor-not-allowed select-none"
+                    style={{
+                      backgroundColor: "rgba(22,11,36,0.03)",
+                      border: "1.5px solid rgba(22,11,36,0.06)",
+                      animation: `entrar ${400 + idx * 100}ms ease forwards`,
+                      opacity: 0,
+                    }}
+                  >
+                    <div className="flex items-center gap-5">
+                      <div
+                        className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shrink-0"
+                        style={{ backgroundColor: "rgba(22,11,36,0.08)" }}
+                      >
+                        🔒
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: "var(--foreground)", opacity: 0.35 }}>
+                          Unidad {unidad.numero_unidad}
+                        </p>
+                        <h2 className="text-lg font-bold" style={{ color: "var(--foreground)", opacity: 0.35 }}>
+                          {unidad.titulo}
+                        </h2>
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  <AnimatePresence>
+                    {unidadShakeId === unidad.id && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -6 }}
+                        transition={{ duration: 0.2 }}
+                        className="absolute left-1/2 -translate-x-1/2 top-full mt-2 text-xs font-medium px-3 py-1.5 rounded-lg shadow-lg z-10 whitespace-nowrap"
+                        style={{ backgroundColor: "#160B24", color: "#ffffff" }}
+                      >
+                        Completá la unidad anterior primero
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            }
+
             return (
               <Link
                 key={unidad.id}
