@@ -29,22 +29,28 @@ export default function NivelesPage() {
       const estudiante = getEstudianteLocal();
       if (!estudiante) { setCargando(false); return; }
 
-      const { data: grado } = await supabase
-        .from("grados")
-        .select("numero_grado, nivel")
-        .eq("id", estudiante.grado_id)
-        .maybeSingle();
+      try {
+        const { data: grado } = await supabase
+          .from("grados")
+          .select("numero_grado, nivel")
+          .eq("id", estudiante.grado_id)
+          .maybeSingle();
 
-      if (grado) setGradoNombre(`${grado.numero_grado}mo grado — ${grado.nivel}`);
+        if (grado) setGradoNombre(`${grado.numero_grado}mo grado — ${grado.nivel}`);
 
-      const { data } = await supabase
-        .from("unidades")
-        .select("id, titulo, numero_unidad")
-        .eq("grado_id", estudiante.grado_id)
-        .order("numero_unidad", { ascending: true });
+        const { data } = await supabase
+          .from("unidades")
+          .select("id, titulo, numero_unidad")
+          .eq("grado_id", estudiante.grado_id)
+          .order("numero_unidad", { ascending: true });
 
-      setUnidades(data ?? []);
-      setCargando(false);
+        setUnidades(data ?? []);
+      } catch {
+        // si falla la red, no dejamos la página colgada en skeleton infinito
+        setUnidades([]);
+      } finally {
+        setCargando(false);
+      }
     }
     cargarUnidades();
   }, []);
@@ -71,7 +77,7 @@ export default function NivelesPage() {
         <p className="text-sm font-semibold uppercase tracking-widest mb-1" style={{ color: "#F0A8B6" }}>
           {gradoNombre || "Cargando..."}
         </p>
-        <h1 className="text-4xl font-bold" style={{ color: "#160B24" }}>
+        <h1 className="text-4xl font-bold" style={{ color: "var(--foreground)" }}>
           Tus unidades
         </h1>
         <p className="text-sm mt-2 text-gray-400">
@@ -113,7 +119,7 @@ export default function NivelesPage() {
                     <p className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: color.accent }}>
                       Unidad {unidad.numero_unidad}
                     </p>
-                    <h2 className="text-lg font-bold" style={{ color: "#160B24" }}>
+                    <h2 className="text-lg font-bold" style={{ color: "var(--foreground)" }}>
                       {unidad.titulo}
                     </h2>
                   </div>

@@ -38,3 +38,37 @@ h1, h2, h3, h4, h5, h6 {
   .text-brand-rosa { color: #F0A8B6; }
   .text-brand-celeste { color: #A4CDD5; }
 }
+
+@keyframes flotar-fondo {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(var(--flota-dist, -20px)); }
+}
+
+.fondo-flotante {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.figura-flotante,
+.figura-flotante--alt {
+  position: absolute;
+  border-radius: 9999px;
+  background-color: #160B24;
+  opacity: var(--op-light, 0.05);
+  animation-name: flotar-fondo;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+.dark .figura-flotante {
+  background-color: #F0A8B6;
+  opacity: var(--op-dark, 0.06);
+}
+
+.dark .figura-flotante--alt {
+  background-color: #A4CDD5;
+  opacity: var(--op-dark, 0.06);
+}

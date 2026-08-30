@@ -13,6 +13,31 @@ const NAV_ITEMS = [
   { href: "/extras",    label: "Extras",   emoji: "⭐" },
 ];
 
+interface FiguraFondo {
+  top: string;
+  left: string;
+  size: number;
+  duration: number;
+  delay: number;
+  distancia: number;
+  opLight: number;
+  opDark: number;
+  variante?: "alt";
+}
+
+const FIGURAS_FONDO: FiguraFondo[] = [
+  { top: "6%",  left: "8%",  size: 90,  duration: 7.5,  delay: 0,    distancia: -20, opLight: 0.05, opDark: 0.06 },
+  { top: "18%", left: "82%", size: 130, duration: 9,    delay: 1.2,  distancia: -26, opLight: 0.04, opDark: 0.07, variante: "alt" },
+  { top: "38%", left: "22%", size: 60,  duration: 6,    delay: 2.4,  distancia: -16, opLight: 0.06, opDark: 0.08 },
+  { top: "48%", left: "70%", size: 200, duration: 10.5, delay: 0.6,  distancia: -30, opLight: 0.03, opDark: 0.05, variante: "alt" },
+  { top: "62%", left: "5%",  size: 110, duration: 8.2,  delay: 3.1,  distancia: -22, opLight: 0.05, opDark: 0.06 },
+  { top: "72%", left: "45%", size: 45,  duration: 5.5,  delay: 1.8,  distancia: -14, opLight: 0.06, opDark: 0.08, variante: "alt" },
+  { top: "84%", left: "88%", size: 150, duration: 9.8,  delay: 0,    distancia: -24, opLight: 0.04, opDark: 0.06 },
+  { top: "10%", left: "48%", size: 70,  duration: 6.8,  delay: 2.9,  distancia: -18, opLight: 0.05, opDark: 0.07, variante: "alt" },
+  { top: "90%", left: "18%", size: 95,  duration: 7.2,  delay: 1.4,  distancia: -20, opLight: 0.04, opDark: 0.06 },
+  { top: "55%", left: "92%", size: 55,  duration: 5.9,  delay: 3.6,  distancia: -15, opLight: 0.06, opDark: 0.08, variante: "alt" },
+];
+
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -32,8 +57,29 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-[var(--background)] transition-colors">
+      {/* Fondo animado — figuras flotantes, no interfiere con clicks */}
+      <div className="fondo-flotante" aria-hidden="true">
+        {FIGURAS_FONDO.map((figura, idx) => (
+          <span
+            key={idx}
+            className={`figura-flotante${figura.variante === "alt" ? " figura-flotante--alt" : ""}`}
+            style={{
+              top: figura.top,
+              left: figura.left,
+              width: figura.size,
+              height: figura.size,
+              animationDuration: `${figura.duration}s`,
+              animationDelay: `${figura.delay}s`,
+              ["--flota-dist" as string]: `${figura.distancia}px`,
+              ["--op-light" as string]: figura.opLight,
+              ["--op-dark" as string]: figura.opDark,
+            } as React.CSSProperties}
+          />
+        ))}
+      </div>
+
       {/* Sidebar — solo desktop */}
-      <aside className="hidden md:flex flex-col w-56 min-h-screen border-r border-[#F0A8B6]/20 bg-[#160B24] px-4 py-6 shrink-0">
+      <aside className="relative z-10 hidden md:flex flex-col w-56 min-h-screen border-r border-[#F0A8B6]/20 bg-[#160B24] px-4 py-6 shrink-0">
         <p className="text-lg font-bold mb-8 px-2 text-white">
           Digna<span style={{ color: "#A4CDD5" }}>Learn</span>
         </p>
@@ -62,7 +108,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
       </aside>
 
       {/* Contenido principal */}
-      <main className="flex-1 pb-20 md:pb-0 bg-[var(--background)] transition-colors">
+      <main className="relative z-10 flex-1 pb-20 md:pb-0">
         {children}
       </main>
 

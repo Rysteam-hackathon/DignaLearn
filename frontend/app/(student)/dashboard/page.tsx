@@ -158,7 +158,7 @@ export default function DashboardPage() {
             🔥 {datos.racha} {datos.racha === 1 ? "día" : "días"} seguidos
           </div>
         ) : null}
-        <h1 className="text-3xl font-bold" style={{ color: "#160B24" }}>
+        <h1 className="text-3xl font-bold" style={{ color: "var(--foreground)" }}>
           {saludo(estudiante?.nombre_display ?? null)}
         </h1>
         <p className="text-sm text-gray-400 mt-1">¿Qué aprendemos hoy?</p>
@@ -211,7 +211,7 @@ export default function DashboardPage() {
               {datos?.ultimoLogro ? (
                 <>
                   <p className="text-3xl mb-2" aria-hidden>🏆</p>
-                  <p className="font-bold text-sm" style={{ color: "#160B24" }}>{datos.ultimoLogro.titulo}</p>
+                  <p className="font-bold text-sm" style={{ color: "var(--foreground)" }}>{datos.ultimoLogro.titulo}</p>
                 </>
               ) : (
                 <>
@@ -224,7 +224,7 @@ export default function DashboardPage() {
             {/* Unidades */}
             <div className="card-hover rounded-2xl p-5" style={{ border: "1.5px solid rgba(164,205,213,0.2)", backgroundColor: "rgba(164,205,213,0.04)" }}>
               <p className="text-xs font-bold uppercase tracking-wider mb-3 text-gray-400">Unidades</p>
-              <p className="text-4xl font-bold mb-1" style={{ color: "#160B24" }}>
+              <p className="text-4xl font-bold mb-1" style={{ color: "var(--foreground)" }}>
                 {datos?.unidadesCompletadas ?? 0}
               </p>
               <p className="text-xs text-gray-400 mb-3">de 4 completadas</p>
@@ -251,7 +251,7 @@ export default function DashboardPage() {
                 style={{ border: "1.5px solid rgba(22,11,36,0.08)", backgroundColor: "rgba(22,11,36,0.03)" }}
               >
                 <p className="text-2xl mb-1" aria-hidden>{item.emoji}</p>
-                <p className="text-xs font-semibold" style={{ color: "#160B24" }}>{item.label}</p>
+                <p className="text-xs font-semibold" style={{ color: "var(--foreground)" }}>{item.label}</p>
               </Link>
             ))}
           </div>
