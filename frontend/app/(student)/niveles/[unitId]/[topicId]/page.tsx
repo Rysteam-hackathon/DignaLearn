@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import WordSearch from "@/components/games/WordSearch";
 import Quiz from "@/components/games/Quiz";
@@ -131,21 +130,6 @@ export default function TemaPage({
           opacity: 0;
         }
       `}</style>
-
-      {/* Breadcrumb */}
-      <nav className="flex items-center gap-1.5 text-sm mb-4 flex-wrap" style={{ color: colorSecundario }}>
-        <Link href="/niveles" className="hover:underline" style={{ color: "#A4CDD5" }}>
-          Niveles
-        </Link>
-        <span aria-hidden>/</span>
-        <Link href={`/niveles/${params.unitId}`} className="hover:underline" style={{ color: "#A4CDD5" }}>
-          Temas
-        </Link>
-        <span aria-hidden>/</span>
-        <span className="truncate max-w-[160px]" style={{ color: colorSecundario }}>
-          {tema?.titulo ?? "..."}
-        </span>
-      </nav>
 
       {cargando ? (
         <p className="text-sm" style={{ color: colorSecundario }}>Cargando tema...</p>

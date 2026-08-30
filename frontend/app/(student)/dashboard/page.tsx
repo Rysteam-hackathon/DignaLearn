@@ -32,6 +32,111 @@ function saludo(nombre: string | null): string {
   return nombre ? `${momento}, ${nombre.split(" ")[0]}` : momento;
 }
 
+type IconoTematico = "venus" | "libro" | "estrella" | "balanza" | "lapiz";
+
+interface FiguraTematicaConfig {
+  icono: IconoTematico;
+  top?: string;
+  left?: string;
+  right?: string;
+  size: number;
+  duration: number;
+  delay: number;
+  distancia: number;
+  opLight: number;
+  opDark: number;
+}
+
+const FIGURAS_TEMATICAS: FiguraTematicaConfig[] = [
+  { icono: "venus",    top: "8%",  left: "6%",   size: 60, duration: 7.2, delay: 0,   distancia: -18, opLight: 0.05, opDark: 0.06 },
+  { icono: "libro",    top: "15%", right: "10%", size: 80, duration: 8.6, delay: 1.4, distancia: -22, opLight: 0.04, opDark: 0.07 },
+  { icono: "estrella", top: "34%", left: "18%",  size: 42, duration: 6.1, delay: 2.2, distancia: -14, opLight: 0.06, opDark: 0.08 },
+  { icono: "balanza",  top: "46%", right: "22%", size: 70, duration: 9.4, delay: 0.6, distancia: -24, opLight: 0.05, opDark: 0.06 },
+  { icono: "lapiz",    top: "60%", left: "8%",   size: 55, duration: 7.8, delay: 3.0, distancia: -18, opLight: 0.04, opDark: 0.07 },
+  { icono: "estrella", top: "70%", right: "12%", size: 48, duration: 6.6, delay: 1.9, distancia: -16, opLight: 0.06, opDark: 0.08 },
+  { icono: "venus",    top: "82%", left: "30%",  size: 65, duration: 8.1, delay: 0.9, distancia: -20, opLight: 0.05, opDark: 0.06 },
+  { icono: "libro",    top: "90%", right: "34%", size: 90, duration: 9.9, delay: 2.6, distancia: -26, opLight: 0.04, opDark: 0.07 },
+];
+
+function IconoSvg({ tipo }: { tipo: IconoTematico }) {
+  switch (tipo) {
+    case "venus":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="10" cy="12" r="6" />
+          <line x1="10" y1="18" x2="10" y2="23" />
+          <line x1="7" y1="20.5" x2="13" y2="20.5" />
+          <line x1="14.5" y1="7.5" x2="20" y2="2" />
+          <polyline points="15,2 20,2 20,7" />
+        </svg>
+      );
+    case "libro":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+          <rect x="2" y="5" width="9" height="14" rx="1" />
+          <rect x="13" y="5" width="9" height="14" rx="1" />
+          <line x1="4.5" y1="9" x2="8.5" y2="9" />
+          <line x1="4.5" y1="12" x2="8.5" y2="12" />
+          <line x1="15.5" y1="9" x2="19.5" y2="9" />
+          <line x1="15.5" y1="12" x2="19.5" y2="12" />
+        </svg>
+      );
+    case "estrella":
+      return (
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2 L14.9 9.1 L22.5 9.5 L16.5 14.3 L18.5 21.5 L12 17.3 L5.5 21.5 L7.5 14.3 L1.5 9.5 L9.1 9.1 Z" />
+        </svg>
+      );
+    case "balanza":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="12" y1="4" x2="12" y2="16" />
+          <line x1="5" y1="7" x2="19" y2="7" />
+          <path d="M12 16 L7 21 H17 Z" />
+        </svg>
+      );
+    case "lapiz":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round">
+          <path d="M5 19 L17 7 L20 10 L8 22 Z" />
+          <path d="M5 19 L3 21 L6 22 Z" />
+        </svg>
+      );
+  }
+}
+
+function FondoTematico() {
+  return (
+    <div
+      className="fondo-tematico"
+      style={{ position: "fixed", inset: 0, zIndex: -1, overflow: "hidden", pointerEvents: "none" }}
+      aria-hidden="true"
+    >
+      {FIGURAS_TEMATICAS.map((fig, idx) => (
+        <div
+          key={idx}
+          className="figura-tematica"
+          style={{
+            position: "absolute",
+            top: fig.top,
+            left: fig.left,
+            right: fig.right,
+            width: fig.size,
+            height: fig.size,
+            animationDuration: `${fig.duration}s`,
+            animationDelay: `${fig.delay}s`,
+            ["--flota-dist" as string]: `${fig.distancia}px`,
+            ["--op-light" as string]: fig.opLight,
+            ["--op-dark" as string]: fig.opDark,
+          } as React.CSSProperties}
+        >
+          <IconoSvg tipo={fig.icono} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const [estudiante, setEstudiante] = useState<EstudianteProfile | null>(null);
   const [datos, setDatos] = useState<DashboardData | null>(null);
@@ -148,7 +253,25 @@ export default function DashboardPage() {
           transform: translateY(-1px);
           opacity: 0.9;
         }
+        .figura-tematica {
+          color: #160B24;
+          opacity: var(--op-light, 0.05);
+          animation-name: flotar-fondo;
+          animation-timing-function: ease-in-out;
+          animation-iteration-count: infinite;
+        }
+        .figura-tematica svg {
+          width: 100%;
+          height: 100%;
+          display: block;
+        }
+        .dark .figura-tematica {
+          color: #F0A8B6;
+          opacity: var(--op-dark, 0.06);
+        }
       `}</style>
+
+      <FondoTematico />
 
       {/* Saludo */}
       <div style={{ animation: "entrar 500ms ease forwards" }} className="mb-8">
