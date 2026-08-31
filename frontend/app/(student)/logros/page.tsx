@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { supabase } from "@/lib/supabase";
 import { getEstudianteLocal } from "@/lib/auth";
 import LogroIcono from "@/components/LogroIcono";
@@ -22,6 +23,29 @@ function badgeStyle(nivel: string, esOscuro: boolean): { bg: string; text: strin
   return esOscuro
     ? { bg: "rgba(255,255,255,0.15)", text: "#ffffff", label: "Unidad" }
     : { bg: "rgba(22,11,36,0.1)", text: "#160B24", label: "Unidad" };
+}
+
+const POSICIONES_DESTELLOS = [
+  { top: "-6px", left: "2px" },
+  { top: "8%", right: "-6px" },
+  { bottom: "-6px", left: "34%" },
+  { top: "45%", left: "-8px" },
+];
+
+function DestellosEspeciales() {
+  return (
+    <div className="absolute inset-0 pointer-events-none" aria-hidden>
+      {POSICIONES_DESTELLOS.map((pos, i) => (
+        <motion.span
+          key={i}
+          className="absolute w-1.5 h-1.5 rounded-full"
+          style={{ ...pos, backgroundColor: i % 2 === 0 ? "#F0A8B6" : "#A4CDD5" }}
+          animate={{ opacity: [0, 1, 0], scale: [0.4, 1.3, 0.4] }}
+          transition={{ duration: 1.6, repeat: Infinity, delay: i * 0.3, ease: "easeInOut" }}
+        />
+      ))}
+    </div>
+  );
 }
 
 export default function LogrosPage() {
@@ -98,36 +122,27 @@ export default function LogrosPage() {
   return (
     <div className="p-5 max-w-3xl mx-auto">
       <style>{`
-        @keyframes logros-entrar {
-          from { opacity: 0; transform: translateY(18px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
         @keyframes logros-pulse {
           0%, 100% { transform: scale(1); opacity: 1; }
           50% { transform: scale(1.08); opacity: 0.75; }
-        }
-        .logro-card {
-          animation: logros-entrar 400ms ease forwards;
-          opacity: 0;
-          transition: transform 220ms ease, box-shadow 220ms ease;
-        }
-        .logro-card:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 14px 32px rgba(240, 168, 182, 0.18);
         }
         .logro-emoji-vacio {
           animation: logros-pulse 2.2s ease-in-out infinite;
         }
       `}</style>
 
-      <div style={{ animation: "logros-entrar 400ms ease forwards" }}>
+      <motion.div
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+      >
         <h1 className="text-3xl font-bold mb-1" style={{ color: "var(--foreground)" }}>
           Mis logros
         </h1>
         <p className="text-sm mb-6" style={{ color: colorSecundario }}>
           {logros.length} {logros.length === 1 ? "logro desbloqueado" : "logros desbloqueados"}
         </p>
-      </div>
+      </motion.div>
 
       {cargando ? (
         <p className="text-sm" style={{ color: colorSecundario }}>Cargando logros...</p>
@@ -139,25 +154,30 @@ export default function LogrosPage() {
           </p>
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-3">
           {logros.map((item, idx) => {
             const badge = badgeStyle(item.logro.nivel, esOscuro);
+            const esEspecial = item.logro.nivel === "especial";
             return (
-              <div
+              <motion.div
                 key={item.id}
-                className="logro-card rounded-2xl p-4 flex items-center gap-4"
-                style={{
-                  backgroundColor: cardBg,
-                  border: `1px solid ${cardBorder}`,
-                  animationDelay: `${idx * 70}ms`,
-                }}
+                initial={{ opacity: 0, scale: 0.3 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20, delay: idx * 0.1 }}
+                whileHover={{ scale: 1.05, boxShadow: "0 16px 36px rgba(240,168,182,0.25)" }}
+                className="rounded-2xl p-4 flex items-center gap-4"
+                style={{ backgroundColor: cardBg, border: `1px solid ${cardBorder}` }}
               >
-                <div
-                  className="w-14 h-14 rounded-full flex items-center justify-center shrink-0"
+                <motion.div
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                  className="relative w-14 h-14 rounded-full flex items-center justify-center shrink-0"
                   style={{ backgroundColor: badge.bg }}
                 >
+                  {esEspecial && <DestellosEspeciales />}
                   <LogroIcono tipo_condicion={item.logro.tipo_condicion} nivel={item.logro.nivel} size={44} />
-                </div>
+                </motion.div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                     <p className="text-sm font-semibold" style={{ color: "var(--foreground)" }}>
@@ -179,7 +199,7 @@ export default function LogrosPage() {
                 <p className="text-xs shrink-0" style={{ color: colorSecundario }}>
                   {formatearFecha(item.desbloqueado_en)}
                 </p>
-              </div>
+              </motion.div>
             );
           })}
         </div>
