@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useState, type CSSProperties } from "react";
 import { getEstudianteLocal } from "@/lib/auth";
-import { marcarElementoCompletado, PROGRESO_ACTUALIZADO_EVENT } from "@/lib/progress";
+import { marcarElementoCompletado, mapLogrosDesbloqueados, PROGRESO_ACTUALIZADO_EVENT } from "@/lib/progress";
+import LogroCelebracion, { type Logro } from "@/components/LogroCelebracion";
 
 interface QuizOption {
   id: string;
@@ -49,8 +50,15 @@ export default function Quiz({ config, temaId }: QuizProps) {
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState(false);
+  const [logrosQueue, setLogrosQueue] = useState<Logro[]>([]);
 
   const esCorrecta = confirmed && selectedId === respuesta_correcta;
+
+  const handleLogroCierre = useCallback(() => {
+    setTimeout(() => {
+      setLogrosQueue((prev) => prev.slice(1));
+    }, 500);
+  }, []);
 
   function handleSelect(id: string) {
     if (confirmed) return;
@@ -64,8 +72,11 @@ export default function Quiz({ config, temaId }: QuizProps) {
     const estudiante = getEstudianteLocal();
     if (estudiante) {
       marcarElementoCompletado(estudiante.id, temaId, "actividad")
-        .then(() => {
+        .then((actualizado) => {
           window.dispatchEvent(new Event(PROGRESO_ACTUALIZADO_EVENT));
+          if (actualizado.logros_desbloqueados.length > 0) {
+            setLogrosQueue(mapLogrosDesbloqueados(actualizado.logros_desbloqueados));
+          }
         })
         .catch(() => {
           // no bloqueamos la UI si falla el guardado de progreso
@@ -109,7 +120,16 @@ export default function Quiz({ config, temaId }: QuizProps) {
   }
 
   return (
-    <div className="max-w-xl">
+    <>
+      {logrosQueue.length > 0 && (
+        <LogroCelebracion
+          key={logrosQueue[0].id}
+          logro={logrosQueue[0]}
+          onClose={handleLogroCierre}
+        />
+      )}
+
+      <div className="max-w-xl">
       <style>{`
         @keyframes quiz-entrar {
           from { opacity: 0; transform: translateY(14px); }
@@ -161,6 +181,7 @@ export default function Quiz({ config, temaId }: QuizProps) {
           <p className="text-sm" style={{ color: "#160B24" }}>{retroalimentacion}</p>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }

@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { getEstudianteLocal } from "@/lib/auth";
-import { marcarElementoCompletado, PROGRESO_ACTUALIZADO_EVENT } from "@/lib/progress";
+import { marcarElementoCompletado, mapLogrosDesbloqueados, PROGRESO_ACTUALIZADO_EVENT } from "@/lib/progress";
+import LogroCelebracion, { type Logro } from "@/components/LogroCelebracion";
 
 interface WordSearchConfig {
   palabras: string[];
@@ -130,6 +131,13 @@ export default function WordSearch({ config, temaId }: WordSearchProps) {
   const [foundWords, setFoundWords] = useState<string[]>([]);
   const [foundCells, setFoundCells] = useState<Record<string, Cell[]>>({});
   const [progresoGuardado, setProgresoGuardado] = useState(false);
+  const [logrosQueue, setLogrosQueue] = useState<Logro[]>([]);
+
+  const handleLogroCierre = useCallback(() => {
+    setTimeout(() => {
+      setLogrosQueue((prev) => prev.slice(1));
+    }, 500);
+  }, []);
 
   const foundCellsSet = useMemo(() => {
     const set = new Set<string>();
@@ -194,8 +202,11 @@ export default function WordSearch({ config, temaId }: WordSearchProps) {
 
     setProgresoGuardado(true);
     marcarElementoCompletado(estudiante.id, temaId, "actividad")
-      .then(() => {
+      .then((actualizado) => {
         window.dispatchEvent(new Event(PROGRESO_ACTUALIZADO_EVENT));
+        if (actualizado.logros_desbloqueados.length > 0) {
+          setLogrosQueue(mapLogrosDesbloqueados(actualizado.logros_desbloqueados));
+        }
       })
       .catch(() => {
         // no bloqueamos la UI si falla el guardado de progreso
@@ -203,7 +214,16 @@ export default function WordSearch({ config, temaId }: WordSearchProps) {
   }, [completado, progresoGuardado, temaId]);
 
   return (
-    <div className="flex flex-col md:flex-row gap-8">
+    <>
+      {logrosQueue.length > 0 && (
+        <LogroCelebracion
+          key={logrosQueue[0].id}
+          logro={logrosQueue[0]}
+          onClose={handleLogroCierre}
+        />
+      )}
+
+      <div className="flex flex-col md:flex-row gap-8">
       <div
         className="grid gap-1 select-none w-fit"
         style={{ gridTemplateColumns: `repeat(${tamaño}, minmax(0, 1fr))` }}
@@ -264,6 +284,7 @@ export default function WordSearch({ config, temaId }: WordSearchProps) {
           </p>
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 }

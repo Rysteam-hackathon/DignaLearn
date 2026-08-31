@@ -4,6 +4,7 @@ from typing import Literal
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+from app.services.gamification import LogroDesbloqueado, evaluar_logros
 from app.supabase_client import get_supabase_client
 
 router = APIRouter(prefix="/api/progress", tags=["progress"])
@@ -28,6 +29,7 @@ class ProgresoResponse(BaseModel):
     actividad_completada: bool
     reflexion_respondida: bool
     completado_en: str | None
+    logros_desbloqueados: list[LogroDesbloqueado] = []
 
 
 @router.post("/completar-elemento", response_model=ProgresoResponse)
@@ -84,4 +86,13 @@ def completar_elemento(body: CompletarElementoRequest) -> ProgresoResponse:
     if not resultado.data:
         raise HTTPException(status_code=500, detail="No se pudo actualizar el progreso.")
 
-    return ProgresoResponse(**resultado.data[0])
+    fila = resultado.data[0]
+
+    logros_desbloqueados: list[LogroDesbloqueado] = []
+    if completado:
+        # El tema quedó completo con este elemento, sin importar el orden en que
+        # se completaron lectura/actividad/reflexión: se evalúan los logros acá,
+        # en el único lugar donde se escribe el progreso.
+        logros_desbloqueados = evaluar_logros(body.estudiante_id, body.tema_id)
+
+    return ProgresoResponse(**fila, logros_desbloqueados=logros_desbloqueados)

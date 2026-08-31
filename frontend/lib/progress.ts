@@ -1,15 +1,26 @@
 import { supabase } from "@/lib/supabase";
 import { apiFetch } from "@/lib/api";
+import type { Logro } from "@/components/LogroCelebracion";
 
 export type ElementoProgreso = "lectura" | "actividad" | "reflexion";
 
 export const PROGRESO_ACTUALIZADO_EVENT = "progreso-actualizado";
+
+export interface LogroDesbloqueadoApi {
+  id: string;
+  titulo: string;
+  descripcion: string | null;
+  icono_url: string | null;
+  tipo_condicion: string;
+  nivel_nombre: string | null;
+}
 
 export interface ProgresoTema {
   lectura_completada: boolean;
   actividad_completada: boolean;
   reflexion_respondida: boolean;
   completado_en: string | null;
+  logros_desbloqueados: LogroDesbloqueadoApi[];
 }
 
 const PROGRESO_VACIO: ProgresoTema = {
@@ -17,7 +28,22 @@ const PROGRESO_VACIO: ProgresoTema = {
   actividad_completada: false,
   reflexion_respondida: false,
   completado_en: null,
+  logros_desbloqueados: [],
 };
+
+// Mapea la forma que devuelve el backend (LogroDesbloqueado) a la que espera
+// el componente LogroCelebracion. Centralizado acá para no repetirlo en cada
+// componente que llama a marcarElementoCompletado.
+export function mapLogrosDesbloqueados(items: LogroDesbloqueadoApi[]): Logro[] {
+  return items.map((item) => ({
+    id: item.id,
+    titulo: item.titulo,
+    descripcion: item.descripcion,
+    icono_url: item.icono_url,
+    tipo_condicion: item.tipo_condicion,
+    nivel: item.nivel_nombre ?? "tema",
+  }));
+}
 
 export async function obtenerProgresoPorTema(
   estudianteId: string,
@@ -34,7 +60,7 @@ export async function obtenerProgresoPorTema(
     return PROGRESO_VACIO;
   }
 
-  return data;
+  return { ...data, logros_desbloqueados: [] };
 }
 
 export async function marcarElementoCompletado(

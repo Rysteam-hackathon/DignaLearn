@@ -2,12 +2,11 @@
 
 import { useState, useCallback, useEffect, type CSSProperties } from "react";
 import { getEstudianteLocal } from "@/lib/auth";
-import { apiFetch } from "@/lib/api";
 import {
   marcarElementoCompletado,
+  mapLogrosDesbloqueados,
   registrarActividadDiaria,
   PROGRESO_ACTUALIZADO_EVENT,
-  type ProgresoTema,
 } from "@/lib/progress";
 import LogroCelebracion, { type Logro } from "@/components/LogroCelebracion";
 
@@ -26,15 +25,6 @@ interface ReflexionConfig {
 interface ReflexionProps {
   temaId: string;
   config: ReflexionConfig;
-}
-
-interface LogroApiResponse {
-  id: string;
-  titulo: string;
-  descripcion: string | null;
-  icono_url: string | null;
-  tipo_condicion: string;
-  nivel_nombre: string | null;
 }
 
 function useModoOscuro(): boolean {
@@ -81,58 +71,49 @@ export default function Reflexion({ temaId, config }: ReflexionProps) {
     }, 500);
   }, []);
 
-  async function evaluarLogros(estudianteId: string) {
-    try {
-      const res = await apiFetch(
-        `/api/gamification/evaluar/${estudianteId}`,
-        {
-          method: "POST",
-          body: JSON.stringify({ tema_id: temaId }),
-        }
-      );
-      if (!res.ok) return;
-      const data: LogroApiResponse[] = await res.json();
-      const logros: Logro[] = data.map((item) => ({
-        id: item.id,
-        titulo: item.titulo,
-        descripcion: item.descripcion,
-        icono_url: item.icono_url,
-        tipo_condicion: item.tipo_condicion,
-        nivel: item.nivel_nombre ?? "tema",
-      }));
-      if (logros.length > 0) {
-        setLogrosQueue(logros);
-      }
-    } catch {
-      // no bloqueamos la UI si falla la evaluación de logros
-    }
-  }
-
-  function handleResponder() {
+  async function handleResponder() {
     if (!selectedId) return;
     setRespondida(true);
 
     const estudiante = getEstudianteLocal();
-    if (!estudiante) return;
+    if (!estudiante) {
+      console.error("No se encontró estudiante local; no se puede guardar el progreso de la reflexión.");
+      return;
+    }
 
-    marcarElementoCompletado(estudiante.id, temaId, "reflexion")
-      .then(async (progreso: ProgresoTema) => {
-        window.dispatchEvent(new Event(PROGRESO_ACTUALIZADO_EVENT));
+    let resultado;
+    try {
+      // El backend evalúa y devuelve los logros desbloqueados en la misma
+      // respuesta si este elemento deja los 3 flags en true, sin importar
+      // el orden en que se completaron lectura/actividad/reflexión.
+      resultado = await marcarElementoCompletado(estudiante.id, temaId, "reflexion");
+      window.dispatchEvent(new Event(PROGRESO_ACTUALIZADO_EVENT));
+    } catch (error) {
+      console.error("Error al marcar la reflexión como completada:", error);
+      return;
+    }
+    console.log("Progreso actualizado:", resultado);
 
-        // Registrar actividad del día (alimenta la racha diaria)
-        await registrarActividadDiaria(estudiante.id).catch(() => {});
+    try {
+      // Registrar actividad del día (alimenta la racha diaria)
+      await registrarActividadDiaria(estudiante.id);
+    } catch (error) {
+      console.error("Error al registrar actividad diaria:", error);
+      // no bloqueamos el resto del flujo por esto: la racha es secundaria al progreso del tema
+    }
 
-        if (
-          progreso.lectura_completada &&
-          progreso.actividad_completada &&
-          progreso.reflexion_respondida
-        ) {
-          setTemaDominado(true);
-          // Evaluar y mostrar logros desbloqueados
-          await evaluarLogros(estudiante.id);
-        }
-      })
-      .catch(() => {});
+    const temaCompleto =
+      resultado.lectura_completada &&
+      resultado.actividad_completada &&
+      resultado.reflexion_respondida;
+
+    if (temaCompleto) {
+      setTemaDominado(true);
+      console.log("Logros recibidos:", resultado.logros_desbloqueados);
+      if (resultado.logros_desbloqueados.length > 0) {
+        setLogrosQueue(mapLogrosDesbloqueados(resultado.logros_desbloqueados));
+      }
+    }
   }
 
   function optionStyle(opcion: ReflexionOption): CSSProperties {
