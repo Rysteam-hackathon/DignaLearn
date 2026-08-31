@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { apiFetch } from "@/lib/api";
 
 export type ElementoProgreso = "lectura" | "actividad" | "reflexion";
 
@@ -41,43 +42,20 @@ export async function marcarElementoCompletado(
   temaId: string,
   elemento: ElementoProgreso
 ): Promise<ProgresoTema> {
-  const actual = await obtenerProgresoPorTema(estudianteId, temaId);
+  const res = await apiFetch("/api/progress/completar-elemento", {
+    method: "POST",
+    body: JSON.stringify({
+      estudiante_id: estudianteId,
+      tema_id: temaId,
+      elemento,
+    }),
+  });
 
-  const nuevoEstado: ProgresoTema = { ...actual };
-  if (elemento === "lectura") nuevoEstado.lectura_completada = true;
-  if (elemento === "actividad") nuevoEstado.actividad_completada = true;
-  if (elemento === "reflexion") nuevoEstado.reflexion_respondida = true;
-
-  const completado =
-    nuevoEstado.lectura_completada &&
-    nuevoEstado.actividad_completada &&
-    nuevoEstado.reflexion_respondida;
-
-  nuevoEstado.completado_en = completado
-    ? actual.completado_en ?? new Date().toISOString()
-    : null;
-
-  const { data, error } = await supabase
-    .from("progreso_estudiante")
-    .upsert(
-      {
-        estudiante_id: estudianteId,
-        tema_id: temaId,
-        lectura_completada: nuevoEstado.lectura_completada,
-        actividad_completada: nuevoEstado.actividad_completada,
-        reflexion_respondida: nuevoEstado.reflexion_respondida,
-        completado_en: nuevoEstado.completado_en,
-      },
-      { onConflict: "estudiante_id,tema_id" }
-    )
-    .select("lectura_completada, actividad_completada, reflexion_respondida, completado_en")
-    .single();
-
-  if (error || !data) {
+  if (!res.ok) {
     throw new Error("No se pudo actualizar el progreso.");
   }
 
-  return data;
+  return res.json();
 }
 
 export async function registrarActividadDiaria(estudianteId: string): Promise<void> {
