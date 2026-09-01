@@ -30,23 +30,39 @@ export default function NivelesPage() {
 
   useEffect(() => {
     async function cargarUnidades() {
+      console.log("[niveles] cargarUnidades: iniciando");
       const estudiante = getEstudianteLocal();
-      if (!estudiante) { setCargando(false); return; }
+      console.log("[niveles] getEstudianteLocal():", estudiante);
+      if (!estudiante) {
+        console.log("[niveles] sin estudiante local — no hay sesión activa, deteniendo carga");
+        setCargando(false);
+        return;
+      }
 
       try {
-        const { data: grado } = await supabase
+        console.log("[niveles] consultando grado con id:", estudiante.grado_id, "tipo:", typeof estudiante.grado_id);
+
+        const { data: grado, error: gradoError } = await supabase
           .from("grados")
           .select("numero_grado, nivel")
           .eq("id", estudiante.grado_id)
           .maybeSingle();
 
+        console.log("[niveles] grado query result:", grado, gradoError);
+        console.log("[niveles] grado data completo:", JSON.stringify(grado));
+        console.log("[niveles] grado error completo:", JSON.stringify(gradoError));
+
         if (grado) setGradoNombre(`${grado.numero_grado}mo grado — ${grado.nivel}`);
 
-        const { data } = await supabase
+        console.log("[niveles] consultando unidades con grado_id:", estudiante.grado_id);
+
+        const { data, error: unidadesError } = await supabase
           .from("unidades")
           .select("id, titulo, numero_unidad")
           .eq("grado_id", estudiante.grado_id)
           .order("numero_unidad", { ascending: true });
+
+        console.log("[niveles] unidades query result:", data, unidadesError);
 
         const unidadesData = data ?? [];
         setUnidades(unidadesData);
@@ -63,11 +79,13 @@ export default function NivelesPage() {
 
           let temasCompletados = new Set<string>();
           if (temaIds.length) {
-            const { data: progresos } = await supabase
+            const { data: progresos, error: progresoError } = await supabase
               .from("progreso_estudiante")
               .select("tema_id, lectura_completada, actividad_completada, reflexion_respondida")
               .eq("estudiante_id", estudiante.id)
               .in("tema_id", temaIds);
+
+            console.log("[niveles] progreso query result:", progresos, progresoError);
 
             temasCompletados = new Set(
               (progresos ?? [])
@@ -86,10 +104,13 @@ export default function NivelesPage() {
           }
           setUnidadesCompletas(completas);
         }
-      } catch {
+      } catch (error) {
         // si falla la red, no dejamos la página colgada en skeleton infinito
+        console.error("[niveles] error en cargarUnidades:", error);
         setUnidades([]);
       } finally {
+        console.log("[niveles] cargarUnidades: terminado, setCargando(false)");
+        console.log("[niveles] estado final - unidades:", unidades.length, "grado:", gradoNombre);
         setCargando(false);
       }
     }

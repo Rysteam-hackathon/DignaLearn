@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { getEstudianteLocal } from "@/lib/auth";
+import FondoAnimado from "@/components/FondoAnimado";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Inicio",   emoji: "🏠" },
@@ -57,7 +58,10 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-[var(--background)] transition-colors">
-      {/* Fondo animado — figuras flotantes, no interfiere con clicks */}
+      {/* Fondo animado — figuras temáticas SVG (venus/libro/estrella/balanza/lápiz) */}
+      <FondoAnimado />
+
+      {/* Fondo animado — círculos flotantes, no interfiere con clicks */}
       <div className="fondo-flotante" aria-hidden="true">
         {FIGURAS_FONDO.map((figura, idx) => (
           <span
