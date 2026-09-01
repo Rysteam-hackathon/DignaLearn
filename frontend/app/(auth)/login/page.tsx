@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import { loginEstudiante, loginDocente } from "@/lib/auth";
 import LogoDignaLearn from "@/components/ui/LogoDignaLearn";
 
@@ -52,10 +53,83 @@ export default function LoginPage() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center p-4"
+      className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden"
       style={{ backgroundColor: "#160B24" }}
     >
-      <div className="w-full max-w-sm">
+      {/* Fondo animado — elementos flotantes dopamínicos, mismo patrón que FondoAnimado.tsx */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none" aria-hidden="true">
+        <motion.span
+          className="absolute select-none text-8xl"
+          style={{ top: "8%", left: "5%", color: "#F0A8B6", opacity: 0.09 }}
+          animate={{ y: [0, -20, 0] }}
+          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+        >
+          ♀
+        </motion.span>
+
+        <motion.span
+          className="absolute select-none text-7xl"
+          style={{ top: "15%", right: "8%", color: "#A4CDD5", opacity: 0.1 }}
+          animate={{ y: [0, -15, 0], rotate: [0, 10, 0] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+        >
+          ★
+        </motion.span>
+
+        <motion.span
+          className="absolute select-none text-6xl"
+          style={{ top: "40%", left: "3%", color: "#F0A8B6", opacity: 0.08 }}
+          animate={{ y: [0, -12, 0] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+        >
+          ⚖
+        </motion.span>
+
+        <motion.span
+          className="absolute select-none text-7xl"
+          style={{ top: "60%", right: "5%", color: "#A4CDD5", opacity: 0.1 }}
+          animate={{ y: [0, -18, 0], rotate: [0, -8, 0] }}
+          transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut" }}
+        >
+          📖
+        </motion.span>
+
+        <motion.span
+          className="absolute select-none text-6xl"
+          style={{ bottom: "20%", left: "8%", color: "#F0A8B6", opacity: 0.09 }}
+          animate={{ y: [0, -10, 0], scale: [1, 1.1, 1] }}
+          transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
+        >
+          ♥
+        </motion.span>
+
+        <motion.span
+          className="absolute select-none text-9xl"
+          style={{ bottom: "10%", right: "3%", color: "#A4CDD5", opacity: 0.07 }}
+          animate={{ y: [0, -25, 0] }}
+          transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
+        >
+          ♀
+        </motion.span>
+
+        <motion.span
+          className="absolute select-none text-5xl"
+          style={{ top: "75%", left: "40%", color: "#F0A8B6", opacity: 0.11 }}
+          animate={{ y: [0, -8, 0], rotate: [0, 15, 0] }}
+          transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+        >
+          ✏
+        </motion.span>
+
+        <motion.div
+          className="absolute w-32 h-32 rounded-full"
+          style={{ top: "30%", right: "15%", border: "2px solid #A4CDD5" }}
+          animate={{ scale: [1, 1.15, 1], opacity: [0.06, 0.1, 0.06] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+        />
+      </div>
+
+      <div className="relative z-10 w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
           <LogoDignaLearn

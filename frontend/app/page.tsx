@@ -1,281 +1,478 @@
 "use client";
-import Link from "next/link";
+
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-
-const FEATURES = [
-  { emoji: "📖", titulo: "Contenido del MINED", descripcion: "Lectura, actividades y reflexiones basadas en el currículo oficial de Nicaragua para 7mo y 9no grado." },
-  { emoji: "🏆", titulo: "Sistema de logros", descripcion: "Completá temas y desbloqueá logros. Cada avance se celebra con animaciones y reconocimientos." },
-  { emoji: "🔥", titulo: "Racha diaria", descripcion: "Estudiá cada día y mantené tu racha activa. La constancia construye el conocimiento." },
-  { emoji: "👩‍🏫", titulo: "Panel del docente", descripcion: "Los docentes crean estudiantes, ven el progreso grupal e individual en tiempo real." },
-];
-
-const GRADOS_DISPONIBLES = [
-  { grado: "7mo", nivel: "Secundaria" },
-  { grado: "9no", nivel: "Secundaria" },
-];
-
-const GRADOS_PROXIMAMENTE = [
-  { grado: "Primaria", nivel: "1ro – 6to grado" },
-  { grado: "8vo", nivel: "Secundaria" },
-  { grado: "10mo", nivel: "Secundaria" },
-  { grado: "11vo", nivel: "Secundaria" },
-];
+import Link from "next/link";
+import { motion } from "framer-motion";
+import LogoDignaLearn from "@/components/ui/LogoDignaLearn";
 
 const PASOS = [
-  { numero: "01", titulo: "El docente crea tu cuenta", descripcion: "Recibís un código único DL-XXXX y un PIN de 4 dígitos." },
-  { numero: "02", titulo: "Ingresás a la plataforma", descripcion: "Usás tu código y PIN para entrar. Sin correo ni contraseña complicada." },
-  { numero: "03", titulo: "Aprendés y jugás", descripcion: "Leés, completás la sopa de letras, respondés el quiz y reflexionás." },
-  { numero: "04", titulo: "Desbloqueás logros", descripcion: "Cada tema dominado suma logros y mantiene tu racha activa." },
+  {
+    numero: "01",
+    icono: "👩‍🏫",
+    titulo: "Tu docente crea tu cuenta",
+    descripcion: "Recibís un código único DL-XXXX y un PIN de 4 dígitos para entrar, sin necesidad de correo electrónico.",
+    color: "#F0A8B6",
+  },
+  {
+    numero: "02",
+    icono: "🔑",
+    titulo: "Ingresás con tu código",
+    descripcion: "Usás tu código DL-XXXX y un PIN de 4 dígitos. Sin email, sin contraseña.",
+    color: "#A4CDD5",
+  },
+  {
+    numero: "03",
+    icono: "📚",
+    titulo: "Aprendés a tu ritmo",
+    descripcion: "Lectura, minijuego y reflexión por cada tema. Vos decidís cuándo y cómo.",
+    color: "#F0A8B6",
+  },
+  {
+    numero: "04",
+    icono: "⭐",
+    titulo: "Ganás logros",
+    descripcion: "Al completar temas y unidades desbloqueás logros. Tu docente ve tu avance.",
+    color: "#A4CDD5",
+  },
 ];
 
-function CardGradoDisponible({ grado, nivel, delay }: { grado: string; nivel: string; delay: number }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5, delay, ease: "easeOut" }}
-      whileHover={{ scale: 1.02, boxShadow: "0 20px 45px rgba(240,168,182,0.25)" }}
-      className="relative overflow-hidden rounded-2xl p-6 flex items-center gap-5"
-      style={{
-        background: "linear-gradient(135deg, rgba(240,168,182,0.16), rgba(240,168,182,0.04))",
-        border: "1px solid rgba(240,168,182,0.25)",
-      }}
-    >
-      <motion.div
-        className="absolute top-3 right-3 rounded-full px-2.5 py-1 text-[10px] font-bold"
-        style={{ backgroundColor: "rgba(74,222,128,0.15)", color: "#4ADE80", border: "1px solid rgba(74,222,128,0.35)" }}
-        animate={{ opacity: [1, 0.6, 1] }}
-        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-      >
-        ✅ Disponible
-      </motion.div>
+const VALORES = [
+  { icono: "📘", titulo: "EDUCACIÓN", descripcion: "Transmitimos temas de interés para todas las edades." },
+  { icono: "🤝", titulo: "CONEXIÓN", descripcion: "Entendimiento y comunicación entre docente y estudiante." },
+  { icono: "✨", titulo: "SENCILLEZ", descripcion: "Uso y comprensión intuitiva, accesible desde cualquier dispositivo." },
+  { icono: "💡", titulo: "INNOVACIÓN", descripcion: "Estrategias innovadoras que incorporan juego para mejorar el aprendizaje." },
+  { icono: "🌱", titulo: "CRECIMIENTO", descripcion: "Guiamos a cada estudiante en su desarrollo académico y personal." },
+];
 
-      <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-lg font-bold shrink-0" style={{backgroundColor:"#F0A8B6",color:"#160B24"}}>
-        {grado}
-      </div>
-      <div className="flex-1">
-        <h3 className="text-base font-bold" style={{color:"#F0A8B6"}}>{grado} grado</h3>
-        <p className="text-sm" style={{color:"rgba(255,255,255,0.6)"}}>{nivel}</p>
-      </div>
-      <Link href="/login" className="btn-hover rounded-xl px-4 py-2 text-sm font-semibold shrink-0" style={{backgroundColor:"#F0A8B6",color:"#160B24"}}>
-        Ingresar →
-      </Link>
-    </motion.div>
-  );
-}
+const EQUIPO = [
+  { emoji: "👨‍💼", nombre: "Eddy Marenco", rol: "Líder y Marketing", color: "#F0A8B6" },
+  { emoji: "📣", nombre: "Ronald Dávila", rol: "Comunicador", color: "#A4CDD5" },
+  { emoji: "🎨", nombre: "Sharis Peralta", rol: "Diseño", color: "#F0A8B6" },
+  { emoji: "⚙️", nombre: "Dirk Martinez", rol: "Backend", color: "#A4CDD5" },
+  { emoji: "💻", nombre: "Sidar Perez", rol: "Frontend", color: "#F0A8B6" },
+];
 
-function CardGradoProximamente({ grado, nivel, delay }: { grado: string; nivel: string; delay: number }) {
-  const [hover, setHover] = useState(false);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5, delay, ease: "easeOut" }}
-      whileHover={{ scale: 1.015 }}
-      onHoverStart={() => setHover(true)}
-      onHoverEnd={() => setHover(false)}
-      className="relative rounded-2xl p-5 text-center"
-      style={{
-        backgroundColor: "rgba(164,205,213,0.06)",
-        border: "1px solid rgba(164,205,213,0.2)",
-        opacity: 0.8,
-      }}
-    >
-      <div
-        className="badge-proximamente inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold mb-4"
-        style={{backgroundColor:"rgba(164,205,213,0.15)",color:"#A4CDD5",border:"1px solid rgba(164,205,213,0.3)"}}
-      >
-        ✨ Próximamente
-      </div>
-      <h3 className="text-base font-bold mb-1" style={{color:"#A4CDD5"}}>{grado}</h3>
-      <p className="text-xs" style={{color:"rgba(255,255,255,0.5)"}}>{nivel}</p>
-
-      <AnimatePresence>
-        {hover && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
-            transition={{ duration: 0.2 }}
-            className="absolute left-1/2 -translate-x-1/2 top-full mt-2 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-medium shadow-lg pointer-events-none z-10"
-            style={{backgroundColor:"#160B24", color:"#A4CDD5", border:"1px solid rgba(164,205,213,0.3)"}}
-          >
-            ¡Pronto disponible!
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
-  );
+function irASeccion(id: string) {
+  document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
 }
 
 export default function LandingPage() {
-  const [visible, setVisible] = useState(false);
-  useEffect(() => { setTimeout(() => setVisible(true), 100); }, []);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    function onScroll() {
+      setScrolled(window.scrollY > 50);
+    }
+    onScroll();
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
     <div className="min-h-screen overflow-x-hidden" style={{ backgroundColor: "#160B24", color: "#FFFFFF" }}>
-      <style>{`
-        @keyframes flotar { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-20px)} }
-        @keyframes flotar2 { 0%,100%{transform:translateY(0) rotate(0deg)} 50%{transform:translateY(-15px) rotate(3deg)} }
-        @keyframes entrar { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes badge-pulse { 0%,100%{opacity:1} 50%{opacity:0.55} }
-        .badge-proximamente{animation:badge-pulse 2s ease-in-out infinite}
-        .flota1{animation:flotar 6s ease-in-out infinite}
-        .flota2{animation:flotar2 8s ease-in-out infinite}
-        .flota3{animation:flotar 10s ease-in-out infinite reverse}
-        .card-hover{transition:transform 250ms ease,box-shadow 250ms ease}
-        .card-hover:hover{transform:translateY(-4px);box-shadow:0 16px 40px rgba(240,168,182,0.15)}
-        .btn-hover{transition:transform 150ms ease,opacity 150ms ease}
-        .btn-hover:hover{transform:translateY(-2px);opacity:0.92}
-        .btn-hover:active{transform:translateY(0)}
-      `}</style>
+      {/* ━━━ NAVBAR ━━━ */}
+      <motion.nav
+        className="fixed top-0 left-0 right-0 z-50"
+        animate={{ backgroundColor: scrolled ? "rgba(22,11,36,0.75)" : "#160B24" }}
+        transition={{ duration: 0.3 }}
+        style={{
+          backdropFilter: scrolled ? "blur(12px)" : "none",
+          WebkitBackdropFilter: scrolled ? "blur(12px)" : "none",
+          boxShadow: scrolled ? "0 8px 30px rgba(0,0,0,0.25)" : "none",
+        }}
+      >
+        <div className="flex items-center justify-between px-6 md:px-12 py-4">
+          <LogoDignaLearn size={36} showWordmark={true} darkBackground={true} />
 
-      <nav className="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto">
-        <p className="text-xl font-bold">Digna<span style={{color:"#A4CDD5"}}>Learn</span></p>
-        <Link href="/login" className="btn-hover rounded-xl px-5 py-2 text-sm font-semibold" style={{backgroundColor:"#F0A8B6",color:"#160B24"}}>
-          Ingresar →
-        </Link>
-      </nav>
-
-      <section className="relative min-h-[90vh] flex items-center justify-center px-6 overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="flota1 absolute rounded-full opacity-10" style={{width:500,height:500,background:"#F0A8B6",top:-150,left:-150}}/>
-          <div className="flota2 absolute rounded-full opacity-10" style={{width:350,height:350,background:"#A4CDD5",bottom:-100,right:-100}}/>
-          <div className="flota3 absolute rounded-full opacity-5" style={{width:200,height:200,background:"#F0A8B6",top:"40%",right:"15%"}}/>
-        </div>
-        <div className="relative z-10 text-center max-w-3xl mx-auto" style={{opacity:visible?1:0,transform:visible?"translateY(0)":"translateY(30px)",transition:"all 800ms ease"}}>
-          <div className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold mb-8" style={{backgroundColor:"rgba(240,168,182,0.15)",color:"#F0A8B6",border:"1px solid rgba(240,168,182,0.3)"}}>
-            ✨ Plataforma educativa del MINED Nicaragua
+          <div className="hidden md:flex gap-8">
+            <button
+              type="button"
+              onClick={() => irASeccion("como-funciona")}
+              className="text-white/70 hover:text-white transition-colors font-medium"
+            >
+              Cómo funciona
+            </button>
+            <button
+              type="button"
+              onClick={() => irASeccion("nosotros")}
+              className="text-white/70 hover:text-white transition-colors font-medium"
+            >
+              Nosotros
+            </button>
+            <button
+              type="button"
+              onClick={() => irASeccion("valores")}
+              className="text-white/70 hover:text-white transition-colors font-medium"
+            >
+              Valores
+            </button>
           </div>
-          <h1 className="text-5xl md:text-7xl font-bold leading-tight mb-6">
-            Aprendé tus <span style={{color:"#F0A8B6"}}>derechos</span><br/>jugando
-          </h1>
-          <p className="text-lg md:text-xl mb-10 max-w-xl mx-auto" style={{color:"rgba(255,255,255,0.7)"}}>
-            DignaLearn es la experiencia educativa gamificada para la asignatura <strong style={{color:"#A4CDD5"}}>Derechos y Dignidad de la Mujer</strong>, disponible para primaria y secundaria.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/login" className="btn-hover rounded-2xl px-8 py-4 text-base font-bold" style={{backgroundColor:"#F0A8B6",color:"#160B24"}}>
-              Comenzar ahora →
+
+          <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
+            <Link
+              href="/login"
+              className="block bg-[#F0A8B6] hover:bg-[#F0A8B6]/80 text-[#160B24] font-semibold px-5 py-2 rounded-full transition-colors"
+            >
+              Ingresar →
             </Link>
-            <a href="#como-funciona" className="btn-hover rounded-2xl px-8 py-4 text-base font-semibold" style={{backgroundColor:"rgba(255,255,255,0.08)",color:"#ffffff",border:"1px solid rgba(255,255,255,0.15)"}}>
-              ¿Cómo funciona?
-            </a>
-          </div>
-          <div className="flex flex-wrap justify-center gap-8 mt-16">
-            {[{num:"34",label:"Temas del MINED"},{num:"135",label:"Actividades"},{num:"45",label:"Logros posibles"},{num:"2",label:"Grados"}].map((stat)=>(
-              <div key={stat.label} className="text-center">
-                <p className="text-3xl font-bold" style={{color:"#F0A8B6"}}>{stat.num}</p>
-                <p className="text-xs mt-1" style={{color:"rgba(255,255,255,0.5)"}}>{stat.label}</p>
-              </div>
-            ))}
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </motion.nav>
 
-      <section className="py-24 px-6" style={{backgroundColor:"rgba(255,255,255,0.03)"}}>
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Todo lo que necesitás para <span style={{color:"#A4CDD5"}}>aprender</span></h2>
-            <p style={{color:"rgba(255,255,255,0.6)"}}>Una plataforma completa diseñada para estudiantes y docentes de secundaria.</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {FEATURES.map((f)=>(
-              <div key={f.titulo} className="card-hover rounded-2xl p-6" style={{backgroundColor:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)"}}>
-                <p className="text-4xl mb-4" aria-hidden>{f.emoji}</p>
-                <h3 className="text-lg font-bold mb-2">{f.titulo}</h3>
-                <p className="text-sm" style={{color:"rgba(255,255,255,0.6)"}}>{f.descripcion}</p>
-              </div>
-            ))}
-          </div>
+      {/* ━━━ HERO ━━━ */}
+      <section
+        className="relative min-h-screen flex items-center justify-center pt-24 pb-16 px-6 overflow-hidden"
+        style={{ backgroundColor: "#160B24" }}
+      >
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          <motion.span
+            className="absolute select-none text-9xl"
+            style={{ top: "12%", right: "8%", color: "#F0A8B6", opacity: 0.08 }}
+            animate={{ y: [0, -20, 0] }}
+            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+          >
+            ♀
+          </motion.span>
+          <motion.span
+            className="absolute select-none text-8xl"
+            style={{ bottom: "10%", left: "8%", color: "#A4CDD5", opacity: 0.07 }}
+            animate={{ y: [0, -15, 0] }}
+            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+          >
+            ★
+          </motion.span>
+          <motion.div
+            className="absolute w-64 h-64 rounded-full"
+            style={{ top: "-5%", left: "-8%", border: "1px solid rgba(164,205,213,0.2)" }}
+            animate={{ scale: [1, 1.1, 1] }}
+            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          />
         </div>
-      </section>
 
-      <section id="como-funciona" className="py-24 px-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">¿Cómo <span style={{color:"#F0A8B6"}}>funciona</span>?</h2>
-            <p style={{color:"rgba(255,255,255,0.6)"}}>En cuatro pasos simples, estudiantes y docentes están listos para empezar.</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {PASOS.map((paso)=>(
-              <div key={paso.numero} className="card-hover rounded-2xl p-6 flex gap-4" style={{backgroundColor:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)"}}>
-                <p className="text-4xl font-bold shrink-0" style={{color:"rgba(240,168,182,0.3)"}}>{paso.numero}</p>
-                <div>
-                  <h3 className="text-base font-bold mb-1">{paso.titulo}</h3>
-                  <p className="text-sm" style={{color:"rgba(255,255,255,0.6)"}}>{paso.descripcion}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+        <div className="relative z-10 text-center max-w-3xl mx-auto px-6">
+          <motion.span
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0 }}
+            className="inline-block rounded-full px-4 py-1.5 text-sm"
+            style={{ backgroundColor: "rgba(240,168,182,0.15)", color: "#F0A8B6" }}
+          >
+            ✨ Plataforma educativa del MINED Nicaragua
+          </motion.span>
 
-      <section className="relative py-24 px-6 overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="flota1 absolute rounded-full opacity-10" style={{width:260,height:260,background:"#F0A8B6",top:-60,left:-60}}/>
-          <div className="flota2 absolute rounded-full opacity-10" style={{width:220,height:220,background:"#A4CDD5",bottom:-70,right:-70}}/>
-        </div>
-        <div className="relative z-10 max-w-5xl mx-auto">
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="text-5xl md:text-7xl font-bold leading-tight mt-6"
+            style={{ fontFamily: "var(--font-heading)" }}
+          >
+            Aprendé tus <span style={{ color: "#F0A8B6" }}>derechos</span> jugando
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="text-lg md:text-xl text-white/70 mt-6 max-w-xl mx-auto"
+          >
+            DignaLearn es la experiencia educativa gamificada para la asignatura{" "}
+            <strong style={{ color: "#A4CDD5" }}>Derechos y Dignidad de la Mujer</strong>, disponible para primaria y secundaria.
+          </motion.p>
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-            className="text-center mb-16"
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="flex flex-wrap gap-4 justify-center mt-10"
           >
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Disponible <span style={{color:"#F0A8B6"}}>ahora</span></h2>
-            <p style={{color:"rgba(255,255,255,0.6)"}}>Comenzamos con secundaria — 7mo y 9no grado — y pronto sumamos primaria completa y el resto de secundaria.</p>
+            <motion.div whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(240,168,182,0.4)" }} whileTap={{ scale: 0.97 }}>
+              <Link
+                href="/login"
+                className="block bg-[#F0A8B6] text-[#160B24] font-bold px-8 py-4 rounded-full text-lg"
+              >
+                Soy estudiante →
+              </Link>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.05, backgroundColor: "rgba(164,205,213,0.1)" }} whileTap={{ scale: 0.97 }}>
+              <Link
+                href="/login"
+                className="block border-2 border-[#A4CDD5] text-[#A4CDD5] px-8 py-4 rounded-full text-lg font-semibold"
+              >
+                Soy docente →
+              </Link>
+            </motion.div>
           </motion.div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
-            {GRADOS_DISPONIBLES.map((g, i)=>(
-              <CardGradoDisponible key={g.grado} grado={g.grado} nivel={g.nivel} delay={i * 0.1} />
-            ))}
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-            {GRADOS_PROXIMAMENTE.map((g, i)=>(
-              <CardGradoProximamente key={g.grado} grado={g.grado} nivel={g.nivel} delay={i * 0.1} />
-            ))}
-          </div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+          >
+            <motion.div
+              animate={{ y: [0, 8, 0] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              className="text-2xl text-white/40 mt-16"
+              aria-hidden
+            >
+              ↓
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
-      <section className="py-24 px-6" style={{backgroundColor:"rgba(255,255,255,0.03)"}}>
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-16">¿Para <span style={{color:"#A4CDD5"}}>quién</span> es?</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="card-hover rounded-2xl p-8" style={{backgroundColor:"rgba(240,168,182,0.08)",border:"1px solid rgba(240,168,182,0.2)"}}>
-              <p className="text-5xl mb-4" aria-hidden>🎓</p>
-              <h3 className="text-xl font-bold mb-3" style={{color:"#F0A8B6"}}>Estudiantes</h3>
-              <p className="text-sm" style={{color:"rgba(255,255,255,0.7)"}}>De 7mo y 9no grado. Aprendés los derechos de la mujer de forma interactiva, con actividades y logros que hacen el aprendizaje divertido.</p>
-            </div>
-            <div className="card-hover rounded-2xl p-8" style={{backgroundColor:"rgba(164,205,213,0.08)",border:"1px solid rgba(164,205,213,0.2)"}}>
-              <p className="text-5xl mb-4" aria-hidden>👩‍🏫</p>
-              <h3 className="text-xl font-bold mb-3" style={{color:"#A4CDD5"}}>Docentes</h3>
-              <p className="text-sm" style={{color:"rgba(255,255,255,0.7)"}}>Creás las cuentas de tus estudiantes, ves su progreso individual y grupal en tiempo real desde un panel dedicado.</p>
-            </div>
+      {/* ━━━ TARJETAS DOPAMÍNICAS ━━━ */}
+      <section className="py-20 px-6" style={{ backgroundColor: "#160B24" }}>
+        <motion.h2
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="text-3xl md:text-4xl font-bold text-center text-white mb-4"
+          style={{ fontFamily: "var(--font-heading)" }}
+        >
+          Todo lo que necesitás para aprender
+        </motion.h2>
+        <p className="text-white/60 text-center mb-14 max-w-xl mx-auto">
+          Una experiencia diseñada para que aprender tus derechos se sienta cercano, divertido y tuyo.
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.5, delay: 0 }}
+            whileHover={{ y: -8, boxShadow: "0 20px 60px rgba(240,168,182,0.25)" }}
+            className="rounded-2xl p-8"
+            style={{
+              background: "linear-gradient(135deg, rgba(240,168,182,0.15), rgba(240,168,182,0.05))",
+              border: "1px solid rgba(240,168,182,0.2)",
+            }}
+          >
+            <p className="text-5xl mb-4" aria-hidden>🎮</p>
+            <h3 className="text-xl font-bold text-white">Aprende jugando</h3>
+            <p className="text-white/65 text-sm mt-2">
+              Sopas de letras, quizzes y escenarios reales del currículo MINED. Cada actividad refuerza lo que aprendiste.
+            </p>
+            <Link href="/login" className="block text-sm font-semibold mt-6" style={{ color: "#F0A8B6" }}>
+              Empezar ahora →
+            </Link>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            whileHover={{ y: -8, boxShadow: "0 20px 60px rgba(164,205,213,0.25)" }}
+            className="rounded-2xl p-8"
+            style={{
+              background: "linear-gradient(135deg, rgba(164,205,213,0.15), rgba(164,205,213,0.05))",
+              border: "1px solid rgba(164,205,213,0.2)",
+            }}
+          >
+            <p className="text-5xl mb-4" aria-hidden>📖</p>
+            <h3 className="text-xl font-bold text-white">Modo Historia</h3>
+            <p className="text-white/65 text-sm mt-2">
+              Una novela visual educativa donde los personajes enfrentan situaciones reales sobre derechos, dignidad e igualdad.
+            </p>
+            <Link href="/login" className="block text-sm font-semibold mt-6" style={{ color: "#A4CDD5" }}>
+              Explorar →
+            </Link>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            whileHover={{ y: -8, boxShadow: "0 20px 60px rgba(240,168,182,0.2)" }}
+            className="rounded-2xl p-8"
+            style={{
+              background: "linear-gradient(135deg, rgba(240,168,182,0.1), rgba(164,205,213,0.1))",
+              border: "1px solid rgba(255,255,255,0.1)",
+            }}
+          >
+            <p className="text-5xl mb-4" aria-hidden>🏆</p>
+            <h3 className="text-xl font-bold text-white">Logros y racha</h3>
+            <p className="text-white/65 text-sm mt-2">
+              Desbloqueá logros al dominar temas, mantené tu racha diaria y visualizá tu avance en el currículo completo.
+            </p>
+            <Link href="/login" className="block text-sm font-semibold mt-6" style={{ color: "#F0A8B6" }}>
+              Ver logros →
+            </Link>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ━━━ CÓMO FUNCIONA ━━━ */}
+      <section id="como-funciona" className="py-20 px-6 bg-white/[0.02]" style={{ backgroundColor: "#160B24" }}>
+        <motion.h2
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="text-3xl md:text-4xl font-bold text-center text-white"
+          style={{ fontFamily: "var(--font-heading)" }}
+        >
+          ¿Cómo funciona?
+        </motion.h2>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto mt-14">
+          {PASOS.map((paso, idx) => (
+            <motion.div
+              key={paso.numero}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.5, delay: idx * 0.1 }}
+              className="text-center"
+            >
+              <p className="text-6xl font-bold" style={{ color: `${paso.color}33` }}>{paso.numero}</p>
+              <p className="text-3xl -mt-4" aria-hidden>{paso.icono}</p>
+              <h3 className="text-white font-semibold mt-2">{paso.titulo}</h3>
+              <p className="text-white/60 text-sm mt-1">{paso.descripcion}</p>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* ━━━ VALORES DE LA MARCA ━━━ */}
+      <section id="valores" className="py-20 px-6" style={{ backgroundColor: "#160B24" }}>
+        <motion.h2
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="text-3xl md:text-4xl font-bold text-center text-white mb-4"
+          style={{ fontFamily: "var(--font-heading)" }}
+        >
+          Los valores de DignaLearn
+        </motion.h2>
+        <p className="text-white/60 text-center mb-14 max-w-xl mx-auto">
+          Lo que nos guía en cada decisión de diseño y contenido.
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-4xl mx-auto">
+          {VALORES.map((valor, idx) => (
+            <motion.div
+              key={valor.titulo}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.5, delay: idx * 0.08 }}
+              whileHover={{ borderColor: "rgba(240,168,182,0.4)", y: -4 }}
+              className="rounded-xl p-6"
+              style={{ border: "1px solid rgba(255,255,255,0.08)" }}
+            >
+              <p className="text-3xl mb-3" aria-hidden>{valor.icono}</p>
+              <p className="uppercase tracking-widest text-xs font-bold" style={{ color: "#F0A8B6" }}>
+                {valor.titulo}
+              </p>
+              <p className="text-white/65 text-sm mt-2">{valor.descripcion}</p>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* ━━━ QUIÉNES SOMOS ━━━ */}
+      <section id="nosotros" className="py-20 px-6" style={{ backgroundColor: "#160B24" }}>
+        <motion.h2
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="text-3xl md:text-4xl font-bold text-center text-white mb-8"
+          style={{ fontFamily: "var(--font-heading)" }}
+        >
+          Quiénes somos
+        </motion.h2>
+
+        <p className="max-w-2xl mx-auto text-center text-white/70">
+          Somos Rysteam, un equipo de estudiantes nicaragüenses que creamos DignaLearn para el Hackathon Nicaragua 2026. Nuestra misión: fortalecer la enseñanza de los Derechos y Dignidad de la Mujer con tecnología accesible y cercana.
+        </p>
+
+        <div className="flex flex-wrap justify-center gap-4 mt-12">
+          {EQUIPO.map((miembro, idx) => (
+            <motion.div
+              key={miembro.nombre}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.5, delay: idx * 0.08 }}
+              whileHover={{ y: -6 }}
+              className="rounded-2xl p-6 text-center w-40"
+              style={{ border: "1px solid rgba(255,255,255,0.1)" }}
+            >
+              <p className="text-3xl mb-2" aria-hidden>{miembro.emoji}</p>
+              <p className="text-sm font-semibold text-white">{miembro.nombre}</p>
+              <p className="text-xs mt-1" style={{ color: miembro.color }}>{miembro.rol}</p>
+            </motion.div>
+          ))}
+        </div>
+
+        <p className="text-center text-white/40 text-sm mt-8">
+          Hecho con ❤️ en Nicaragua · Hackathon Nicaragua 2026
+        </p>
+      </section>
+
+      {/* ━━━ CTA FINAL ━━━ */}
+      <section
+        className="py-24 px-6 text-center"
+        style={{ background: "linear-gradient(180deg, #160B24, #1a0f2e)" }}
+      >
+        <motion.h2
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="text-4xl md:text-5xl font-bold text-white"
+          style={{ fontFamily: "var(--font-heading)" }}
+        >
+          ¿Listo para empezar?
+        </motion.h2>
+        <p className="text-white/60 mt-4">
+          Tu código de acceso te espera. Pedíselo a tu docente.
+        </p>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="inline-block mt-10"
+        >
+          <motion.div whileHover={{ scale: 1.05, boxShadow: "0 0 40px rgba(240,168,182,0.5)" }} whileTap={{ scale: 0.97 }}>
+            <Link
+              href="/login"
+              className="block bg-[#F0A8B6] text-[#160B24] font-bold text-xl px-10 py-5 rounded-full"
+            >
+              Ingresar a DignaLearn →
+            </Link>
+          </motion.div>
+        </motion.div>
+      </section>
+
+      {/* ━━━ FOOTER ━━━ */}
+      <footer className="py-10 px-6" style={{ backgroundColor: "#0d0718" }}>
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+          <div>
+            <LogoDignaLearn size={28} showWordmark={true} darkBackground={true} />
+            <p className="text-white/40 text-xs mt-2">
+              Contenido basado en documentos oficiales del MINED Nicaragua
+            </p>
           </div>
-        </div>
-      </section>
 
-      <section className="py-24 px-6 text-center">
-        <div className="max-w-2xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6">Listo para <span style={{color:"#F0A8B6"}}>empezar</span></h2>
-          <p className="mb-10" style={{color:"rgba(255,255,255,0.6)"}}>Ingresá con tu código de acceso y PIN que te dio tu docente.</p>
-          <Link href="/login" className="btn-hover inline-block rounded-2xl px-10 py-4 text-base font-bold" style={{backgroundColor:"#F0A8B6",color:"#160B24"}}>
-            Ingresar a DignaLearn →
-          </Link>
-        </div>
-      </section>
+          <div className="flex gap-6 text-sm text-white/50">
+            <Link href="/privacidad" className="hover:text-white/80 transition-colors">Política de privacidad</Link>
+            <Link href="/terminos" className="hover:text-white/80 transition-colors">Términos de uso</Link>
+            <a href="mailto:contacto@dignalearn.com" className="hover:text-white/80 transition-colors">Contacto</a>
+          </div>
 
-      <footer className="py-8 px-6 text-center" style={{borderTop:"1px solid rgba(255,255,255,0.08)"}}>
-        <p className="text-sm" style={{color:"rgba(255,255,255,0.4)"}}>© 2026 DignaLearn — Equipo Rysteam · Hackathon Nicaragua 2026</p>
-        <p className="text-xs mt-1" style={{color:"rgba(255,255,255,0.25)"}}>Contenido basado en el currículo oficial del MINED Nicaragua · Ley N° 787</p>
+          <p className="text-white/40 text-xs">
+            © 2026 DignaLearn — Equipo Rysteam
+          </p>
+        </div>
       </footer>
     </div>
   );
