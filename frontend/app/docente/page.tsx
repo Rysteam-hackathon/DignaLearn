@@ -64,7 +64,7 @@ export default function DocentePage() {
         .from("perfiles_docente")
         .select("nombre_escuela, usuarios(nombre_display)")
         .eq("usuario_id", data.user.id)
-        .single();
+        .maybeSingle();
       setDocente({
         usuario_id: data.user.id,
         nombre_display: (perfil?.usuarios as unknown as { nombre_display: string } | null)?.nombre_display ?? null,
@@ -85,7 +85,8 @@ export default function DocentePage() {
       if (!res.ok) throw new Error();
       const data: EstudianteResumen[] = await res.json();
       setEstudiantes(data);
-    } catch {
+    } catch (error) {
+      console.error("Error:", error);
       setEstudiantes([]);
     } finally {
       setCargando(false);

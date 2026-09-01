@@ -85,7 +85,8 @@ export default function ProgresoPage() {
           : null;
 
         setDatos({ racha, temasCompletados, ultimoLogro });
-      } catch {
+      } catch (error) {
+        console.error("Error:", error);
         setDatos({ racha: 0, temasCompletados: 0, ultimoLogro: null });
       } finally {
         setCargando(false);

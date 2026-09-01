@@ -101,7 +101,7 @@ export async function loginDocente(
     .from("perfiles_docente")
     .select("id, usuario_id, nombre_escuela, usuarios(nombre_display)")
     .eq("usuario_id", data.user.id)
-    .single();
+    .maybeSingle();
 
   return {
     id: perfil?.id ?? data.user.id,

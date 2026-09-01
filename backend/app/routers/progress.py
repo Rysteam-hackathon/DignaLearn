@@ -1,9 +1,10 @@
 from datetime import datetime, timezone
 from typing import Literal
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel
 
+from app.services.auth_service import verificar_estudiante_autenticado
 from app.services.gamification import LogroDesbloqueado, evaluar_logros
 from app.supabase_client import get_supabase_client
 
@@ -33,13 +34,17 @@ class ProgresoResponse(BaseModel):
 
 
 @router.post("/completar-elemento", response_model=ProgresoResponse)
-def completar_elemento(body: CompletarElementoRequest) -> ProgresoResponse:
+def completar_elemento(
+    body: CompletarElementoRequest,
+    authorization: str | None = Header(default=None),
+) -> ProgresoResponse:
+    estudiante_id = verificar_estudiante_autenticado(authorization, body.estudiante_id)
     supabase = get_supabase_client()
 
     actual = (
         supabase.table("progreso_estudiante")
         .select("lectura_completada, actividad_completada, reflexion_respondida, completado_en")
-        .eq("estudiante_id", body.estudiante_id)
+        .eq("estudiante_id", estudiante_id)
         .eq("tema_id", body.tema_id)
         .maybe_single()
         .execute()
@@ -71,7 +76,7 @@ def completar_elemento(body: CompletarElementoRequest) -> ProgresoResponse:
         supabase.table("progreso_estudiante")
         .upsert(
             {
-                "estudiante_id": body.estudiante_id,
+                "estudiante_id": estudiante_id,
                 "tema_id": body.tema_id,
                 "lectura_completada": datos["lectura_completada"],
                 "actividad_completada": datos["actividad_completada"],
@@ -93,6 +98,6 @@ def completar_elemento(body: CompletarElementoRequest) -> ProgresoResponse:
         # El tema quedó completo con este elemento, sin importar el orden en que
         # se completaron lectura/actividad/reflexión: se evalúan los logros acá,
         # en el único lugar donde se escribe el progreso.
-        logros_desbloqueados = evaluar_logros(body.estudiante_id, body.tema_id)
+        logros_desbloqueados = evaluar_logros(estudiante_id, body.tema_id)
 
     return ProgresoResponse(**fila, logros_desbloqueados=logros_desbloqueados)

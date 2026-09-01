@@ -45,3 +45,20 @@ def verificar_token(token: str) -> dict:
         raise HTTPException(status_code=401, detail="Token expirado.")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Token inválido.")
+
+
+def verificar_estudiante_autenticado(authorization: str | None, estudiante_id: str) -> str:
+    """Verifica el JWT del estudiante y devuelve el estudiante_id real (campo "sub"
+    del token). Lanza 401 si falta el token, es inválido/expiró, o no corresponde
+    al estudiante_id recibido en el body/URL."""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Falta el token de autenticación.")
+
+    token = authorization.removeprefix("Bearer ").strip()
+    payload = verificar_token(token)
+
+    sub = payload.get("sub")
+    if not sub or sub != estudiante_id:
+        raise HTTPException(status_code=401, detail="El token no corresponde a este estudiante.")
+
+    return sub

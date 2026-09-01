@@ -138,7 +138,8 @@ export default function DashboardPage() {
         }
 
         setDatos({ racha, continuarTema, ultimoLogro, unidadesCompletadas });
-      } catch {
+      } catch (error) {
+        console.error("Error:", error);
         setDatos({ racha: 0, continuarTema: null, ultimoLogro: null, unidadesCompletadas: 0 });
       } finally {
         setCargando(false);
