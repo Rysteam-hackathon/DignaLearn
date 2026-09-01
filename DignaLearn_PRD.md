@@ -1023,3 +1023,91 @@ Para el MVP: los temas dentro de una unidad son secuenciales (Tema 2 no se desbl
 
 `/niveles/page.tsx` tiene el `grado_id` hardcodeado a 7mo grado. Hay que conectarlo al perfil del estudiante en localStorage para que muestre el grado correcto según quién esté logueado.
 
+> **Resuelto en Sesión 6:** `niveles/page.tsx` ya lee `estudiante.grado_id` desde `getEstudianteLocal()` — no queda hardcodeado. Verificado con login real de `DL-TEST` (grado 1 → "7mo grado — secundaria" correcto).
+
+---
+
+## PARTE 20 — Decisiones y Actualizaciones (Sesión 6)
+
+> Estas decisiones actualizan y complementan las partes anteriores. Tienen precedencia sobre cualquier versión anterior, incluyendo la regla de animaciones de la PARTE 19.
+
+---
+
+### Decisión de animación: Framer Motion OBLIGATORIO (reemplaza la regla de PARTE 19)
+
+**La regla de PARTE 19 ("Solo CSS transitions y keyframes... Prohibido Framer Motion") queda revertida.** A partir de Sesión 6, el estándar del proyecto es el opuesto:
+
+- **Framer Motion es obligatorio** para toda animación de interfaz nueva (entradas escalonadas, hover, wiggle de íconos, celebraciones, toggles). Nunca usar solo CSS `@keyframes`/`transition` para estas piezas.
+- Patrón establecido: un `Record` de configuración por variante de ícono (`{ animate, duration, ease }`) + un componente/`motion.div` que consume esa config — así se hizo primero en `extras/page.tsx` (`ANIMACION_POR_ICONO`, íconos del equipo Rysteam) y se replicó exactamente igual en `dashboard/page.tsx` (`ANIMACION_POR_ACCESO`) y `niveles/page.tsx` (`ANIMACION_ICONO_UNIDAD`).
+- `whileHover`/`whileTap` con `scale` + `boxShadow` tintado con el color de marca del elemento (`${color}55` / `${color}40`) es el patrón estándar de hover en cards.
+- Entradas de listas (unidades, temas, miembros del equipo): `initial={{opacity:0, y:20}}` → `animate={{opacity:1, y:0}}`, spring (`stiffness: 300, damping: 20-24`), con `delay: idx * 0.08` a `idx * 0.1` para el efecto escalonado.
+- Loops infinitos de íconos: `duration` entre 2s y 4s, `ease: "easeInOut"`, nunca más rápido ni más lento sin pedido explícito — los ajustes de "más suave" en esta sesión (racha, trofeo) confirmaron que la preferencia del equipo es sutil, no llamativo.
+- `AnimatePresence` + `createPortal(..., document.body)` es el patrón obligatorio para overlays de viewport completo (`LogroCelebracion.tsx`) — cualquier ancestro con `transform` (incluso uno dejado por una animación `forwards`) rompe `position: fixed` si no se usa portal.
+
+---
+
+### Arquitectura de progreso: migrado al backend FastAPI
+
+El progreso ya no se evalúa solo desde el cliente. `POST /api/progress/completar-elemento` (`backend/app/routers/progress.py`) es ahora el único punto de escritura de `progreso_estudiante`, y en la misma request evalúa logros (`evaluar_logros()`) si el tema queda completo — sin importar el orden en que el estudiante complete lectura/actividad/reflexión. Esto resolvió el bug histórico de `LogroCelebracion` no disparando según el orden de finalización.
+
+`frontend/lib/progress.ts` centraliza el llamado (`marcarElementoCompletado`) y el mapeo de la respuesta (`mapLogrosDesbloqueados`) para que los 4 componentes que pueden completar el último elemento de un tema (`Reflexion`, `ProgresoLectura`, `WordSearch`, `Quiz`) compartan la misma lógica de mostrar `LogroCelebracion` en cola.
+
+El endpoint `POST /api/gamification/evaluar/{estudiante_id}` sigue existiendo mas ya no tiene ningún llamador desde el frontend (quedó vestigial tras la migración) — se mantiene por si se necesita re-evaluar logros manualmente, pero ahora también exige JWT válido (ver sección de seguridad más abajo).
+
+---
+
+### Sistema de login con JWT propio (no Supabase Auth)
+
+El estudiante **no usa Supabase Auth**. El login (`POST /api/auth/login-estudiante`) verifica `codigo_acceso` + `pin` (bcrypt) contra `perfiles_estudiante` y emite un JWT propio firmado con PyJWT (`crear_token_estudiante`, `HS256`, 7 días de expiración, secreto en `JWT_SECRET_KEY`). El payload lleva `sub` (estudiante_id), `grado_id`, `access_code`, `nombre`.
+
+- El frontend guarda el token en `localStorage["dignalearn_token"]` y lo decodifica sin verificar firma en `getEstudianteLocal()` (`frontend/lib/auth.ts`) solo para reconstruir el perfil localmente — la verificación real de firma ocurre en el backend.
+- `frontend/lib/api.ts` (`apiFetch`) adjunta el token como `Authorization: Bearer <token>` en cada llamada al backend.
+- El docente sí usa Supabase Auth normal (`supabase.auth.signInWithPassword`) — son dos sistemas de auth distintos y coexisten a propósito: el estudiante no tiene email/password, el docente sí.
+
+**Hallazgo de seguridad crítico corregido en Sesión 6:** hasta esta sesión, ningún endpoint de estudiante (`progress.py`, `gamification.py`) verificaba ese JWT — `verificar_token()` existía en `auth_service.py` pero nunca se llamaba. Cualquiera podía mandar un `estudiante_id` ajeno y modificar el progreso de otro estudiante. Se agregó `verificar_estudiante_autenticado()` (auth_service.py) que valida el header, decodifica el token, y compara `sub` contra el `estudiante_id` recibido — 401 si no coincide o falta el token. Ambos endpoints ahora usan el `estudiante_id` **del token verificado**, nunca el del body/URL directamente.
+
+**Pendiente relacionado, aún NO corregido:** las políticas RLS de `progreso_estudiante`, `actividad_diaria` y `estudiante_logros` siguen con `qual: true` para el rol `anon` en SELECT (y UPDATE en los dos primeros) — es decir, **cualquiera con la anon key pública puede leer/escribir el progreso de cualquier estudiante directamente contra la REST API de Supabase**, sin pasar por el backend recién asegurado. El fix de esta sesión protege las escrituras que pasan por FastAPI, pero las lecturas que el frontend hace directo a Supabase (dashboard, progreso, niveles) siguen expuestas a nivel de base de datos. Ver PENDIENTE 1 más abajo.
+
+---
+
+### Estado real de implementación al cierre de Sesión 6
+
+**Funcionando y verificado en esta sesión (Playwright + login real `DL-TEST`/`1234`):**
+- Fondo animado en todas las páginas del estudiante: dos capas coexistiendo en `layout.tsx` — el sistema de círculos original (`FIGURAS_FONDO`, `.fondo-flotante`, `z-index: 0`) y `FondoAnimado.tsx` (8 figuras SVG temáticas: venus, libro, estrella, balanza, lápiz, `z-index: 0`, colores adaptativos claro/oscuro).
+- Dashboard: tarjeta "Continuar" con gradiente rosa→celeste en modo claro y `#160B24` en modo oscuro; tarjetas "Último logro"/"Unidades" con contraste correcto en ambos modos; accesos rápidos con ícono animado por rol (páginas, wiggle de trofeo, scale+rotate de historia) y hover con sombra de marca.
+- Niveles: cards de unidades y de temas con entrada escalonada Framer Motion, hover con sombra por color de unidad, ícono animado distinto por unidad (flor/balanza/apretón de manos/estrella); candados y shake en unidades/temas bloqueados (ya existía de antes, verificado que sigue intacto).
+- Seguridad: JWT verificado en `progress.py`/`gamification.py`, `.single()` reemplazado por `.maybeSingle()` en los 2 lugares del flujo docente, `console.error` agregado en 3 catches que antes silenciaban el error real, CORS restringido a orígenes explícitos.
+- Todo verificado con `npx tsc --noEmit` (0 errores) en cada paso, y pruebas reales en navegador (no solo compilación).
+
+**Commits de esta sesión (rama `feature/monorepo-setup`):**
+```
+be71b17 fix: seguridad - JWT en endpoints estudiante, maybeSingle docente, CORS restrictivo
+3191e63 feat: animaciones Framer Motion en iconos dashboard y niveles
+ff2be60 feat: fondo animado unificado, dashboard adaptado a ambos modos, fix dark mode tarjetas
+```
+
+---
+
+### Pendientes actuales — EN ORDEN DE PRIORIDAD
+
+**PENDIENTE 1 — RLS real por estudiante (seguridad, prioridad máxima).**
+Las políticas de `progreso_estudiante`/`actividad_diaria`/`estudiante_logros` permiten a `anon` leer y escribir filas de cualquier estudiante. Mientras el login siga siendo un JWT propio (no Supabase Auth), Postgres no tiene forma nativa de saber "quién es" el estudiante que llama — hay que decidir un mecanismo (ej: función Postgres que valide el JWT propio vía `pgjwt`/`current_setting`, o mover TODAS las lecturas de progreso a través del backend en vez de Supabase directo desde el navegador) antes de considerar esto cerrado.
+
+**PENDIENTE 2 — Auditoría completa de contraste en dark mode.**
+Esta sesión corrigió puntualmente dashboard (tarjeta continuar, último logro, unidades). No se hizo una pasada completa de TODAS las páginas del estudiante y del docente en ambos modos.
+
+**PENDIENTE 3 — Rotación de variantes de actividades.**
+Cuando el estudiante repite un tema completado, mostrar una variante distinta de sopa de letras/quiz (`grupo_variante` 1/2/3 en rotación). No tocado desde Sesión 5.
+
+**PENDIENTE 4 — Probar panel del docente end-to-end.**
+Login docente → crear estudiante → ver progreso → resetear PIN. La auditoría de esta sesión confirmó que la lógica de autenticación (`_verificar_docente_autenticado`) es correcta por lectura de código, pero no se ejecutó el flujo completo en navegador.
+
+**PENDIENTE 5 — Mascota guía.**
+No iniciado. Sigue en la especificación de PARTE 19 (sprite pixel art, pistas progresivas desde `pistas_actividad`).
+
+**PENDIENTE 6 — Integración Modo Historia (Sidar).**
+Estado no verificado en esta sesión — última información conocida es la de PARTE 19 (deadline 27/08, Sidar entrega archivos a Dirk).
+
+**PENDIENTE 7 — README + ejecución local.**
+No iniciado.
+
