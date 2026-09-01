@@ -105,13 +105,6 @@ export default function UnidadPage({ params }: { params: { unitId: string } }) {
           from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        .tema-card {
-          transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
-        }
-        .tema-card:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 14px 32px rgba(240, 168, 182, 0.15);
-        }
       `}</style>
 
       <Link
@@ -154,14 +147,21 @@ export default function UnidadPage({ params }: { params: { unitId: string } }) {
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") handleTemaBloqueadoClick(tema.id);
                     }}
-                    animate={temaShakeId === tema.id ? { x: [0, -8, 8, -8, 8, -4, 4, 0] } : { x: 0 }}
-                    transition={{ duration: 0.45, ease: "easeInOut" }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={
+                      temaShakeId === tema.id
+                        ? { opacity: 1, y: 0, x: [0, -8, 8, -8, 8, -4, 4, 0] }
+                        : { opacity: 1, y: 0, x: 0 }
+                    }
+                    transition={
+                      temaShakeId === tema.id
+                        ? { duration: 0.45, ease: "easeInOut" }
+                        : { type: "spring", stiffness: 300, damping: 24, delay: idx * 0.08 }
+                    }
                     className="tema-card block rounded-2xl p-5 cursor-not-allowed select-none"
                     style={{
                       backgroundColor: cardBgBloqueado,
                       border: `1px solid ${cardBorderBloqueado}`,
-                      animation: `entrar ${400 + idx * 100}ms ease forwards`,
-                      opacity: 0,
                     }}
                   >
                     <div className="flex items-center gap-4">
@@ -204,40 +204,46 @@ export default function UnidadPage({ params }: { params: { unitId: string } }) {
             }
 
             return (
-              <Link
+              <motion.div
                 key={tema.id}
-                href={`/niveles/${params.unitId}/${tema.id}`}
-                className="tema-card block rounded-2xl p-5"
-                style={{
-                  backgroundColor: cardBg,
-                  border: `1px solid ${cardBorder}`,
-                  animation: `entrar ${400 + idx * 100}ms ease forwards`,
-                  opacity: 0,
-                }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ type: "spring", stiffness: 300, damping: 24, delay: idx * 0.08 }}
+                whileHover={{ scale: 1.02 }}
+                className="tema-card rounded-2xl"
               >
-                <div className="flex items-center gap-4">
-                  <div
-                    className="w-11 h-11 rounded-xl flex items-center justify-center text-sm font-bold shrink-0"
-                    style={{ backgroundColor: "#F0A8B6", color: "#160B24" }}
-                  >
-                    {tema.orden}
-                  </div>
-                  <div className="flex-1">
-                    <h2 className="text-base font-bold" style={{ color: colorTitulo }}>
-                      {tema.titulo}
-                    </h2>
-                    <span
-                      className="inline-block text-xs font-semibold mt-1 px-2 py-0.5 rounded-full"
-                      style={{
-                        backgroundColor: completado ? "rgba(164,205,213,0.2)" : "rgba(240,168,182,0.15)",
-                        color: completado ? "#A4CDD5" : "#F0A8B6",
-                      }}
+                <Link
+                  href={`/niveles/${params.unitId}/${tema.id}`}
+                  className="block rounded-2xl p-5"
+                  style={{
+                    backgroundColor: cardBg,
+                    border: `1px solid ${cardBorder}`,
+                  }}
+                >
+                  <div className="flex items-center gap-4">
+                    <div
+                      className="w-11 h-11 rounded-xl flex items-center justify-center text-sm font-bold shrink-0"
+                      style={{ backgroundColor: "#F0A8B6", color: "#160B24" }}
                     >
-                      {completado ? "✓ Completado" : "Pendiente"}
-                    </span>
+                      {tema.orden}
+                    </div>
+                    <div className="flex-1">
+                      <h2 className="text-base font-bold" style={{ color: colorTitulo }}>
+                        {tema.titulo}
+                      </h2>
+                      <span
+                        className="inline-block text-xs font-semibold mt-1 px-2 py-0.5 rounded-full"
+                        style={{
+                          backgroundColor: completado ? "rgba(164,205,213,0.2)" : "rgba(240,168,182,0.15)",
+                          color: completado ? "#A4CDD5" : "#F0A8B6",
+                        }}
+                      >
+                        {completado ? "✓ Completado" : "Pendiente"}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              </Link>
+                </Link>
+              </motion.div>
             );
           })}
         </div>

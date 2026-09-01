@@ -20,6 +20,14 @@ const COLORES_UNIDAD = [
   { bg: "rgba(164,205,213,0.08)", border: "rgba(164,205,213,0.2)", accent: "#A4CDD5" },
 ];
 
+// Animación específica por ícono de unidad, mismo patrón que ANIMACION_POR_ICONO en extras/page.tsx
+const ANIMACION_ICONO_UNIDAD: { animate: Record<string, number[]>; duration: number; ease: "easeInOut" }[] = [
+  { animate: { rotate: [-8, 8, -8] },                        duration: 3.2, ease: "easeInOut" }, // 🌸 flor
+  { animate: { x: [-3, 3, -3] },                             duration: 2.8, ease: "easeInOut" }, // ⚖️ balanza
+  { animate: { scale: [1, 1.12, 1] },                        duration: 2.6, ease: "easeInOut" }, // 🤝 pulse
+  { animate: { rotate: [-10, 10, -10], scale: [1, 1.1, 1] }, duration: 3.4, ease: "easeInOut" }, // 🌟 estrella
+];
+
 export default function NivelesPage() {
   const [unidades, setUnidades] = useState<Unidad[]>([]);
   const [unidadesCompletas, setUnidadesCompletas] = useState<Set<string>>(new Set());
@@ -137,12 +145,7 @@ export default function NivelesPage() {
           to { opacity: 1; transform: translateY(0); }
         }
         .unidad-card {
-          transition: transform 250ms ease, box-shadow 250ms ease, border-color 250ms ease;
           cursor: pointer;
-        }
-        .unidad-card:hover {
-          transform: translateY(-4px) scale(1.01);
-          box-shadow: 0 16px 40px rgba(240, 168, 182, 0.15);
         }
       `}</style>
 
@@ -183,14 +186,21 @@ export default function NivelesPage() {
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") handleUnidadBloqueadaClick(unidad.id);
                     }}
-                    animate={unidadShakeId === unidad.id ? { x: [0, -8, 8, -8, 8, -4, 4, 0] } : { x: 0 }}
-                    transition={{ duration: 0.45, ease: "easeInOut" }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={
+                      unidadShakeId === unidad.id
+                        ? { opacity: 1, y: 0, x: [0, -8, 8, -8, 8, -4, 4, 0] }
+                        : { opacity: 1, y: 0, x: 0 }
+                    }
+                    transition={
+                      unidadShakeId === unidad.id
+                        ? { duration: 0.45, ease: "easeInOut" }
+                        : { type: "spring", stiffness: 300, damping: 24, delay: idx * 0.1 }
+                    }
                     className="unidad-card block rounded-2xl p-6 cursor-not-allowed select-none"
                     style={{
                       backgroundColor: "rgba(22,11,36,0.03)",
                       border: "1.5px solid rgba(22,11,36,0.06)",
-                      animation: `entrar ${400 + idx * 100}ms ease forwards`,
-                      opacity: 0,
                     }}
                   >
                     <div className="flex items-center gap-5">
@@ -230,35 +240,49 @@ export default function NivelesPage() {
             }
 
             return (
-              <Link
+              <motion.div
                 key={unidad.id}
-                href={`/niveles/${unidad.id}`}
-                className="unidad-card block rounded-2xl p-6"
-                style={{
-                  backgroundColor: color.bg,
-                  border: `1.5px solid ${color.border}`,
-                  animation: `entrar ${400 + idx * 100}ms ease forwards`,
-                  opacity: 0,
-                }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ type: "spring", stiffness: 300, damping: 24, delay: idx * 0.1 }}
+                whileHover={{ scale: 1.02, boxShadow: `0 16px 40px ${color.accent}40` }}
+                className="unidad-card rounded-2xl"
               >
-                <div className="flex items-center gap-5">
-                  <div
-                    className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shrink-0"
-                    style={{ backgroundColor: color.border }}
-                  >
-                    {icono}
+                <Link
+                  href={`/niveles/${unidad.id}`}
+                  className="block rounded-2xl p-6"
+                  style={{
+                    backgroundColor: color.bg,
+                    border: `1.5px solid ${color.border}`,
+                  }}
+                >
+                  <div className="flex items-center gap-5">
+                    <motion.div
+                      className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shrink-0"
+                      style={{ backgroundColor: color.border }}
+                      animate={ANIMACION_ICONO_UNIDAD[idx % ANIMACION_ICONO_UNIDAD.length].animate}
+                      transition={{
+                        duration: ANIMACION_ICONO_UNIDAD[idx % ANIMACION_ICONO_UNIDAD.length].duration,
+                        repeat: Infinity,
+                        ease: ANIMACION_ICONO_UNIDAD[idx % ANIMACION_ICONO_UNIDAD.length].ease,
+                        delay: idx * 0.15,
+                      }}
+                      whileHover={{ scale: 1.1 }}
+                    >
+                      {icono}
+                    </motion.div>
+                    <div className="flex-1">
+                      <p className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: color.accent }}>
+                        Unidad {unidad.numero_unidad}
+                      </p>
+                      <h2 className="text-lg font-bold" style={{ color: "var(--foreground)" }}>
+                        {unidad.titulo}
+                      </h2>
+                    </div>
+                    <div className="text-2xl opacity-30" style={{ color: color.accent }}>→</div>
                   </div>
-                  <div className="flex-1">
-                    <p className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: color.accent }}>
-                      Unidad {unidad.numero_unidad}
-                    </p>
-                    <h2 className="text-lg font-bold" style={{ color: "var(--foreground)" }}>
-                      {unidad.titulo}
-                    </h2>
-                  </div>
-                  <div className="text-2xl opacity-30" style={{ color: color.accent }}>→</div>
-                </div>
-              </Link>
+                </Link>
+              </motion.div>
             );
           })}
         </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { supabase } from "@/lib/supabase";
 import { getEstudianteLocal, type EstudianteProfile } from "@/lib/auth";
 
@@ -31,6 +32,20 @@ function saludo(nombre: string | null): string {
   const momento = hora < 12 ? "Buenos días" : hora < 19 ? "Buenas tardes" : "Buenas noches";
   return nombre ? `${momento}, ${nombre.split(" ")[0]}` : momento;
 }
+
+type AccesoRapidoId = "niveles" | "logros" | "historia";
+
+const ANIMACION_POR_ACCESO: Record<AccesoRapidoId, { animate: Record<string, number[]>; duration: number; ease: "easeInOut" }> = {
+  niveles:  { animate: { scale: [1, 1.12, 1] },   duration: 3,   ease: "easeInOut" },
+  logros:   { animate: { rotate: [-8, 8, -8] },   duration: 2.8, ease: "easeInOut" },
+  historia: { animate: { scale: [1, 1.1, 1], rotate: [-5, 5, -5] }, duration: 3, ease: "easeInOut" },
+};
+
+const ACCESOS_RAPIDOS: { id: AccesoRapidoId; href: string; emoji: string; label: string; color: string }[] = [
+  { id: "niveles",  href: "/niveles",  emoji: "📖", label: "Niveles",  color: "#F0A8B6" },
+  { id: "logros",   href: "/logros",   emoji: "🏆", label: "Logros",   color: "#A4CDD5" },
+  { id: "historia", href: "/historia", emoji: "🎭", label: "Historia", color: "#F0A8B6" },
+];
 
 export default function DashboardPage() {
   const [estudiante, setEstudiante] = useState<EstudianteProfile | null>(null);
@@ -139,10 +154,6 @@ export default function DashboardPage() {
           from { opacity: 0; transform: translateY(24px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        @keyframes pulso-racha {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.05); }
-        }
         .card-hover {
           transition: transform 220ms ease, box-shadow 220ms ease;
         }
@@ -163,8 +174,14 @@ export default function DashboardPage() {
       <div style={{ animation: "entrar 500ms ease forwards" }} className="mb-8">
         {datos?.racha && datos.racha > 0 ? (
           <div className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 mb-3 text-xs font-bold"
-            style={{ backgroundColor: "rgba(240,168,182,0.15)", color: "#F0A8B6", border: "1px solid rgba(240,168,182,0.3)", animation: "pulso-racha 2s ease-in-out infinite" }}>
-            🔥 {datos.racha} {datos.racha === 1 ? "día" : "días"} seguidos
+            style={{ backgroundColor: "rgba(240,168,182,0.15)", color: "#F0A8B6", border: "1px solid rgba(240,168,182,0.3)" }}>
+            <motion.span
+              animate={{ scale: [1, 1.2, 1] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            >
+              🔥
+            </motion.span>
+            {datos.racha} {datos.racha === 1 ? "día" : "días"} seguidos
           </div>
         ) : null}
         <h1 className="text-3xl font-bold" style={{ color: "var(--foreground)" }}>
@@ -222,12 +239,26 @@ export default function DashboardPage() {
               <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: esOscuro ? "rgba(255,255,255,0.5)" : "rgba(22,11,36,0.4)" }}>Último logro</p>
               {datos?.ultimoLogro ? (
                 <>
-                  <p className="text-3xl mb-2" aria-hidden>🏆</p>
+                  <motion.p
+                    className="text-3xl mb-2"
+                    aria-hidden
+                    animate={{ rotate: [-2, 2, -2] }}
+                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                  >
+                    🏆
+                  </motion.p>
                   <p className="font-bold text-sm" style={{ color: "var(--foreground)" }}>{datos.ultimoLogro.titulo}</p>
                 </>
               ) : (
                 <>
-                  <p className="text-3xl mb-2 opacity-20" aria-hidden>🏆</p>
+                  <motion.p
+                    className="text-3xl mb-2 opacity-20"
+                    aria-hidden
+                    animate={{ rotate: [-2, 2, -2] }}
+                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                  >
+                    🏆
+                  </motion.p>
                   <p className="text-xs" style={{ color: esOscuro ? "rgba(255,255,255,0.5)" : "rgba(22,11,36,0.4)" }}>Completá tu primer tema</p>
                 </>
               )}
@@ -251,21 +282,35 @@ export default function DashboardPage() {
 
           {/* Accesos rápidos */}
           <div className="grid grid-cols-3 gap-3" style={{ animation: "entrar 500ms ease 300ms both" }}>
-            {[
-              { href: "/niveles", emoji: "📖", label: "Niveles" },
-              { href: "/logros", emoji: "🏆", label: "Logros" },
-              { href: "/historia", emoji: "🎭", label: "Historia" },
-            ].map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="card-hover rounded-2xl p-4 text-center"
-                style={{ border: "1.5px solid rgba(22,11,36,0.08)", backgroundColor: "rgba(22,11,36,0.03)" }}
-              >
-                <p className="text-2xl mb-1" aria-hidden>{item.emoji}</p>
-                <p className="text-xs font-semibold" style={{ color: "var(--foreground)" }}>{item.label}</p>
-              </Link>
-            ))}
+            {ACCESOS_RAPIDOS.map((item) => {
+              const config = ANIMACION_POR_ACCESO[item.id];
+              return (
+                <motion.div
+                  key={item.href}
+                  whileHover={{ scale: 1.03, boxShadow: `0 14px 32px ${item.color}55` }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  className="rounded-2xl"
+                >
+                  <Link
+                    href={item.href}
+                    className="block rounded-2xl p-4 text-center"
+                    style={{ border: "1.5px solid rgba(22,11,36,0.08)", backgroundColor: "rgba(22,11,36,0.03)" }}
+                  >
+                    <motion.p
+                      className="text-2xl mb-1"
+                      aria-hidden
+                      animate={config.animate}
+                      transition={{ duration: config.duration, repeat: Infinity, ease: config.ease }}
+                      whileHover={{ scale: 1.1 }}
+                    >
+                      {item.emoji}
+                    </motion.p>
+                    <p className="text-xs font-semibold" style={{ color: "var(--foreground)" }}>{item.label}</p>
+                  </Link>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       )}
