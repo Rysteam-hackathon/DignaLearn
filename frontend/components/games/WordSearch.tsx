@@ -189,7 +189,9 @@ export default function WordSearch({ config, temaId }: WordSearchProps) {
     const key = `${row}-${col}`;
     if (foundCellsSet.has(key)) return "bg-[#A4CDD5] border-transparent";
     if (activeCellsSet.has(key)) return "bg-[#F0A8B6] border-transparent";
-    return "bg-white border-gray-200 hover:bg-[#160B24]/5";
+    return esOscuro
+      ? "bg-[#160B24]/60 border-white/10 hover:bg-white/10"
+      : "bg-white border-gray-200 hover:bg-[#160B24]/5";
   }
 
   const completado = foundWords.length === palabras.length;
@@ -208,8 +210,8 @@ export default function WordSearch({ config, temaId }: WordSearchProps) {
           setLogrosQueue(mapLogrosDesbloqueados(actualizado.logros_desbloqueados));
         }
       })
-      .catch(() => {
-        // no bloqueamos la UI si falla el guardado de progreso
+      .catch((error) => {
+        console.error("Error al guardar progreso (WordSearch):", error);
       });
   }, [completado, progresoGuardado, temaId]);
 
@@ -234,7 +236,9 @@ export default function WordSearch({ config, temaId }: WordSearchProps) {
               key={`${r}-${c}`}
               type="button"
               onClick={() => handleCellClick(r, c)}
-              className={`w-8 h-8 flex items-center justify-center text-sm font-semibold text-[#160B24] border rounded-xl transition-colors duration-200 ${cellClass(
+              className={`w-8 h-8 flex items-center justify-center text-sm font-semibold ${
+                esOscuro ? "text-white" : "text-[#160B24]"
+              } border rounded-xl transition-colors duration-200 ${cellClass(
                 r,
                 c
               )}`}

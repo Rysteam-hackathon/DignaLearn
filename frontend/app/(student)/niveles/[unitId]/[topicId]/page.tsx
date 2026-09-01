@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { supabase } from "@/lib/supabase";
 import WordSearch from "@/components/games/WordSearch";
 import Quiz from "@/components/games/Quiz";
@@ -120,36 +121,35 @@ export default function TemaPage({
 
   return (
     <main className="max-w-2xl mx-auto p-6">
-      <style>{`
-        @keyframes tema-entrar {
-          from { opacity: 0; transform: translateY(18px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .tema-seccion {
-          animation: tema-entrar 450ms ease forwards;
-          opacity: 0;
-        }
-      `}</style>
-
       {cargando ? (
         <p className="text-sm" style={{ color: colorSecundario }}>Cargando tema...</p>
       ) : (
         <>
-          <h1
-            className="tema-seccion text-3xl font-bold mb-4"
-            style={{ color: colorTitulo, animationDelay: "0ms" }}
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 24, delay: 0 }}
+            className="text-3xl font-bold mb-4"
+            style={{ color: colorTitulo }}
           >
             {tema?.titulo}
-          </h1>
+          </motion.h1>
 
-          <div className="tema-seccion" style={{ animationDelay: "60ms" }}>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 24, delay: 0.06 }}
+          >
             <ProgresoLectura temaId={params.topicId} />
-          </div>
+          </motion.div>
 
           {/* Lectura */}
-          <div
-            className="tema-seccion rounded-2xl p-6"
-            style={{ backgroundColor: cardBg, border: `1px solid ${cardBorder}`, animationDelay: "120ms" }}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 24, delay: 0.2 }}
+            className="rounded-2xl p-6"
+            style={{ backgroundColor: cardBg, border: `1px solid ${cardBorder}` }}
           >
             <p
               className="text-lg leading-relaxed whitespace-pre-line"
@@ -157,36 +157,51 @@ export default function TemaPage({
             >
               {tema?.contenido_lectura}
             </p>
-          </div>
+          </motion.div>
 
           {sopaConfig && (
-            <div className="tema-seccion mt-4" style={{ animationDelay: "180ms" }}>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 24, delay: 0.28 }}
+              className="mt-4"
+            >
               <Separador emoji="🔤" esOscuro={esOscuro} />
               <h2 className="text-xl font-bold mb-4" style={{ color: colorTitulo }}>
                 Sopa de letras
               </h2>
               <WordSearch config={sopaConfig} temaId={params.topicId} />
-            </div>
+            </motion.div>
           )}
 
           {quizConfig && (
-            <div className="tema-seccion mt-4" style={{ animationDelay: "240ms" }}>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 24, delay: 0.36 }}
+              className="mt-4"
+            >
               <Separador emoji="❓" esOscuro={esOscuro} />
               <h2 className="text-xl font-bold mb-4" style={{ color: colorTitulo }}>
                 Quiz
               </h2>
               <Quiz config={quizConfig} temaId={params.topicId} />
-            </div>
+            </motion.div>
           )}
 
           {reflexionConfig && (
-            <div className="tema-seccion mt-4" style={{ animationDelay: "300ms" }}>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 24, delay: 0.44 }}
+              className="mt-4"
+            >
               <Separador emoji="💭" esOscuro={esOscuro} />
               <h2 className="text-xl font-bold mb-4" style={{ color: colorTitulo }}>
                 Reflexión
               </h2>
               <Reflexion config={reflexionConfig} temaId={params.topicId} />
-            </div>
+            </motion.div>
           )}
         </>
       )}

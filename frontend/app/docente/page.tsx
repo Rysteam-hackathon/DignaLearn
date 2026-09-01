@@ -124,7 +124,8 @@ export default function DocentePage() {
       setNuevoNombre("");
       setNuevoPin("");
       await cargarEstudiantes();
-    } catch {
+    } catch (error) {
+      console.error("Error al crear estudiante:", error);
       setErrorFormulario("No se pudo crear el estudiante. Intentá de nuevo.");
     } finally {
       setCreando(false);

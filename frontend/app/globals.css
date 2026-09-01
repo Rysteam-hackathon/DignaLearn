@@ -8,11 +8,13 @@
   --color-celeste: #A4CDD5;
   --background: #ffffff;
   --foreground: #160B24;
+  --font-heading: 'Sitka Small', 'Sitka', 'Cambria', Georgia, serif;
 }
 
 .dark {
   --background: #160B24;
   --foreground: #ffffff;
+  --font-heading: 'Sitka Small', 'Sitka', 'Cambria', Georgia, serif;
 }
 
 body {
@@ -23,7 +25,7 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-playfair), Georgia, serif;
+  font-family: var(--font-heading), Georgia, serif;
   font-weight: 700;
 }
 

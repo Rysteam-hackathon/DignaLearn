@@ -13,6 +13,9 @@ const config: Config = {
         background: "var(--background)",
         foreground: "var(--foreground)",
       },
+      fontFamily: {
+        heading: ["var(--font-heading)", "Georgia", "serif"],
+      },
       keyframes: {
         "logro-overlay-fade": {
           "0%": { opacity: "0" },

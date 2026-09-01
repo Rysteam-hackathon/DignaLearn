@@ -140,26 +140,39 @@ export default function NivelesPage() {
   return (
     <div className="min-h-screen p-6 max-w-3xl mx-auto">
       <style>{`
-        @keyframes entrar {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
         .unidad-card {
           cursor: pointer;
         }
       `}</style>
 
       {/* Header */}
-      <div style={{ animation: "entrar 500ms ease forwards" }} className="mb-10">
-        <p className="text-sm font-semibold uppercase tracking-widest mb-1" style={{ color: "#F0A8B6" }}>
+      <div className="mb-10">
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 300, damping: 24, delay: 0 }}
+          className="text-sm font-semibold uppercase tracking-widest mb-1"
+          style={{ color: "#F0A8B6" }}
+        >
           {gradoNombre || "Cargando..."}
-        </p>
-        <h1 className="text-4xl font-bold" style={{ color: "var(--foreground)" }}>
+        </motion.p>
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 300, damping: 24, delay: 0.08 }}
+          className="text-4xl font-bold"
+          style={{ color: "var(--foreground)" }}
+        >
           Tus unidades
-        </h1>
-        <p className="text-sm mt-2 text-gray-400">
+        </motion.h1>
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 300, damping: 24, delay: 0.16 }}
+          className="text-sm mt-2 text-gray-400"
+        >
           Completá cada unidad para desbloquear logros y avanzar en tu aprendizaje.
-        </p>
+        </motion.p>
       </div>
 
       {cargando ? (

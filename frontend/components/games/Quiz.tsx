@@ -78,8 +78,8 @@ export default function Quiz({ config, temaId }: QuizProps) {
             setLogrosQueue(mapLogrosDesbloqueados(actualizado.logros_desbloqueados));
           }
         })
-        .catch(() => {
-          // no bloqueamos la UI si falla el guardado de progreso
+        .catch((error) => {
+          console.error("Error al guardar progreso (Quiz):", error);
         });
     }
   }

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 
 export default function HistoriaPage() {
   const [esOscuro, setEsOscuro] = useState(false);
@@ -18,19 +19,6 @@ export default function HistoriaPage() {
 
   return (
     <div className="relative overflow-hidden min-h-[70vh] flex flex-col items-center justify-center text-center p-5 max-w-3xl mx-auto">
-      <style>{`
-        @keyframes historia-flotar {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-16px); }
-        }
-        @keyframes historia-pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.55; }
-        }
-        .historia-emoji { animation: historia-flotar 4s ease-in-out infinite; }
-        .historia-badge { animation: historia-pulse 2s ease-in-out infinite; }
-      `}</style>
-
       <div className="absolute inset-0 pointer-events-none">
         <div
           className="absolute rounded-full opacity-10"
@@ -43,14 +31,23 @@ export default function HistoriaPage() {
       </div>
 
       <div className="relative z-10 flex flex-col items-center">
-        <div
-          className="historia-badge inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold mb-6"
+        <motion.div
+          animate={{ opacity: [1, 0.55, 1] }}
+          transition={{ duration: 2, ease: "easeInOut", repeat: Infinity }}
+          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold mb-6"
           style={{ backgroundColor: "rgba(240,168,182,0.15)", color: "#F0A8B6", border: "1px solid rgba(240,168,182,0.3)" }}
         >
           ✨ Próximamente
-        </div>
+        </motion.div>
 
-        <p className="historia-emoji text-7xl mb-6" aria-hidden>📖</p>
+        <motion.p
+          animate={{ y: [0, -16, 0] }}
+          transition={{ duration: 4, ease: "easeInOut", repeat: Infinity }}
+          className="text-7xl mb-6"
+          aria-hidden
+        >
+          📖
+        </motion.p>
 
         <h1 className="text-3xl font-bold mb-3" style={{ color: colorTitulo }}>
           Modo Historia

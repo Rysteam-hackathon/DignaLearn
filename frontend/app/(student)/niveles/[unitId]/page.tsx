@@ -100,28 +100,39 @@ export default function UnidadPage({ params }: { params: { unitId: string } }) {
 
   return (
     <main className="min-h-screen p-6 max-w-2xl mx-auto">
-      <style>{`
-        @keyframes entrar {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
-
-      <Link
-        href="/niveles"
-        className="text-sm font-medium hover:underline"
-        style={{ color: "#A4CDD5" }}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: "spring", stiffness: 300, damping: 24, delay: 0 }}
       >
-        ← Volver a Unidades
-      </Link>
+        <Link
+          href="/niveles"
+          className="text-sm font-medium hover:underline"
+          style={{ color: "#A4CDD5" }}
+        >
+          ← Volver a Unidades
+        </Link>
+      </motion.div>
 
-      <div style={{ animation: "entrar 500ms ease forwards" }} className="mt-3 mb-8">
-        <p className="text-sm font-semibold uppercase tracking-widest mb-1" style={{ color: "#F0A8B6" }}>
+      <div className="mt-3 mb-8">
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 300, damping: 24, delay: 0.08 }}
+          className="text-sm font-semibold uppercase tracking-widest mb-1"
+          style={{ color: "#F0A8B6" }}
+        >
           {unidad ? `Unidad ${unidad.numero_unidad}` : "Cargando..."}
-        </p>
-        <h1 className="text-3xl font-bold" style={{ color: colorTitulo }}>
+        </motion.p>
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 300, damping: 24, delay: 0.16 }}
+          className="text-3xl font-bold"
+          style={{ color: colorTitulo }}
+        >
           {unidad?.titulo ?? "Temas"}
-        </h1>
+        </motion.h1>
       </div>
 
       {cargando ? (

@@ -151,10 +151,6 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen p-5 max-w-3xl mx-auto">
       <style>{`
-        @keyframes entrar {
-          from { opacity: 0; transform: translateY(24px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
         .card-hover {
           transition: transform 220ms ease, box-shadow 220ms ease;
         }
@@ -172,7 +168,12 @@ export default function DashboardPage() {
       `}</style>
 
       {/* Saludo */}
-      <div style={{ animation: "entrar 500ms ease forwards" }} className="mb-8">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: "spring", stiffness: 300, damping: 24 }}
+        className="mb-8"
+      >
         {datos?.racha && datos.racha > 0 ? (
           <div className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 mb-3 text-xs font-bold"
             style={{ backgroundColor: "rgba(240,168,182,0.15)", color: "#F0A8B6", border: "1px solid rgba(240,168,182,0.3)" }}>
@@ -189,7 +190,7 @@ export default function DashboardPage() {
           {saludo(estudiante?.nombre_display ?? null)}
         </h1>
         <p className="text-sm text-gray-400 mt-1">¿Qué aprendemos hoy?</p>
-      </div>
+      </motion.div>
 
       {cargando ? (
         <div className="flex flex-col gap-4">
@@ -202,11 +203,13 @@ export default function DashboardPage() {
       ) : (
         <div className="flex flex-col gap-4">
           {/* Tarjeta continuar */}
-          <div
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 24, delay: 0.1 }}
             className="rounded-3xl p-7 relative overflow-hidden"
             style={{
               background: esOscuro ? "#160B24" : "linear-gradient(135deg, #F0A8B6, #A4CDD5)",
-              animation: "entrar 500ms ease 100ms both",
             }}
           >
             <div className="absolute top-0 right-0 w-40 h-40 rounded-full opacity-10 -translate-y-10 translate-x-10"
@@ -231,12 +234,18 @@ export default function DashboardPage() {
                 {datos?.continuarTema ? "Continuar →" : "Comenzar →"}
               </Link>
             </div>
-          </div>
+          </motion.div>
 
           {/* Tarjetas métricas */}
-          <div className="grid grid-cols-2 gap-4" style={{ animation: "entrar 500ms ease 200ms both" }}>
+          <div className="grid grid-cols-2 gap-4">
             {/* Último logro */}
-            <div className="card-hover rounded-2xl p-5" style={{ border: "1.5px solid rgba(240,168,182,0.2)", backgroundColor: esOscuro ? "rgba(240,168,182,0.08)" : "rgba(240,168,182,0.04)" }}>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 24, delay: 0 * 0.08 }}
+              className="card-hover rounded-2xl p-5"
+              style={{ border: "1.5px solid rgba(240,168,182,0.2)", backgroundColor: esOscuro ? "rgba(240,168,182,0.08)" : "rgba(240,168,182,0.04)" }}
+            >
               <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: esOscuro ? "rgba(255,255,255,0.5)" : "rgba(22,11,36,0.4)" }}>Último logro</p>
               {datos?.ultimoLogro ? (
                 <>
@@ -263,10 +272,16 @@ export default function DashboardPage() {
                   <p className="text-xs" style={{ color: esOscuro ? "rgba(255,255,255,0.5)" : "rgba(22,11,36,0.4)" }}>Completá tu primer tema</p>
                 </>
               )}
-            </div>
+            </motion.div>
 
             {/* Unidades */}
-            <div className="card-hover rounded-2xl p-5" style={{ border: "1.5px solid rgba(164,205,213,0.2)", backgroundColor: esOscuro ? "rgba(164,205,213,0.08)" : "rgba(164,205,213,0.04)" }}>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 24, delay: 1 * 0.08 }}
+              className="card-hover rounded-2xl p-5"
+              style={{ border: "1.5px solid rgba(164,205,213,0.2)", backgroundColor: esOscuro ? "rgba(164,205,213,0.08)" : "rgba(164,205,213,0.04)" }}
+            >
               <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: esOscuro ? "rgba(255,255,255,0.5)" : "rgba(22,11,36,0.4)" }}>Unidades</p>
               <p className="text-4xl font-bold mb-1" style={{ color: "var(--foreground)" }}>
                 {datos?.unidadesCompletadas ?? 0}
@@ -278,19 +293,21 @@ export default function DashboardPage() {
                     style={{ backgroundColor: n <= (datos?.unidadesCompletadas ?? 0) ? "#F0A8B6" : esOscuro ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)" }} />
                 ))}
               </div>
-            </div>
+            </motion.div>
           </div>
 
           {/* Accesos rápidos */}
-          <div className="grid grid-cols-3 gap-3" style={{ animation: "entrar 500ms ease 300ms both" }}>
-            {ACCESOS_RAPIDOS.map((item) => {
+          <div className="grid grid-cols-3 gap-3">
+            {ACCESOS_RAPIDOS.map((item, idx) => {
               const config = ANIMACION_POR_ACCESO[item.id];
               return (
                 <motion.div
                   key={item.href}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 24, delay: idx * 0.08 }}
                   whileHover={{ scale: 1.03, boxShadow: `0 14px 32px ${item.color}55` }}
                   whileTap={{ scale: 0.95 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
                   className="rounded-2xl"
                 >
                   <Link

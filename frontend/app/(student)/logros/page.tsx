@@ -121,16 +121,6 @@ export default function LogrosPage() {
 
   return (
     <div className="p-5 max-w-3xl mx-auto">
-      <style>{`
-        @keyframes logros-pulse {
-          0%, 100% { transform: scale(1); opacity: 1; }
-          50% { transform: scale(1.08); opacity: 0.75; }
-        }
-        .logro-emoji-vacio {
-          animation: logros-pulse 2.2s ease-in-out infinite;
-        }
-      `}</style>
-
       <motion.div
         initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
@@ -148,7 +138,14 @@ export default function LogrosPage() {
         <p className="text-sm" style={{ color: colorSecundario }}>Cargando logros...</p>
       ) : logros.length === 0 ? (
         <div className="text-center py-16">
-          <p className="logro-emoji-vacio text-6xl mb-4" aria-hidden>🏆</p>
+          <motion.p
+            className="text-6xl mb-4"
+            aria-hidden
+            animate={{ scale: [1, 1.08, 1], opacity: [1, 0.75, 1] }}
+            transition={{ duration: 2.2, ease: "easeInOut", repeat: Infinity }}
+          >
+            🏆
+          </motion.p>
           <p className="text-sm" style={{ color: colorSecundario }}>
             Completá tu primer tema para desbloquear logros.
           </p>
