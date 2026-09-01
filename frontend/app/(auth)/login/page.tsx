@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { loginEstudiante, loginDocente } from "@/lib/auth";
+import LogoDignaLearn from "@/components/ui/LogoDignaLearn";
 
 type Tab = "estudiante" | "docente";
 
@@ -57,9 +58,12 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white mb-1">
-            Digna<span style={{ color: "#A4CDD5" }}>Learn</span>
-          </h1>
+          <LogoDignaLearn
+            size={72}
+            showWordmark={true}
+            darkBackground={true}
+            className="justify-center mb-6"
+          />
           <p className="text-sm" style={{ color: "#F0A8B6" }}>
             Educación que empodera. Dignidad que transforma.
           </p>

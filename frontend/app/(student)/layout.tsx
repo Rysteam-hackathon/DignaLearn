@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { getEstudianteLocal } from "@/lib/auth";
 import FondoAnimado from "@/components/FondoAnimado";
+import LogoDignaLearn from "@/components/ui/LogoDignaLearn";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Inicio",   emoji: "🏠" },
@@ -84,9 +85,9 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
 
       {/* Sidebar — solo desktop */}
       <aside className="relative z-10 hidden md:flex flex-col w-56 min-h-screen border-r border-[#F0A8B6]/20 bg-[#160B24] px-4 py-6 shrink-0">
-        <p className="text-lg font-bold mb-8 px-2 text-white">
-          Digna<span style={{ color: "#A4CDD5" }}>Learn</span>
-        </p>
+        <div className="mb-8 px-2">
+          <LogoDignaLearn size={40} showWordmark={true} darkBackground={true} />
+        </div>
         <nav className="flex flex-col gap-1">
           {NAV_ITEMS.map((item) => {
             const activo = pathname === item.href || pathname.startsWith(item.href + "/");
