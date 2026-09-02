@@ -55,6 +55,10 @@ export default function DocentePage() {
   const [nuevoPin, setNuevoPin] = useState("");
   const [errorFormulario, setErrorFormulario] = useState<string | null>(null);
   const [codigoGenerado, setCodigoGenerado] = useState<string | null>(null);
+  const [resetPinAbiertoId, setResetPinAbiertoId] = useState<string | null>(null);
+  const [resetPinValor, setResetPinValor] = useState("");
+  const [resetPinEnviando, setResetPinEnviando] = useState(false);
+  const [resetPinMensaje, setResetPinMensaje] = useState<{ id: string; tipo: "exito" | "error"; texto: string } | null>(null);
 
   useEffect(() => {
     async function verificarSesion() {
@@ -129,6 +133,38 @@ export default function DocentePage() {
       setErrorFormulario("No se pudo crear el estudiante. Intentá de nuevo.");
     } finally {
       setCreando(false);
+    }
+  }
+
+  async function handleResetearPin(estudianteId: string) {
+    if (!/^\d{4}$/.test(resetPinValor)) {
+      setResetPinMensaje({ id: estudianteId, tipo: "error", texto: "El PIN debe ser exactamente 4 dígitos." });
+      return;
+    }
+    if (!docente) return;
+    setResetPinEnviando(true);
+    try {
+      const token = await obtenerTokenDocente();
+      const res = await fetch(`${BACKEND_URL}/api/docente/resetear-pin`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          docente_usuario_id: docente.usuario_id,
+          estudiante_id: estudianteId,
+          nuevo_pin: resetPinValor,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      setResetPinMensaje({ id: estudianteId, tipo: "exito", texto: "PIN actualizado correctamente." });
+      setResetPinValor("");
+    } catch (error) {
+      console.error("Error al resetear PIN:", error);
+      setResetPinMensaje({ id: estudianteId, tipo: "error", texto: "No se pudo actualizar el PIN. Intentá de nuevo." });
+    } finally {
+      setResetPinEnviando(false);
     }
   }
 
@@ -321,6 +357,61 @@ export default function DocentePage() {
                         {est.temas_completados} de {TEMAS_POR_GRADO} temas completados ·{" "}
                         {est.ultima_actividad ? `Última actividad: ${formatearFecha(est.ultima_actividad)}` : "Sin actividad registrada"}
                       </p>
+
+                      <div className="mt-4 pt-4 border-t border-gray-100">
+                        {resetPinAbiertoId === est.id ? (
+                          <div className="flex flex-col gap-2">
+                            <label className="block text-xs font-medium text-gray-700">Nuevo PIN (4 dígitos)</label>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="password"
+                                inputMode="numeric"
+                                maxLength={4}
+                                value={resetPinValor}
+                                onChange={(e) => setResetPinValor(e.target.value.replace(/\D/g, ""))}
+                                placeholder="0000"
+                                className="w-24 rounded-lg border border-gray-300 px-3 py-1.5 text-sm"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleResetearPin(est.id)}
+                                disabled={resetPinEnviando}
+                                className="rounded-lg border border-[#A4CDD5] text-[#A4CDD5] text-sm px-3 py-1 hover:bg-[#A4CDD5]/10 transition-colors disabled:opacity-50"
+                              >
+                                {resetPinEnviando ? "Guardando..." : "Confirmar"}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setResetPinAbiertoId(null);
+                                  setResetPinValor("");
+                                  setResetPinMensaje(null);
+                                }}
+                                className="text-sm text-gray-400 hover:text-gray-700"
+                              >
+                                Cancelar
+                              </button>
+                            </div>
+                            {resetPinMensaje && resetPinMensaje.id === est.id && (
+                              <p className={resetPinMensaje.tipo === "exito" ? "text-[#A4CDD5] text-sm" : "text-red-400 text-sm"}>
+                                {resetPinMensaje.texto}
+                              </p>
+                            )}
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setResetPinAbiertoId(est.id);
+                              setResetPinValor("");
+                              setResetPinMensaje(null);
+                            }}
+                            className="rounded-lg border border-[#A4CDD5] text-[#A4CDD5] text-sm px-3 py-1 hover:bg-[#A4CDD5]/10 transition-colors"
+                          >
+                            Resetear PIN
+                          </button>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>

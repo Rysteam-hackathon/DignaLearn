@@ -45,11 +45,11 @@ const VALORES = [
 ];
 
 const EQUIPO = [
+  { emoji: "⚙️", nombre: "Dirk Martinez", rol: "Backend", color: "#A4CDD5" },
   { emoji: "👨‍💼", nombre: "Eddy Marenco", rol: "Líder y Marketing", color: "#F0A8B6" },
   { emoji: "📣", nombre: "Ronald Dávila", rol: "Comunicador", color: "#A4CDD5" },
   { emoji: "🎨", nombre: "Sharis Peralta", rol: "Diseño", color: "#F0A8B6" },
-  { emoji: "⚙️", nombre: "Dirk Martinez", rol: "Backend", color: "#A4CDD5" },
-  { emoji: "💻", nombre: "Sidar Perez", rol: "Frontend", color: "#F0A8B6" },
+  { emoji: "💻", nombre: "Sidar Perez", rol: "Frontend", color: "#A4CDD5" },
 ];
 
 function irASeccion(id: string) {
@@ -466,7 +466,7 @@ export default function LandingPage() {
           <div className="flex gap-6 text-sm text-white/50">
             <Link href="/privacidad" className="hover:text-white/80 transition-colors">Política de privacidad</Link>
             <Link href="/terminos" className="hover:text-white/80 transition-colors">Términos de uso</Link>
-            <a href="mailto:contacto@dignalearn.com" className="hover:text-white/80 transition-colors">Contacto</a>
+            <Link href="/contacto" className="hover:text-white/80 transition-colors">Contacto</Link>
           </div>
 
           <p className="text-white/40 text-xs">

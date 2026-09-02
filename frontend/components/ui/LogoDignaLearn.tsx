@@ -21,6 +21,7 @@ export default function LogoDignaLearn({
         alt="DignaLearn"
         width={size}
         height={size}
+        style={{ width: size, height: size }}
         priority
       />
       {showWordmark && (
