@@ -13,6 +13,7 @@ export interface Logro {
   icono_url: string | null;
   tipo_condicion: string;
   nivel: string;
+  valor_condicion?: number | null;
 }
 
 interface LogroCelebracionProps {
@@ -114,7 +115,13 @@ export default function LogroCelebracion({ logro, onClose }: LogroCelebracionPro
                   className="w-24 h-24 object-contain"
                 />
               ) : (
-                <LogroIcono tipo_condicion={logro.tipo_condicion ?? ""} nivel={logro.nivel ?? "tema"} size={96} />
+                <LogroIcono
+                  tipo_condicion={logro.tipo_condicion ?? ""}
+                  nivel={logro.nivel ?? "tema"}
+                  size={96}
+                  nombre_logro={logro.titulo}
+                  condicion_valor={logro.valor_condicion ?? undefined}
+                />
               )}
             </motion.div>
 

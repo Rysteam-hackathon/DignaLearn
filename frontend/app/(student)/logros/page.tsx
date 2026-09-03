@@ -14,6 +14,7 @@ interface LogroDesbloqueado {
     descripcion: string | null;
     tipo_condicion: string;
     nivel: string;
+    valor_condicion: number | null;
   };
 }
 
@@ -75,6 +76,7 @@ export default function LogrosPage() {
             titulo,
             descripcion,
             tipo_condicion,
+            valor_condicion,
             niveles_logro ( nombre )
           )
         `)
@@ -86,6 +88,7 @@ export default function LogrosPage() {
           titulo: string;
           descripcion: string | null;
           tipo_condicion: string;
+          valor_condicion: number | null;
           niveles_logro: { nombre: string } | null;
         } | null;
 
@@ -97,6 +100,7 @@ export default function LogrosPage() {
             descripcion: logroRaw?.descripcion ?? null,
             tipo_condicion: logroRaw?.tipo_condicion ?? "",
             nivel: logroRaw?.niveles_logro?.nombre ?? "tema",
+            valor_condicion: logroRaw?.valor_condicion ?? null,
           },
         };
       });
@@ -173,7 +177,13 @@ export default function LogrosPage() {
                   style={{ backgroundColor: badge.bg }}
                 >
                   {esEspecial && <DestellosEspeciales />}
-                  <LogroIcono tipo_condicion={item.logro.tipo_condicion} nivel={item.logro.nivel} size={44} />
+                  <LogroIcono
+                    tipo_condicion={item.logro.tipo_condicion}
+                    nivel={item.logro.nivel}
+                    size={44}
+                    nombre_logro={item.logro.titulo}
+                    condicion_valor={item.logro.valor_condicion ?? undefined}
+                  />
                 </motion.div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5 flex-wrap">

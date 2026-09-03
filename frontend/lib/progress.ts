@@ -13,6 +13,7 @@ export interface LogroDesbloqueadoApi {
   icono_url: string | null;
   tipo_condicion: string;
   nivel_nombre: string | null;
+  valor_condicion: number | null;
 }
 
 export interface ProgresoTema {
@@ -42,6 +43,7 @@ export function mapLogrosDesbloqueados(items: LogroDesbloqueadoApi[]): Logro[] {
     icono_url: item.icono_url,
     tipo_condicion: item.tipo_condicion,
     nivel: item.nivel_nombre ?? "tema",
+    valor_condicion: item.valor_condicion,
   }));
 }
 

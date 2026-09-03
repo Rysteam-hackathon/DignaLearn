@@ -18,6 +18,7 @@ class LogroDesbloqueado(BaseModel):
     nivel_logro_id: int
     tipo_condicion: str
     nivel_nombre: str | None = None
+    valor_condicion: int | None = None
 
 
 def evaluar_logros(estudiante_id: str, tema_id: str) -> list[LogroDesbloqueado]:
@@ -72,6 +73,12 @@ def evaluar_logros(estudiante_id: str, tema_id: str) -> list[LogroDesbloqueado]:
                 )
                 if logro:
                     desbloqueados.append(logro)
+
+    # Especial: Coleccionista — 3 logros de unidad desbloqueados
+    if _cantidad_unidades_desbloqueadas(supabase, estudiante_id) >= 3:
+        logro = _intentar_desbloquear(supabase, estudiante_id, "logros_unidad")
+        if logro:
+            desbloqueados.append(logro)
 
     # Especiales de racha (evalúa los 3 umbrales)
     racha_actual = _racha_de_dias(supabase, estudiante_id)
@@ -234,6 +241,17 @@ def _racha_de_dias(supabase: Client, estudiante_id: str) -> int:
     return racha
 
 
+def _cantidad_unidades_desbloqueadas(supabase: Client, estudiante_id: str) -> int:
+    resultado = (
+        supabase.table("estudiante_logros")
+        .select("id, logros!inner(tipo_condicion)")
+        .eq("estudiante_id", estudiante_id)
+        .eq("logros.tipo_condicion", "unidad_completada")
+        .execute()
+    )
+    return len(resultado.data or [])
+
+
 def _intentar_desbloquear(
     supabase: Client,
     estudiante_id: str,
@@ -245,7 +263,7 @@ def _intentar_desbloquear(
         supabase.table("logros")
         .select(
             "id, titulo, descripcion, icono_url, nivel_logro_id, tipo_condicion,"
-            " niveles_logro(nombre)"
+            " valor_condicion, niveles_logro(nombre)"
         )
         .eq("tipo_condicion", tipo_condicion)
     )
