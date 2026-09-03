@@ -31,8 +31,7 @@ El repositorio `DignaLearn` contiene únicamente **5 archivos de documentación*
 
 | Miembro | Rol | Responsabilidad técnica |
 |---------|-----|------------------------|
-| Eddy Marenco | Líder / Marketing | Coordinación, presentación, estrategia + dev backend/BD |
-| Ronald Dávila | Comunicador | Documentación, comunicación externa |
+| Eddy Marenco | Líder / Marketing y Comunicaciones | Coordinación, presentación, estrategia, comunicación externa + dev backend/BD |
 | Sharis Peralta | Diseñadora | UI/UX, ilustraciones de insignias, assets visuales |
 | Dirk Martinez | Dev Backend | FastAPI, lógica de gamificación, conexión Supabase |
 | Sidar Perez | Diseñador / Dev Frontend | Módulo Modo Historia (ver Parte 10) |
@@ -632,7 +631,7 @@ student_story_progress (
 
 ## PARTE 12 — Modelo de Negocio
 
-> ⚠️ En definición — el equipo de marketing (Eddy/Ronald) confirmará el modelo final. Lo que sigue es la propuesta base para el hackathon.
+> ⚠️ En definición — Eddy (Marketing y Comunicaciones) confirmará el modelo final. Lo que sigue es la propuesta base para el hackathon.
 
 ### Principio base
 
@@ -671,10 +670,9 @@ Contenido educativo basado en documentos oficiales del MINED Nicaragua
 Debe incluir:
 - Descripción breve del proyecto y su propósito
 - Créditos del equipo con roles:
-  - Eddy Marenco — Líder y Marketing
-  - Ronald Dávila — Comunicador
-  - Sharis Peralta — Diseño
   - Dirk Martinez — Backend
+  - Eddy Marenco — Líder, Marketing y Comunicaciones
+  - Sharis Peralta — Diseño
   - Sidar Perez — Frontend y Modo Historia
 - "Hecho con ❤️ en Nicaragua"
 - Evento: Hackathon Nicaragua 2026
