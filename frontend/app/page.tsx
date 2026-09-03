@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
-import LogoDignaLearn from "@/components/ui/LogoDignaLearn";
 
 const PASOS = [
   {
@@ -46,8 +46,7 @@ const VALORES = [
 
 const EQUIPO = [
   { emoji: "⚙️", nombre: "Dirk Martinez", rol: "Backend", color: "#A4CDD5" },
-  { emoji: "👨‍💼", nombre: "Eddy Marenco", rol: "Líder y Marketing", color: "#F0A8B6" },
-  { emoji: "📣", nombre: "Ronald Dávila", rol: "Comunicador", color: "#A4CDD5" },
+  { emoji: "👨‍💼", nombre: "Eddy Marenco", rol: "Líder, Marketing y Comunicaciones", color: "#F0A8B6" },
   { emoji: "🎨", nombre: "Sharis Peralta", rol: "Diseño", color: "#F0A8B6" },
   { emoji: "💻", nombre: "Sidar Perez", rol: "Frontend", color: "#A4CDD5" },
 ];
@@ -82,7 +81,23 @@ export default function LandingPage() {
         }}
       >
         <div className="flex items-center justify-between px-6 md:px-12 py-4">
-          <LogoDignaLearn size={36} showWordmark={true} darkBackground={true} />
+          <Link href="/" className="flex items-center gap-3">
+            <Image
+              src="/logo-isotipo.svg"
+              alt="DignaLearn"
+              width={36}
+              height={36}
+              style={{ width: 36, height: 36 }}
+              priority
+            />
+            <span
+              style={{ fontFamily: "var(--font-heading)" }}
+              className="text-xl font-semibold tracking-tight leading-none"
+            >
+              <span style={{ color: "#FFFFFF" }}>Digna</span>
+              <span style={{ color: "#F0A8B6" }}>Learn</span>
+            </span>
+          </Link>
 
           <div className="hidden md:flex gap-8">
             <button
@@ -94,17 +109,17 @@ export default function LandingPage() {
             </button>
             <button
               type="button"
-              onClick={() => irASeccion("nosotros")}
-              className="text-white/70 hover:text-white transition-colors font-medium"
-            >
-              Nosotros
-            </button>
-            <button
-              type="button"
               onClick={() => irASeccion("valores")}
               className="text-white/70 hover:text-white transition-colors font-medium"
             >
               Valores
+            </button>
+            <button
+              type="button"
+              onClick={() => irASeccion("nosotros")}
+              className="text-white/70 hover:text-white transition-colors font-medium"
+            >
+              Nosotros
             </button>
           </div>
 
@@ -348,7 +363,7 @@ export default function LandingPage() {
           className="text-3xl md:text-4xl font-bold text-center text-white mb-4"
           style={{ fontFamily: "var(--font-heading)" }}
         >
-          Los valores de DignaLearn
+          Los valores de Digna<span style={{ color: "#F0A8B6" }}>Learn</span>
         </motion.h2>
         <p className="text-white/60 text-center mb-14 max-w-xl mx-auto">
           Lo que nos guía en cada decisión de diseño y contenido.
@@ -457,7 +472,23 @@ export default function LandingPage() {
       <footer className="py-10 px-6" style={{ backgroundColor: "#0d0718" }}>
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div>
-            <LogoDignaLearn size={28} showWordmark={true} darkBackground={true} />
+            <div className="flex items-center gap-3">
+              <Image
+                src="/logo-isotipo.svg"
+                alt="DignaLearn"
+                width={28}
+                height={28}
+                style={{ width: 28, height: 28 }}
+                priority
+              />
+              <span
+                style={{ fontFamily: "var(--font-heading)" }}
+                className="text-lg font-semibold tracking-tight leading-none"
+              >
+                <span style={{ color: "#FFFFFF" }}>Digna</span>
+                <span style={{ color: "#F0A8B6" }}>Learn</span>
+              </span>
+            </div>
             <p className="text-white/40 text-xs mt-2">
               Contenido basado en documentos oficiales del MINED Nicaragua
             </p>

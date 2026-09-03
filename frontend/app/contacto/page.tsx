@@ -26,13 +26,13 @@ export default function ContactoPage() {
     const body    = encodeURIComponent(
       `Nombre: ${nombre}\nCorreo: ${email || "No indicado"}\n\n${mensaje}`
     );
-    window.open(`mailto:contacto@dignalearn.com?subject=${subject}&body=${body}`);
+    window.open(`mailto:dignalearnRS@gmail.com?subject=${subject}&body=${body}`);
   };
 
   const EQUIPO = [
     { label:"✉️ Correo electrónico",     color:"#F0A8B6",
-      valor:"contacto@dignalearn.com",
-      accion: <a href="mailto:contacto@dignalearn.com"
+      valor:"dignalearnRS@gmail.com",
+      accion: <a href="mailto:dignalearnRS@gmail.com"
                  className="text-[#F0A8B6]/60 hover:text-[#F0A8B6] text-xs transition-colors">
                 Enviar correo →
               </a> },
@@ -43,7 +43,7 @@ export default function ContactoPage() {
       valor:"github.com/Rysteam-hackathon/DignaLearn",
       accion: null },
     { label:"👥 Equipo Rysteam",          color:"#A4CDD5",
-      valor:"Dirk Martinez · Eddy Marenco · Ronald Dávila · Sharis Peralta · Sidar Perez",
+      valor:"Dirk Martinez · Eddy Marenco · Sharis Peralta · Sidar Perez",
       accion: null },
   ];
 

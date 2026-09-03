@@ -77,9 +77,9 @@ export default function PoliticaPrivacidadPage() {
           <li>• Corregir datos incorrectos a través de tu docente</li>
         </ul>
         <p className="mt-3">Para ejercer estos derechos, contactanos en:{" "}
-          <a href="mailto:contacto@dignalearn.com"
+          <a href="mailto:dignalearnRS@gmail.com"
              className="text-[#F0A8B6] hover:underline">
-            contacto@dignalearn.com
+            dignalearnRS@gmail.com
           </a>
         </p>
       </SeccionLegal>

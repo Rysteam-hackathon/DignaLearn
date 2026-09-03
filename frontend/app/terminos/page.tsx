@@ -80,9 +80,9 @@ export default function TerminosPage() {
 
       <SeccionLegal titulo="Contacto" color="#A4CDD5">
         <p>¿Preguntas sobre estos términos? Escribinos a:{" "}
-          <a href="mailto:contacto@dignalearn.com"
+          <a href="mailto:dignalearnRS@gmail.com"
              className="text-[#A4CDD5] hover:underline">
-            contacto@dignalearn.com
+            dignalearnRS@gmail.com
           </a>
         </p>
       </SeccionLegal>
