@@ -84,7 +84,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
       </div>
 
       {/* Sidebar — solo desktop */}
-      <aside className="relative z-10 hidden md:flex flex-col w-56 min-h-screen border-r border-[#F0A8B6]/20 bg-[#160B24] px-4 py-6 shrink-0">
+      <aside className="sticky top-0 h-screen z-10 hidden md:flex flex-col w-56 min-h-screen border-r border-[#F0A8B6]/20 bg-[#160B24] px-4 py-6 shrink-0">
         <div className="mb-8 px-2">
           <LogoDignaLearn size={40} showWordmark={true} darkBackground={true} />
         </div>

@@ -26,7 +26,7 @@ export default function PaginaLegal({
 }: PaginaLegalProps) {
   return (
     <div
-      className="relative min-h-screen overflow-hidden"
+      className="relative min-h-screen"
       style={{ backgroundColor: "#160B24" }}
     >
       {/* Fondo animado */}
@@ -55,8 +55,10 @@ export default function PaginaLegal({
       </div>
 
       {/* Navbar */}
-      <nav className="relative z-10 flex justify-between items-center
-                      px-6 py-4 border-b border-white/5">
+      <nav className="sticky top-0 z-50 flex justify-between items-center
+                 px-6 py-4 border-b border-white/5"
+           style={{ backgroundColor: "rgba(22,11,36,0.85)",
+                    backdropFilter: "blur(12px)" }}>
         <LogoDignaLearn size={36} showWordmark={true} darkBackground={true} />
         <Link
           href="/"
