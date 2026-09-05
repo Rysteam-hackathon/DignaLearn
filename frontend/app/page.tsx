@@ -173,7 +173,14 @@ export default function LandingPage() {
             className="inline-block rounded-full px-4 py-1.5 text-sm"
             style={{ backgroundColor: "rgba(240,168,182,0.15)", color: "#F0A8B6" }}
           >
-            ✨ Plataforma educativa del MINED Nicaragua
+            <motion.span
+              animate={{ scale: [1, 1.15, 1] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              style={{ display: "inline-block" }}
+            >
+              🏆
+            </motion.span>{" "}
+            Tu esfuerzo de hoy es tu victoria de mañana
           </motion.span>
 
           <motion.h1
