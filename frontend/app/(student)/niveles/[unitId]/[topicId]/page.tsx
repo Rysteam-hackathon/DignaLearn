@@ -3,10 +3,34 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { supabaseEstudiante } from "@/lib/supabase";
+import { getEstudianteLocal } from "@/lib/auth";
+import { obtenerProgresoPorTema } from "@/lib/progress";
 import WordSearch from "@/components/games/WordSearch";
 import Quiz from "@/components/games/Quiz";
 import ProgresoLectura from "@/components/ProgresoLectura";
 import Reflexion from "@/components/Reflexion";
+
+// Elige qué variante de actividad mostrar:
+// - Si el estudiante todavía no completó la actividad de este tema, siempre
+//   la variante 1 (versión base para la primera exposición al concepto).
+// - Si ya la completó antes y vuelve a entrar, una al azar entre 2 y 3
+//   (nunca la 1 de nuevo), para que el repaso se sienta distinto.
+// - Si el tema no tiene variantes 2/3 cargadas, cae de nuevo a la 1.
+function elegirActividad<T extends { grupo_variante: number }>(
+  actividades: T[],
+  actividadYaCompletada: boolean
+): T | null {
+  if (!actividades.length) return null;
+
+  if (actividadYaCompletada) {
+    const repaso = actividades.filter((a) => a.grupo_variante === 2 || a.grupo_variante === 3);
+    if (repaso.length > 0) {
+      return repaso[Math.floor(Math.random() * repaso.length)];
+    }
+  }
+
+  return actividades.find((a) => a.grupo_variante === 1) ?? actividades[0];
+}
 
 interface SopaLetrasConfig {
   palabras: string[];
@@ -73,40 +97,38 @@ export default function TemaPage({
         .maybeSingle();
       setTema(temaData);
 
+      let actividadYaCompletada = false;
+      const estudiante = getEstudianteLocal();
+      if (estudiante) {
+        const progreso = await obtenerProgresoPorTema(estudiante.id, params.topicId);
+        actividadYaCompletada = progreso.actividad_completada;
+      }
+
       const { data: actividades } = await supabaseEstudiante
         .from("actividades")
-        .select("config_json, tipos_actividad!inner(nombre)")
+        .select("config_json, grupo_variante, tipos_actividad!inner(nombre)")
         .eq("tema_id", params.topicId)
         .eq("tipos_actividad.nombre", "sopa_letras");
 
-      const actividad =
-        actividades && actividades.length > 0
-          ? actividades[Math.floor(Math.random() * actividades.length)]
-          : null;
+      const actividad = elegirActividad(actividades ?? [], actividadYaCompletada);
       setSopaConfig(actividad?.config_json as SopaLetrasConfig | undefined);
 
       const { data: quizActividades } = await supabaseEstudiante
         .from("actividades")
-        .select("config_json, tipos_actividad!inner(nombre)")
+        .select("config_json, grupo_variante, tipos_actividad!inner(nombre)")
         .eq("tema_id", params.topicId)
         .eq("tipos_actividad.nombre", "quiz");
 
-      const quizActividad =
-        quizActividades && quizActividades.length > 0
-          ? quizActividades[Math.floor(Math.random() * quizActividades.length)]
-          : null;
+      const quizActividad = elegirActividad(quizActividades ?? [], actividadYaCompletada);
       setQuizConfig(quizActividad?.config_json as QuizConfig | undefined);
 
       const { data: scenarioActividades } = await supabaseEstudiante
         .from("actividades")
-        .select("config_json, tipos_actividad!inner(nombre)")
+        .select("config_json, grupo_variante, tipos_actividad!inner(nombre)")
         .eq("tema_id", params.topicId)
         .eq("tipos_actividad.nombre", "scenario");
 
-      const scenarioActividad =
-        scenarioActividades && scenarioActividades.length > 0
-          ? scenarioActividades[Math.floor(Math.random() * scenarioActividades.length)]
-          : null;
+      const scenarioActividad = elegirActividad(scenarioActividades ?? [], actividadYaCompletada);
       setReflexionConfig(scenarioActividad?.config_json as ReflexionConfig | undefined);
 
       setCargando(false);
