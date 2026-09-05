@@ -1,12 +1,38 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabaseDocente as supabase } from "@/lib/supabase";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:8000";
+
+// ---------- Íconos sol / luna del toggle (mismo mecanismo que Extras) ----------
+
+function IconoSol() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
+      <circle cx="12" cy="12" r="5" />
+      <line x1="12" y1="1" x2="12" y2="3" />
+      <line x1="12" y1="21" x2="12" y2="23" />
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+      <line x1="1" y1="12" x2="3" y2="12" />
+      <line x1="21" y1="12" x2="23" y2="12" />
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+    </svg>
+  );
+}
+
+function IconoLuna() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+    </svg>
+  );
+}
 
 interface Docente {
   nombre: string;
@@ -86,6 +112,42 @@ export default function DocentePage() {
   const [creandoEstudiante, setCreandoEstudiante] = useState(false);
   const [codigoCreado, setCodigoCreado] = useState("");
   const [errorCrear, setErrorCrear] = useState("");
+
+  const [modoOscuro, setModoOscuro] = useState(false);
+  const [menuAbierto, setMenuAbierto] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const guardado = localStorage.getItem("dignalearn_tema");
+    setModoOscuro(guardado === "dark");
+    if (guardado === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, []);
+
+  useEffect(() => {
+    function alHacerClickAfuera(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuAbierto(false);
+      }
+    }
+    document.addEventListener("mousedown", alHacerClickAfuera);
+    return () => document.removeEventListener("mousedown", alHacerClickAfuera);
+  }, []);
+
+  function toggleTema() {
+    const nuevo = !modoOscuro;
+    setModoOscuro(nuevo);
+    if (nuevo) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("dignalearn_tema", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("dignalearn_tema", "light");
+    }
+  }
 
   const cargarGrupo = useCallback(async (grupoId: string, token: string) => {
     if (!grupoId) return;
@@ -262,15 +324,77 @@ export default function DocentePage() {
           {institucion && <p className="text-white/50 text-sm mt-1">{institucion.nombre}</p>}
         </div>
 
-        <div className="flex items-center gap-3">
-          <p className="text-white/70 text-sm">{docente?.nombre ?? "Docente"}</p>
+        <div className="relative" ref={menuRef}>
           <button
             type="button"
-            onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }}
-            className="border border-white/20 text-white/60 hover:text-white px-3 py-1 rounded-lg text-sm transition-colors"
+            onClick={() => setMenuAbierto((v) => !v)}
+            className="flex items-center gap-2 text-white/70 hover:text-white text-sm transition-colors"
           >
-            Salir
+            {docente?.nombre ?? "Docente"}
+            <motion.span
+              animate={{ rotate: menuAbierto ? 180 : 0 }}
+              transition={{ duration: 0.2 }}
+              className="text-white/40 text-xs"
+            >
+              ▼
+            </motion.span>
           </button>
+
+          <AnimatePresence>
+            {menuAbierto && (
+              <motion.div
+                initial={{ opacity: 0, y: -8, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -8, scale: 0.96 }}
+                transition={{ duration: 0.18, ease: "easeOut" }}
+                className="absolute right-0 top-full mt-2 w-64 rounded-2xl border border-white/10 p-4 z-50"
+                style={{ backgroundColor: "#160B24", boxShadow: "0 16px 36px rgba(0,0,0,0.4)" }}
+              >
+                <div className="flex items-center justify-between gap-3 pb-4 mb-4 border-b border-white/10">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
+                      style={{ backgroundColor: "rgba(240,168,182,0.18)", color: "#F0A8B6" }}
+                    >
+                      <AnimatePresence mode="wait" initial={false}>
+                        <motion.span
+                          key={modoOscuro ? "moon" : "sun"}
+                          initial={{ opacity: 0, rotate: -90, scale: 0.5 }}
+                          animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                          exit={{ opacity: 0, rotate: 90, scale: 0.5 }}
+                          transition={{ duration: 0.35 }}
+                          className="w-5 h-5"
+                        >
+                          {modoOscuro ? <IconoLuna /> : <IconoSol />}
+                        </motion.span>
+                      </AnimatePresence>
+                    </div>
+                    <span className="text-sm text-white/80">Modo oscuro</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={toggleTema}
+                    className="relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none shrink-0"
+                    style={{ backgroundColor: modoOscuro ? "#F0A8B6" : "#D1D5DB" }}
+                    aria-label={modoOscuro ? "Desactivar modo oscuro" : "Activar modo oscuro"}
+                  >
+                    <span
+                      className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200"
+                      style={{ transform: modoOscuro ? "translateX(20px)" : "translateX(0)" }}
+                    />
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }}
+                  className="w-full border border-white/20 text-white/60 hover:text-white px-3 py-2 rounded-lg text-sm transition-colors text-left"
+                >
+                  Salir
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </header>
 
