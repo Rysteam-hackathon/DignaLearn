@@ -68,7 +68,7 @@ POST /api/progress/completar-elemento — progreso + evaluación de logros
 POST /api/gamification/evaluar/{estudiante_id} — re-evaluar logros
 
 ## Último commit pusheado
-b69d7ce — fix: grupo_id en crear_estudiante, router grupos.py, RLS tablas nuevas, logro Coleccionista
+d925b06 — feat: rediseño panel docente con selector de grupos y fix CORS
 
 ## Pendientes en orden de prioridad
 1. Verificar panel docente en navegador (CORS fix aplicado, no confirmado)
