@@ -55,6 +55,7 @@ export default function DocentePage() {
   const [nuevoPin, setNuevoPin] = useState("");
   const [errorFormulario, setErrorFormulario] = useState<string | null>(null);
   const [codigoGenerado, setCodigoGenerado] = useState<string | null>(null);
+  const [pinUsado, setPinUsado] = useState("");
   const [resetPinAbiertoId, setResetPinAbiertoId] = useState<string | null>(null);
   const [resetPinValor, setResetPinValor] = useState("");
   const [resetPinEnviando, setResetPinEnviando] = useState(false);
@@ -107,6 +108,7 @@ export default function DocentePage() {
     if (!/^\d{4}$/.test(nuevoPin)) { setErrorFormulario("El PIN debe ser exactamente 4 dígitos."); return; }
     if (!docente) return;
     setCreando(true);
+    setPinUsado(nuevoPin);
     try {
       const token = await obtenerTokenDocente();
       const res = await fetch(`${BACKEND_URL}/api/docente/estudiantes`, {
@@ -254,9 +256,10 @@ export default function DocentePage() {
             <h2 className="text-base font-semibold text-gray-900 mb-4">Nuevo estudiante</h2>
             {codigoGenerado ? (
               <div className="text-center py-4">
-                <p className="text-sm text-gray-500 mb-2">Estudiante creado. Compartí este código con el estudiante:</p>
-                <p className="text-3xl font-bold tracking-widest mb-4" style={{ color: "#160B24" }}>{codigoGenerado}</p>
-                <button type="button" onClick={() => { setCodigoGenerado(null); setMostrarFormulario(false); }} className="text-sm text-gray-400 hover:text-gray-700">Cerrar</button>
+                <p className="text-sm text-gray-500 mb-2">Estudiante creado. Compartí este código y PIN con el estudiante:</p>
+                <p className="text-3xl font-bold tracking-widest mb-2" style={{ color: "#160B24" }}>{codigoGenerado}</p>
+                <p className="text-sm text-gray-500 mb-4">PIN: <span className="font-semibold tracking-widest" style={{ color: "#160B24" }}>{pinUsado}</span></p>
+                <button type="button" onClick={() => { setCodigoGenerado(null); setPinUsado(""); setMostrarFormulario(false); }} className="text-sm text-gray-400 hover:text-gray-700">Cerrar</button>
               </div>
             ) : (
               <div className="flex flex-col gap-4">

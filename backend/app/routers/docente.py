@@ -111,46 +111,58 @@ def listar_estudiantes(
         .execute()
     )
 
+    perfiles_data = perfiles.data or []
+    if not perfiles_data:
+        return []
+
+    ids = [perfil["id"] for perfil in perfiles_data]
+    usuario_ids = [perfil["usuario_id"] for perfil in perfiles_data]
+
+    usuarios_batch = (
+        supabase.table("usuarios")
+        .select("id, nombre_display")
+        .in_("id", usuario_ids)
+        .execute()
+    )
+    nombre_por_usuario = {row["id"]: row["nombre_display"] for row in usuarios_batch.data or []}
+
+    progreso_batch = (
+        supabase.table("progreso_estudiante")
+        .select("estudiante_id")
+        .in_("estudiante_id", ids)
+        .eq("lectura_completada", True)
+        .eq("actividad_completada", True)
+        .eq("reflexion_respondida", True)
+        .execute()
+    )
+    temas_por_estudiante: dict[str, int] = {}
+    for row in progreso_batch.data or []:
+        eid = row["estudiante_id"]
+        temas_por_estudiante[eid] = temas_por_estudiante.get(eid, 0) + 1
+
+    actividad_batch = (
+        supabase.table("actividad_diaria")
+        .select("estudiante_id, fecha_actividad")
+        .in_("estudiante_id", ids)
+        .order("fecha_actividad", desc=True)
+        .execute()
+    )
+    ultima_actividad_por_estudiante: dict[str, str] = {}
+    for row in actividad_batch.data or []:
+        eid = row["estudiante_id"]
+        if eid not in ultima_actividad_por_estudiante:
+            ultima_actividad_por_estudiante[eid] = row["fecha_actividad"]
+
     resultado: list[EstudianteResumen] = []
-    for perfil in perfiles.data or []:
-        usuario = (
-            supabase.table("usuarios")
-            .select("nombre_display")
-            .eq("id", perfil["usuario_id"])
-            .maybe_single()
-            .execute()
-        )
-        nombre = usuario.data["nombre_display"] if usuario and usuario.data else None
-
-        progreso = (
-            supabase.table("progreso_estudiante")
-            .select("id")
-            .eq("estudiante_id", perfil["id"])
-            .eq("lectura_completada", True)
-            .eq("actividad_completada", True)
-            .eq("reflexion_respondida", True)
-            .execute()
-        )
-        temas_completados = len(progreso.data or [])
-
-        ultima = (
-            supabase.table("actividad_diaria")
-            .select("fecha_actividad")
-            .eq("estudiante_id", perfil["id"])
-            .order("fecha_actividad", desc=True)
-            .limit(1)
-            .maybe_single()
-            .execute()
-        )
-        ultima_actividad = ultima.data["fecha_actividad"] if ultima and ultima.data else None
-
+    for perfil in perfiles_data:
+        eid = perfil["id"]
         resultado.append(EstudianteResumen(
-            id=perfil["id"],
-            nombre_display=nombre,
+            id=eid,
+            nombre_display=nombre_por_usuario.get(perfil["usuario_id"]),
             codigo_acceso=perfil["codigo_acceso"],
             grado_id=perfil["grado_id"],
-            temas_completados=temas_completados,
-            ultima_actividad=ultima_actividad,
+            temas_completados=temas_por_estudiante.get(eid, 0),
+            ultima_actividad=ultima_actividad_por_estudiante.get(eid),
         ))
 
     return resultado
