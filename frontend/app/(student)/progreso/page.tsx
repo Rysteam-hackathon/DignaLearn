@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { supabase } from "@/lib/supabase";
 import { getEstudianteLocal } from "@/lib/auth";
+import { obtenerRacha, obtenerProgresoEstudiante, obtenerLogrosEstudiante } from "@/lib/progress";
 
 // ---------- Página ----------
 
@@ -51,36 +51,20 @@ export default function ProgresoPage() {
       }
 
       try {
-        const { data: actividad } = await supabase
-          .from("actividad_diaria")
-          .select("fecha_actividad")
-          .eq("estudiante_id", estudiante.id)
-          .order("fecha_actividad", { ascending: false })
-          .limit(60);
+        const fechasActividad = await obtenerRacha(estudiante.id);
+        const racha = calcularRacha(fechasActividad);
 
-        const racha = calcularRacha(actividad?.map((a) => a.fecha_actividad) ?? []);
-
-        const { data: progresos } = await supabase
-          .from("progreso_estudiante")
-          .select("tema_id, lectura_completada, actividad_completada, reflexion_respondida")
-          .eq("estudiante_id", estudiante.id);
-
-        const temasCompletados = (progresos ?? []).filter(
+        const progresos = await obtenerProgresoEstudiante(estudiante.id);
+        const temasCompletados = progresos.filter(
           (p) => p.lectura_completada && p.actividad_completada && p.reflexion_respondida
         ).length;
 
-        const { data: logroData } = await supabase
-          .from("estudiante_logros")
-          .select("desbloqueado_en, logros(titulo)")
-          .eq("estudiante_id", estudiante.id)
-          .order("desbloqueado_en", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        const ultimoLogro = logroData
+        const logrosDesbloqueados = await obtenerLogrosEstudiante(estudiante.id);
+        const primerLogro = logrosDesbloqueados[0];
+        const ultimoLogro = primerLogro
           ? {
-              titulo: (logroData.logros as unknown as { titulo: string } | null)?.titulo ?? "",
-              desbloqueado_en: logroData.desbloqueado_en,
+              titulo: primerLogro.logros?.titulo ?? "",
+              desbloqueado_en: primerLogro.desbloqueado_en,
             }
           : null;
 

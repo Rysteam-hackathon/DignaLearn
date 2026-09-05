@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { supabase } from "@/lib/supabase";
+import { supabaseEstudiante } from "@/lib/supabase";
 import { getEstudianteLocal } from "@/lib/auth";
+import { obtenerProgresoEstudiante } from "@/lib/progress";
 
 interface Tema {
   id: string;
@@ -38,7 +39,7 @@ export default function UnidadPage({ params }: { params: { unitId: string } }) {
     async function cargar() {
       const estudiante = getEstudianteLocal();
 
-      const { data: unidadData } = await supabase
+      const { data: unidadData } = await supabaseEstudiante
         .from("unidades")
         .select("titulo, numero_unidad")
         .eq("id", params.unitId)
@@ -46,7 +47,7 @@ export default function UnidadPage({ params }: { params: { unitId: string } }) {
 
       setUnidad(unidadData);
 
-      const { data: temasData } = await supabase
+      const { data: temasData } = await supabaseEstudiante
         .from("temas")
         .select("id, titulo, orden")
         .eq("unidad_id", params.unitId)
@@ -55,17 +56,13 @@ export default function UnidadPage({ params }: { params: { unitId: string } }) {
       setTemas(temasData ?? []);
 
       if (estudiante && temasData?.length) {
-        const temaIds = temasData.map((t) => t.id);
-        const { data: progresos } = await supabase
-          .from("progreso_estudiante")
-          .select("tema_id, lectura_completada, actividad_completada, reflexion_respondida")
-          .eq("estudiante_id", estudiante.id)
-          .in("tema_id", temaIds);
+        const temaIds = new Set(temasData.map((t) => t.id));
+        const progresos = await obtenerProgresoEstudiante(estudiante.id);
 
         setCompletados(
           new Set(
-            (progresos ?? [])
-              .filter((p) => p.lectura_completada && p.actividad_completada && p.reflexion_respondida)
+            progresos
+              .filter((p) => temaIds.has(p.tema_id) && p.lectura_completada && p.actividad_completada && p.reflexion_respondida)
               .map((p) => p.tema_id)
           )
         );

@@ -1,4 +1,3 @@
-import { supabase } from "@/lib/supabase";
 import { apiFetch } from "@/lib/api";
 import type { Logro } from "@/components/LogroCelebracion";
 
@@ -47,22 +46,71 @@ export function mapLogrosDesbloqueados(items: LogroDesbloqueadoApi[]): Logro[] {
   }));
 }
 
+export interface ProgresoTemaResumen {
+  tema_id: string;
+  lectura_completada: boolean;
+  actividad_completada: boolean;
+  reflexion_respondida: boolean;
+  completado_en: string | null;
+}
+
+export async function obtenerProgresoEstudiante(
+  estudianteId: string,
+  temaId?: string
+): Promise<ProgresoTemaResumen[]> {
+  const query = temaId ? `?tema_id=${encodeURIComponent(temaId)}` : "";
+  const res = await apiFetch(`/api/progress/estudiante/${estudianteId}${query}`);
+  if (!res.ok) return [];
+  return res.json();
+}
+
 export async function obtenerProgresoPorTema(
   estudianteId: string,
   temaId: string
 ): Promise<ProgresoTema> {
-  const { data } = await supabase
-    .from("progreso_estudiante")
-    .select("lectura_completada, actividad_completada, reflexion_respondida, completado_en")
-    .eq("estudiante_id", estudianteId)
-    .eq("tema_id", temaId)
-    .maybeSingle();
+  const filas = await obtenerProgresoEstudiante(estudianteId, temaId);
+  const data = filas[0];
 
   if (!data) {
     return PROGRESO_VACIO;
   }
 
-  return { ...data, logros_desbloqueados: [] };
+  return {
+    lectura_completada: data.lectura_completada,
+    actividad_completada: data.actividad_completada,
+    reflexion_respondida: data.reflexion_respondida,
+    completado_en: data.completado_en,
+    logros_desbloqueados: [],
+  };
+}
+
+export interface RachaFecha {
+  fecha_actividad: string;
+}
+
+export async function obtenerRacha(estudianteId: string): Promise<string[]> {
+  const res = await apiFetch(`/api/progress/racha/${estudianteId}`);
+  if (!res.ok) return [];
+  const data: RachaFecha[] = await res.json();
+  return data.map((d) => d.fecha_actividad);
+}
+
+export interface LogroConDetalle {
+  id: string;
+  desbloqueado_en: string;
+  logros: {
+    titulo: string;
+    descripcion: string | null;
+    tipo_condicion: string;
+    valor_condicion: number | null;
+    niveles_logro: { nombre: string | null } | null;
+  } | null;
+}
+
+export async function obtenerLogrosEstudiante(estudianteId: string): Promise<LogroConDetalle[]> {
+  const res = await apiFetch(`/api/progress/logros/${estudianteId}`);
+  if (!res.ok) return [];
+  return res.json();
 }
 
 export async function marcarElementoCompletado(
@@ -87,27 +135,11 @@ export async function marcarElementoCompletado(
 }
 
 export async function registrarActividadDiaria(estudianteId: string): Promise<void> {
-  const hoy = new Date().toISOString().split("T")[0];
+  const res = await apiFetch(`/api/progress/registrar-actividad/${estudianteId}`, {
+    method: "POST",
+  });
 
-  const { data: existente } = await supabase
-    .from("actividad_diaria")
-    .select("id, elementos_completados")
-    .eq("estudiante_id", estudianteId)
-    .eq("fecha_actividad", hoy)
-    .maybeSingle();
-
-  if (existente) {
-    await supabase
-      .from("actividad_diaria")
-      .update({ elementos_completados: existente.elementos_completados + 1 })
-      .eq("id", existente.id);
-  } else {
-    await supabase
-      .from("actividad_diaria")
-      .insert({
-        estudiante_id: estudianteId,
-        fecha_actividad: hoy,
-        elementos_completados: 1,
-      });
+  if (!res.ok) {
+    throw new Error("No se pudo registrar la actividad diaria.");
   }
 }

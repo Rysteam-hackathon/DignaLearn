@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { supabase } from "@/lib/supabase";
 import { getEstudianteLocal } from "@/lib/auth";
+import { obtenerLogrosEstudiante } from "@/lib/progress";
 import LogroIcono from "@/components/LogroIcono";
 
 interface LogroDesbloqueado {
@@ -67,43 +67,19 @@ export default function LogrosPage() {
       const estudiante = getEstudianteLocal();
       if (!estudiante) return;
 
-      const { data } = await supabase
-        .from("estudiante_logros")
-        .select(`
-          id,
-          desbloqueado_en,
-          logros (
-            titulo,
-            descripcion,
-            tipo_condicion,
-            valor_condicion,
-            niveles_logro ( nombre )
-          )
-        `)
-        .eq("estudiante_id", estudiante.id)
-        .order("desbloqueado_en", { ascending: false });
+      const data = await obtenerLogrosEstudiante(estudiante.id);
 
-      const formateados: LogroDesbloqueado[] = (data ?? []).map((item) => {
-        const logroRaw = item.logros as unknown as {
-          titulo: string;
-          descripcion: string | null;
-          tipo_condicion: string;
-          valor_condicion: number | null;
-          niveles_logro: { nombre: string } | null;
-        } | null;
-
-        return {
-          id: item.id,
-          desbloqueado_en: item.desbloqueado_en,
-          logro: {
-            titulo: logroRaw?.titulo ?? "",
-            descripcion: logroRaw?.descripcion ?? null,
-            tipo_condicion: logroRaw?.tipo_condicion ?? "",
-            nivel: logroRaw?.niveles_logro?.nombre ?? "tema",
-            valor_condicion: logroRaw?.valor_condicion ?? null,
-          },
-        };
-      });
+      const formateados: LogroDesbloqueado[] = data.map((item) => ({
+        id: item.id,
+        desbloqueado_en: item.desbloqueado_en,
+        logro: {
+          titulo: item.logros?.titulo ?? "",
+          descripcion: item.logros?.descripcion ?? null,
+          tipo_condicion: item.logros?.tipo_condicion ?? "",
+          nivel: item.logros?.niveles_logro?.nombre ?? "tema",
+          valor_condicion: item.logros?.valor_condicion ?? null,
+        },
+      }));
 
       setLogros(formateados);
       setCargando(false);

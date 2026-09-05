@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { supabase } from "@/lib/supabase";
+import { supabaseEstudiante } from "@/lib/supabase";
 import { getEstudianteLocal } from "@/lib/auth";
+import { obtenerProgresoEstudiante } from "@/lib/progress";
 
 interface Unidad {
   id: string;
@@ -50,7 +51,7 @@ export default function NivelesPage() {
       try {
         console.log("[niveles] consultando grado con id:", estudiante.grado_id, "tipo:", typeof estudiante.grado_id);
 
-        const { data: grado, error: gradoError } = await supabase
+        const { data: grado, error: gradoError } = await supabaseEstudiante
           .from("grados")
           .select("numero_grado, nivel")
           .eq("id", estudiante.grado_id)
@@ -64,7 +65,7 @@ export default function NivelesPage() {
 
         console.log("[niveles] consultando unidades con grado_id:", estudiante.grado_id);
 
-        const { data, error: unidadesError } = await supabase
+        const { data, error: unidadesError } = await supabaseEstudiante
           .from("unidades")
           .select("id, titulo, numero_unidad")
           .eq("grado_id", estudiante.grado_id)
@@ -77,7 +78,7 @@ export default function NivelesPage() {
 
         if (unidadesData.length) {
           const unidadIds = unidadesData.map((u) => u.id);
-          const { data: temasData } = await supabase
+          const { data: temasData } = await supabaseEstudiante
             .from("temas")
             .select("id, unidad_id")
             .in("unidad_id", unidadIds);
@@ -87,17 +88,12 @@ export default function NivelesPage() {
 
           let temasCompletados = new Set<string>();
           if (temaIds.length) {
-            const { data: progresos, error: progresoError } = await supabase
-              .from("progreso_estudiante")
-              .select("tema_id, lectura_completada, actividad_completada, reflexion_respondida")
-              .eq("estudiante_id", estudiante.id)
-              .in("tema_id", temaIds);
-
-            console.log("[niveles] progreso query result:", progresos, progresoError);
+            const progresos = await obtenerProgresoEstudiante(estudiante.id);
+            const temaIdsSet = new Set(temaIds);
 
             temasCompletados = new Set(
-              (progresos ?? [])
-                .filter((p) => p.lectura_completada && p.actividad_completada && p.reflexion_respondida)
+              progresos
+                .filter((p) => temaIdsSet.has(p.tema_id) && p.lectura_completada && p.actividad_completada && p.reflexion_respondida)
                 .map((p) => p.tema_id)
             );
           }

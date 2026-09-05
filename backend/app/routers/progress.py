@@ -1,7 +1,7 @@
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Literal
 
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Header, HTTPException, Query
 from pydantic import BaseModel
 
 from app.services.auth_service import verificar_estudiante_autenticado
@@ -101,3 +101,132 @@ def completar_elemento(
         logros_desbloqueados = evaluar_logros(estudiante_id, body.tema_id)
 
     return ProgresoResponse(**fila, logros_desbloqueados=logros_desbloqueados)
+
+
+class ActividadFecha(BaseModel):
+    fecha_actividad: str
+
+
+@router.get("/racha/{estudiante_id}", response_model=list[ActividadFecha])
+def obtener_racha(
+    estudiante_id: str,
+    authorization: str | None = Header(default=None),
+) -> list[ActividadFecha]:
+    estudiante_id = verificar_estudiante_autenticado(authorization, estudiante_id)
+    supabase = get_supabase_client()
+
+    resultado = (
+        supabase.table("actividad_diaria")
+        .select("fecha_actividad")
+        .eq("estudiante_id", estudiante_id)
+        .order("fecha_actividad", desc=True)
+        .limit(60)
+        .execute()
+    )
+
+    return [ActividadFecha(**fila) for fila in resultado.data or []]
+
+
+class NivelLogroNombre(BaseModel):
+    nombre: str | None = None
+
+
+class LogroCatalogo(BaseModel):
+    titulo: str
+    descripcion: str | None = None
+    tipo_condicion: str
+    valor_condicion: int | None = None
+    niveles_logro: NivelLogroNombre | None = None
+
+
+class EstudianteLogroItem(BaseModel):
+    id: str
+    desbloqueado_en: str
+    logros: LogroCatalogo | None = None
+
+
+@router.get("/logros/{estudiante_id}", response_model=list[EstudianteLogroItem])
+def obtener_logros_estudiante(
+    estudiante_id: str,
+    authorization: str | None = Header(default=None),
+) -> list[EstudianteLogroItem]:
+    estudiante_id = verificar_estudiante_autenticado(authorization, estudiante_id)
+    supabase = get_supabase_client()
+
+    resultado = (
+        supabase.table("estudiante_logros")
+        .select(
+            "id, desbloqueado_en,"
+            " logros(titulo, descripcion, tipo_condicion, valor_condicion, niveles_logro(nombre))"
+        )
+        .eq("estudiante_id", estudiante_id)
+        .order("desbloqueado_en", desc=True)
+        .execute()
+    )
+
+    return [EstudianteLogroItem(**fila) for fila in resultado.data or []]
+
+
+class ProgresoTemaItem(BaseModel):
+    tema_id: str
+    lectura_completada: bool
+    actividad_completada: bool
+    reflexion_respondida: bool
+    completado_en: str | None = None
+
+
+@router.get("/estudiante/{estudiante_id}", response_model=list[ProgresoTemaItem])
+def obtener_progreso_estudiante(
+    estudiante_id: str,
+    tema_id: str | None = Query(default=None),
+    authorization: str | None = Header(default=None),
+) -> list[ProgresoTemaItem]:
+    estudiante_id = verificar_estudiante_autenticado(authorization, estudiante_id)
+    supabase = get_supabase_client()
+
+    query = (
+        supabase.table("progreso_estudiante")
+        .select("tema_id, lectura_completada, actividad_completada, reflexion_respondida, completado_en")
+        .eq("estudiante_id", estudiante_id)
+    )
+    if tema_id is not None:
+        query = query.eq("tema_id", tema_id)
+
+    resultado = query.execute()
+
+    return [ProgresoTemaItem(**fila) for fila in resultado.data or []]
+
+
+@router.post("/registrar-actividad/{estudiante_id}")
+def registrar_actividad(
+    estudiante_id: str,
+    authorization: str | None = Header(default=None),
+) -> dict:
+    estudiante_id = verificar_estudiante_autenticado(authorization, estudiante_id)
+    supabase = get_supabase_client()
+
+    hoy = date.today().isoformat()
+
+    existente = (
+        supabase.table("actividad_diaria")
+        .select("id, elementos_completados")
+        .eq("estudiante_id", estudiante_id)
+        .eq("fecha_actividad", hoy)
+        .maybe_single()
+        .execute()
+    )
+
+    if existente and existente.data:
+        supabase.table("actividad_diaria").update(
+            {"elementos_completados": existente.data["elementos_completados"] + 1}
+        ).eq("id", existente.data["id"]).execute()
+    else:
+        supabase.table("actividad_diaria").insert(
+            {
+                "estudiante_id": estudiante_id,
+                "fecha_actividad": hoy,
+                "elementos_completados": 1,
+            }
+        ).execute()
+
+    return {"ok": True}

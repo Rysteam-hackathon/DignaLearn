@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { supabase } from "@/lib/supabase";
+import { supabaseEstudiante } from "@/lib/supabase";
 import { getEstudianteLocal, type EstudianteProfile } from "@/lib/auth";
+import { obtenerRacha, obtenerLogrosEstudiante, obtenerProgresoEstudiante } from "@/lib/progress";
 
 interface DashboardData {
   racha: number;
@@ -69,64 +70,44 @@ export default function DashboardPage() {
     async function cargar() {
       if (!est) return;
       try {
-        const { data: actividad } = await supabase
-          .from("actividad_diaria")
-          .select("fecha_actividad")
-          .eq("estudiante_id", est.id)
-          .order("fecha_actividad", { ascending: false })
-          .limit(60);
+        const fechasActividad = await obtenerRacha(est.id);
+        const racha = calcularRacha(fechasActividad);
 
-        const racha = calcularRacha(actividad?.map((a) => a.fecha_actividad) ?? []);
+        const logrosDesbloqueados = await obtenerLogrosEstudiante(est.id);
 
-        const { data: logrosData } = await supabase
-          .from("estudiante_logros")
-          .select("desbloqueado_en, logros(titulo)")
-          .eq("estudiante_id", est.id)
-          .order("desbloqueado_en", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        const ultimoLogro = logrosData ? {
-          titulo: (logrosData.logros as unknown as { titulo: string } | null)?.titulo ?? "",
-          desbloqueado_en: logrosData.desbloqueado_en,
+        const primerLogro = logrosDesbloqueados[0];
+        const ultimoLogro = primerLogro ? {
+          titulo: primerLogro.logros?.titulo ?? "",
+          desbloqueado_en: primerLogro.desbloqueado_en,
         } : null;
 
-        const { data: logrosUnidad } = await supabase
-          .from("estudiante_logros")
-          .select("logros(tipo_condicion)")
-          .eq("estudiante_id", est.id);
-
-        const unidadesCompletadas = (logrosUnidad ?? []).filter(
-          (l) => (l.logros as unknown as { tipo_condicion: string } | null)?.tipo_condicion === "unidad_completada"
+        const unidadesCompletadas = logrosDesbloqueados.filter(
+          (l) => l.logros?.tipo_condicion === "unidad_completada"
         ).length;
 
-        const { data: unidades } = await supabase
+        const { data: unidades } = await supabaseEstudiante
           .from("unidades")
           .select("id, titulo, numero_unidad")
           .eq("grado_id", est.grado_id)
           .order("numero_unidad", { ascending: true });
 
+        const progresoCompleto = await obtenerProgresoEstudiante(est.id);
+
         let continuarTema: DashboardData["continuarTema"] = null;
 
         for (const unidad of unidades ?? []) {
-          const { data: temas } = await supabase
+          const { data: temas } = await supabaseEstudiante
             .from("temas")
             .select("id, titulo, orden")
             .eq("unidad_id", unidad.id)
             .order("orden", { ascending: true });
 
           if (!temas?.length) continue;
-          const temaIds = temas.map((t) => t.id);
-
-          const { data: progresos } = await supabase
-            .from("progreso_estudiante")
-            .select("tema_id, lectura_completada, actividad_completada, reflexion_respondida")
-            .eq("estudiante_id", est.id)
-            .in("tema_id", temaIds);
+          const temaIds = new Set(temas.map((t) => t.id));
 
           const completados = new Set(
-            (progresos ?? [])
-              .filter((p) => p.lectura_completada && p.actividad_completada && p.reflexion_respondida)
+            progresoCompleto
+              .filter((p) => temaIds.has(p.tema_id) && p.lectura_completada && p.actividad_completada && p.reflexion_respondida)
               .map((p) => p.tema_id)
           );
 
