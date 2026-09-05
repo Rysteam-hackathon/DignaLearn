@@ -237,40 +237,63 @@ Crea cuentas de docentes, asigna instituciones. No requiere panel frontend para 
 
 Este modelo es un **punto de partida, no una especificación cerrada.** Siempre generar una migración Alembic antes de modificar el esquema y actualizar `db/schema.sql`.
 
-### Entidades principales (v1 — sujeto a cambios)
+> ⚠️ El esquema real usa nombres en español. Las tablas originales en inglés fueron renombradas durante la implementación.
 
-**`users`** — extendido sobre Supabase Auth  
-`id | email (nullable) | role | display_name | access_code | pin_hash | level_type | grade | created_at`  
-`role`: `student` / `teacher` / `admin`  
-`access_code`: código de 6 chars generado para estudiantes (`DL-XXXX`). NULL para docentes.  
-`grade`: grado asignado (7, 9, etc.). NULL para docentes.
+### Esquema real implementado (v2 — modelo multi-institución)
 
-**`units`** — unidades del programa MINED  
-`id | level_type | grade | title | description | order | cover_image_url | is_active`
+**`instituciones`** — centros educativos que usan la plataforma  
+`id | nombre | ciudad | codigo_institucion | activa | created_at`
 
-**`topics`** — temas dentro de una unidad  
-`id | unit_id | title | order | reading_content (text) | estimated_minutes`
+**`perfiles_admin_institucion`** — administradores por institución  
+`id | usuario_id (FK auth.users) | institucion_id | nombre_completo | created_at`
 
-**`activities`** — actividades lúdicas por tema  
-`id | topic_id | type (word_search/drag_drop/quiz/scenario) | config_json | points_reward | min_score_to_pass`
+**`grupos`** — secciones de clase dentro de una institución  
+`id | nombre | grado_id | institucion_id | anio_lectivo | activo | created_at`
 
-**`student_progress`** — progreso por estudiante y tema  
-`id | student_id | topic_id | reading_completed | activity_completed | reflection_answered | score | completed_at`
+**`docente_grupos`** — relación muchos-a-muchos docente↔grupo  
+`id | docente_id | grupo_id | created_at`
 
-**`achievements`** — catálogo de insignias  
-`id | title | description | icon_url | level | tier (topic/unit/special) | condition_type | condition_value`
+**`perfiles_docente`** — perfil extendido del docente  
+`id | usuario_id (FK auth.users) | nombre_completo | institucion_id | created_at`
 
-**`student_achievements`** — insignias desbloqueadas  
-`id | student_id | achievement_id | unlocked_at`
+**`perfiles_estudiante`** — perfil del estudiante (sin email)  
+`id | usuario_id | codigo_acceso (DL-XXXX) | pin_hash | grado_id | grupo_id | created_at`
 
-**`daily_activity`** — para cálculo de racha  
-`id | student_id | date | elements_completed_count`
+**`grados`** — catálogo de grados escolares  
+`id | numero_grado | nombre_display`
 
-**`story_chapters`** — capítulos del Modo Historia (schema definido por nosotros, gestionado por Sidar)  
-`id | grade | unit_id | title | description | order | is_free | total_pages | estimated_minutes | cover_image_url | is_active`
+**`unidades`** — unidades del programa MINED  
+`id | grado_id | titulo | descripcion | orden | activa`
+
+**`temas`** — temas dentro de una unidad  
+`id | unidad_id | titulo | orden | contenido_lectura | minutos_estimados`
+
+**`actividades`** — actividades lúdicas por tema  
+`id | tema_id | tipo (sopa_letras/quiz/...) | config_json | grupo_variante | puntos_recompensa`
+
+**`progreso_estudiante`** — progreso por estudiante y tema  
+`id | estudiante_id | tema_id | lectura_completada | actividad_completada | reflexion_respondida | completado_at`
+
+**`actividad_diaria`** — para cálculo de racha  
+`id | estudiante_id | fecha_actividad | elementos_completados`
+
+**`logros`** — catálogo de logros (13 logros implementados, cubiertos por 14 casos de ícono en `LogroIcono.tsx` — 13 mapeos directos + 1 fallback genérico)  
+`id | titulo | descripcion | tipo_condicion | valor_condicion | nivel_logro_id | icono_url`
+
+**`estudiante_logros`** — logros desbloqueados por estudiante  
+`id | estudiante_id | logro_id | tema_id | desbloqueado_at`
+
+**`story_chapters`** — capítulos del Modo Historia (Sidar)  
+`id | grado | unidad_id | titulo | orden | es_gratis | total_paginas | activo`
 
 **`student_story_progress`** — progreso en Modo Historia  
-`id | student_id | chapter_id | completed | pages_read | last_read_at`
+`id | student_id | chapter_id | completado | paginas_leidas | last_read_at`
+
+### RLS (Row Level Security)
+
+**Habilitado en:** `instituciones`, `grupos`, `docente_grupos`, `perfiles_admin_institucion`, `grados`, `unidades`, `temas`, `actividades`, `perfiles_estudiante`, `progreso_estudiante`, `actividad_diaria`, `logros`, `estudiante_logros`, `perfiles_docente` ✅ (verificado empíricamente con la anon key pública — 0 filas legibles sin autenticación en las 4 tablas nuevas del modelo multi-institución).
+
+**Pendiente de corrección:** `progreso_estudiante`, `actividad_diaria` y `estudiante_logros` tienen políticas para el rol `anon` con `USING (true)` sin aislamiento real por estudiante — cualquiera con la anon key pública puede leer (y en los dos primeros, escribir) datos de cualquier estudiante directo contra la REST API de Supabase, sin pasar por el backend. El login del estudiante usa un JWT propio (ver Parte 9), no Supabase Auth, así que Postgres no tiene forma nativa de saber "quién es" el estudiante que llama — el fix requiere una función Postgres que valide ese JWT propio, o mover todas las lecturas de progreso a través del backend FastAPI. Fix pendiente.
 
 ---
 
@@ -494,13 +517,29 @@ El estudiante lee una descripción de una mujer histórica nicaragüense y adivi
 **Docente — email + contraseña:**
 Supabase Auth estándar. El admin crea la cuenta desde Supabase Studio.
 
+### Sistema de autenticación — dos flujos distintos (implementación real)
+
+**ESTUDIANTE (sin email):**
+- Login: `POST /api/auth/login-estudiante` con `codigo_acceso` + `pin`.
+- El backend verifica el PIN con `bcrypt` contra `perfiles_estudiante`.
+- Emite un JWT **propio**, firmado con PyJWT (`HS256`, 7 días de expiración) — **no es un JWT de Supabase**.
+- Payload: `{ sub: estudiante_id, grado_id, access_code, nombre }`.
+- El frontend guarda el token en `localStorage["dignalearn_token"]`.
+- Todos los endpoints de estudiante verifican el JWT con `verificar_estudiante_autenticado()` en `auth_service.py` — compara el `sub` del token contra el `estudiante_id` de la request y devuelve 401 si no coincide o falta el token.
+
+**DOCENTE (con email):**
+- Login: `supabase.auth.signInWithPassword(email, password)`.
+- Usa Supabase Auth estándar — JWT de Supabase.
+- El frontend usa `supabase.auth.getSession()` para obtener el `access_token`.
+- Los endpoints de docente verifican con `verificar_docente_autenticado()` en `auth_service.py`, usando `supabase.auth.get_user(token)`.
+
+Son **dos sistemas de auth completamente distintos que coexisten a propósito**: el estudiante no tiene email/contraseña (para no exigir datos que muchos estudiantes de secundaria en zonas rurales no tienen); el docente sí.
+
 ### Roles y RLS
 
-Roles implementados como claims en el JWT de Supabase: `student` / `teacher` / `admin`.
-
 **Row Level Security:**
-- Estudiante: accede solo a su propio progreso y al contenido de su grado.
-- Docente: lee el progreso de los estudiantes que él creó.
+- Estudiante: accede solo a su propio progreso y al contenido de su grado (con el pendiente de aislamiento real descrito en la Parte 5 — RLS).
+- Docente: lee el progreso de los estudiantes de los grupos a los que tiene acceso (vía `docente_grupos`).
 - Contenido (unidades, temas): visible para cualquier usuario autenticado.
 
 ### Privacidad de menores
@@ -599,14 +638,31 @@ student_story_progress (
 **Dark mode:** fondo `#160B24` con acentos rosa y celeste pastel.  
 **Light mode:** fondo `#FFFFFF` con los mismos acentos. Toggle en Extras > Configuración.
 
-**Tipografía definitiva (Mini Brand Identity Guide v3.5):**
+**Tipografía definitiva (Mini Brand Identity Guide v3.5 — Sharis Peralta):**
 
 | Tipo | Fuente | Uso |
 |------|--------|-----|
 | Principal | **Sitka Small Semibold** (serif) | Títulos, headings, logo wordmark, elementos primarios de marca |
 | Secundaria | **Nunito** (sans-serif redondeada) | Cuerpo de texto, descripciones, párrafos informativos, UI secundaria |
 
-> ⚠️ **Corrección respecto a versiones anteriores:** `Inter` era placeholder. Las fuentes definitivas son Sitka Small Semibold + Nunito. Actualizar `tailwind.config.ts` cuando se implemente el frontend.
+> ⚠️ **Corrección respecto a versiones anteriores:** `Inter` era placeholder. Las fuentes definitivas son Sitka Small Semibold + Nunito.
+
+**Implementación real (verificada en código):**
+- Principal: Sitka Small Semibold — implementada como variable CSS en `frontend/app/globals.css`: `--font-heading: 'Sitka Small', 'Sitka', 'Cambria', Georgia, serif;`. Sitka **no está disponible en Google Fonts**, por eso se carga como variable CSS con fallbacks en vez de vía `next/font/google`.
+- Secundaria: Nunito — cargada vía `next/font/google` en `frontend/app/layout.tsx`.
+
+### Animaciones — regla definitiva (Sesión 6 en adelante)
+
+**Framer Motion es OBLIGATORIO para toda animación de interfaz. CSS `@keyframes` está PROHIBIDO en todo el proyecto sin excepción.** Esta regla reemplaza definitivamente la regla anterior de "solo CSS" (ver Parte 19).
+
+### Componentes de marca implementados
+
+- **`LogoDignaLearn.tsx`** (`frontend/components/ui/`) — props: `size`, `showWordmark`, `darkBackground`, `className`.
+  - `darkBackground={true}`: "Digna" en `#FFFFFF`, "Learn" en `#F0A8B6`.
+  - `darkBackground={false}`: "Digna" en `#160B24`, "Learn" en `#F0A8B6`.
+  - "Learn" es **siempre** `#F0A8B6`, sin excepción.
+- **`PaginaLegal.tsx`** (`frontend/components/ui/`) — componente reutilizable para páginas legales: fondo animado, navbar sticky y `SeccionLegal`. Usado en `/privacidad`, `/terminos` y `/contacto` (ver Parte 21).
+- **`LogroIcono.tsx`** (`frontend/components/`) — 14 casos de ícono, cada uno con SVG único y animación Framer Motion propia (ver catálogo completo en Parte 21).
 
 ### Estructura de navegación
 
@@ -1108,4 +1164,109 @@ Estado no verificado en esta sesión — última información conocida es la de 
 
 **PENDIENTE 7 — README + ejecución local.**
 No iniciado.
+
+---
+
+## PARTE 21 — Decisiones y Actualizaciones (Sesiones 7-8)
+
+### Landing page rediseñado (Sesión 7)
+
+El landing page (`frontend/app/page.tsx`) fue reescrito completamente:
+- Navbar sticky con `motion.nav` — blur en scroll, opaco al subir.
+- Hero con badge, headline, 2 CTAs.
+- 3 tarjetas dopamínicas con `whileInView` + `whileHover` glow por color.
+- Sección "Cómo funciona" — 4 pasos con números grandes.
+- Sección "Los valores de DignaLearn" — 5 cards animadas.
+- Sección "Quiénes somos" — 4 miembros en orden alfabético.
+- CTA final + Footer con links a páginas legales.
+- IDs de secciones: `como-funciona`, `valores`, `nosotros`.
+
+### Páginas legales animadas (Sesión 7)
+
+Implementadas con `PaginaLegal.tsx` como componente reutilizable:
+- `frontend/app/privacidad/page.tsx` — 6 secciones, Ley N° 787 Nicaragua.
+- `frontend/app/terminos/page.tsx` — 6 secciones, roles y responsabilidades.
+- `frontend/app/contacto/page.tsx` — 2 columnas, formulario mailto funcional.
+
+Links en footer del landing apuntan a `/privacidad`, `/terminos`, `/contacto`. Email oficial: `dignalearnRS@gmail.com`.
+
+### Login con fondo animado (Sesión 7)
+
+`frontend/app/(auth)/login/page.tsx` tiene fondo animado con 8 elementos flotantes Framer Motion (♀ ★ ⚖ 📖 ♥ ♀ ✏ + círculo decorativo), todos con opacidad 0.07-0.12 y animaciones loop `easeInOut`.
+
+### Ilustraciones SVG de logros (Sesión 8)
+
+`frontend/components/LogroIcono.tsx` reescrito con 14 casos, seleccionados por `tipo_condicion`/`nivel` y desambiguados por `nombre_logro` (string) o `condicion_valor` (number):
+
+- nivel "tema": estrella rosa con rotate loop.
+- `primer_tema`: huella con flecha, avanza hacia adelante.
+- `unidad_completada` / Dignidad: corazón con laureles, latido.
+- `unidad_completada` / Ley: balanza, balanceo.
+- `unidad_completada` / Equidad: dos figuras tomadas de manos, flotan.
+- `unidad_completada` / Líderes: estrella de 6 puntas con silueta, rota.
+- `racha_dias` ≤5: llama naranja con chispas.
+- `racha_dias` ≤7: 7 círculos con wave escalonado.
+- `racha_dias` >7: cohete flotando.
+- `logros_unidad` (Coleccionista): 3 medallas en perspectiva.
+- `ojo_alerta`: ojo estilizado con iris animado.
+- `grado_completo`: diploma con estrella.
+- `protagonismo_nicaragua`: mapa estilizado de Nicaragua.
+- fallback: estrella rosa genérica.
+
+### Modelo multi-institución (Sesión 8)
+
+El sistema fue extendido para soportar múltiples instituciones educativas:
+
+```
+Institución → Admin de Institución
+           → Docente (uno o varios grupos)
+           → Grupo/Sección ("7mo A", "9no A")
+           → Estudiante (pertenece a un grupo)
+```
+
+Tablas nuevas: `instituciones`, `grupos`, `docente_grupos`, `perfiles_admin_institucion`.  
+Columnas nuevas: `perfiles_docente.institucion_id`, `perfiles_estudiante.grupo_id`.  
+RLS habilitado en las 4 tablas nuevas ✅ (verificado: la anon key pública ya no lee ninguna fila de estas tablas).
+
+**Datos de prueba:**
+- Institución: "Instituto Nacional de Prueba" (`INP-2026`, Managua).
+- Grupos: "7mo A" (grado 7), "9no A" (grado 9).
+- Docente: `docente@dignalearn.com` asignado a ambos grupos.
+- Estudiantes: `DL-TEST` y `DL-E492` en 7mo A, `DL-A0NS` en 9no A.
+
+### Panel del docente rediseñado (Sesión 8)
+
+`frontend/app/docente/page.tsx` reescrito completamente con:
+- Header sticky con logo + nombre de institución + botón Salir.
+- Tabs de grupos con pill animado (Framer Motion `layoutId`).
+- 4 stats por grupo (total, promedio, activos, sin actividad).
+- Lista de estudiantes con barras de progreso animadas.
+- Detalle expandible con `AnimatePresence`.
+- Botón Resetear PIN con formulario inline.
+- Modal "Agregar estudiante" con vista de éxito mostrando código + PIN.
+- Fondo `#160B24`, todo Framer Motion.
+
+Backend: 3 endpoints nuevos en `backend/app/routers/grupos.py`:
+- `GET /api/grupos/mis-grupos`
+- `GET /api/grupos/{grupo_id}/estudiantes` (batch queries, no N+1)
+- `GET /api/grupos/{grupo_id}/stats`
+
+### Bugs críticos corregidos (Sesión 8)
+
+1. `crear_estudiante` en `docente.py` no asignaba `grupo_id` → corregido.
+2. `grupos.py` no existía → creado con 3 endpoints.
+3. RLS ausente en tablas nuevas → aplicado desde Supabase SQL Editor.
+4. Logro "Coleccionista" faltaba en la tabla `logros` → insertado.
+
+### Estado de Modo Historia
+
+Sidar Perez no entregó archivos compatibles con el stack del proyecto. La página `/historia` muestra un placeholder "Próximamente" funcional. Sin acción hasta que Sidar entregue archivos a Dirk para evaluación de compatibilidad antes de integrar.
+
+### Equipo actualizado (4 miembros)
+
+Eddy Marenco absorbe el rol de comunicaciones. Equipo actual:
+- Dirk Martinez — Backend
+- Eddy Marenco — Líder, Marketing y Comunicaciones
+- Sharis Peralta — Diseño
+- Sidar Perez — Frontend y Modo Historia
 
