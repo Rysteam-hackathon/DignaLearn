@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { supabase } from "@/lib/supabase";
+import { supabaseEstudiante } from "@/lib/supabase";
 import WordSearch from "@/components/games/WordSearch";
 import Quiz from "@/components/games/Quiz";
 import ProgresoLectura from "@/components/ProgresoLectura";
@@ -66,14 +66,14 @@ export default function TemaPage({
 
   useEffect(() => {
     async function cargar() {
-      const { data: temaData } = await supabase
+      const { data: temaData } = await supabaseEstudiante
         .from("temas")
         .select("titulo, contenido_lectura")
         .eq("id", params.topicId)
         .maybeSingle();
       setTema(temaData);
 
-      const { data: actividades } = await supabase
+      const { data: actividades } = await supabaseEstudiante
         .from("actividades")
         .select("config_json, tipos_actividad!inner(nombre)")
         .eq("tema_id", params.topicId)
@@ -85,7 +85,7 @@ export default function TemaPage({
           : null;
       setSopaConfig(actividad?.config_json as SopaLetrasConfig | undefined);
 
-      const { data: quizActividades } = await supabase
+      const { data: quizActividades } = await supabaseEstudiante
         .from("actividades")
         .select("config_json, tipos_actividad!inner(nombre)")
         .eq("tema_id", params.topicId)
@@ -97,7 +97,7 @@ export default function TemaPage({
           : null;
       setQuizConfig(quizActividad?.config_json as QuizConfig | undefined);
 
-      const { data: scenarioActividades } = await supabase
+      const { data: scenarioActividades } = await supabaseEstudiante
         .from("actividades")
         .select("config_json, tipos_actividad!inner(nombre)")
         .eq("tema_id", params.topicId)
