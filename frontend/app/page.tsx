@@ -46,7 +46,8 @@ const VALORES = [
 
 const EQUIPO = [
   { emoji: "⚙️", nombre: "Dirk Martinez", rol: "Backend", color: "#A4CDD5" },
-  { emoji: "👨‍💼", nombre: "Eddy Marenco", rol: "Líder, Marketing y Comunicaciones", color: "#F0A8B6" },
+  { emoji: "👨‍💼", nombre: "Eddy Marenco", rol: "Líder y Marketing", color: "#F0A8B6" },
+  { emoji: "💬", nombre: "Jonathan Alvarado", rol: "Comunicador", color: "#A4CDD5" },
   { emoji: "🎨", nombre: "Sharis Peralta", rol: "Diseño", color: "#F0A8B6" },
   { emoji: "💻", nombre: "Sidar Perez", rol: "Frontend", color: "#A4CDD5" },
 ];

@@ -105,7 +105,8 @@ interface MiembroEquipo {
 
 const EQUIPO: MiembroEquipo[] = [
   { nombre: "Dirk Martinez", rol: "Backend", icono: "engranaje" },
-  { nombre: "Eddy Marenco", rol: "Líder, Marketing y Comunicaciones", icono: "estrella" },
+  { nombre: "Eddy Marenco", rol: "Líder y Marketing", icono: "estrella" },
+  { nombre: "Jonathan Alvarado", rol: "Comunicador", icono: "bocadillo" },
   { nombre: "Sharis Peralta", rol: "Diseño", icono: "pincel" },
   { nombre: "Sidar Perez", rol: "Frontend y Modo Historia", icono: "pantalla" },
 ];
