@@ -99,6 +99,7 @@ export interface LogroConDetalle {
   id: string;
   desbloqueado_en: string;
   logros: {
+    id: string;
     titulo: string;
     descripcion: string | null;
     tipo_condicion: string;

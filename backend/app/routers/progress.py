@@ -132,6 +132,7 @@ class NivelLogroNombre(BaseModel):
 
 
 class LogroCatalogo(BaseModel):
+    id: str
     titulo: str
     descripcion: str | None = None
     tipo_condicion: str
@@ -157,7 +158,7 @@ def obtener_logros_estudiante(
         supabase.table("estudiante_logros")
         .select(
             "id, desbloqueado_en,"
-            " logros(titulo, descripcion, tipo_condicion, valor_condicion, niveles_logro(nombre))"
+            " logros(id, titulo, descripcion, tipo_condicion, valor_condicion, niveles_logro(nombre))"
         )
         .eq("estudiante_id", estudiante_id)
         .order("desbloqueado_en", desc=True)

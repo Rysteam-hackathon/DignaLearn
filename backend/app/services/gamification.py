@@ -259,20 +259,35 @@ def _intentar_desbloquear(
     valor_condicion: int | None = None,
     tema_id: str | None = None,
 ) -> LogroDesbloqueado | None:
-    query = (
-        supabase.table("logros")
-        .select(
-            "id, titulo, descripcion, icono_url, nivel_logro_id, tipo_condicion,"
-            " valor_condicion, niveles_logro(nombre)"
-        )
-        .eq("tipo_condicion", tipo_condicion)
+    columnas = (
+        "id, titulo, descripcion, icono_url, nivel_logro_id, tipo_condicion,"
+        " valor_condicion, niveles_logro(nombre)"
     )
-    if valor_condicion is not None:
-        query = query.eq("valor_condicion", valor_condicion)
 
-    logro_resultado = query.limit(1).execute()
-    if not logro_resultado.data:
-        return None
+    if tema_id is not None:
+        # Logro de nivel "tema": cada tema real tiene su propio logro específico
+        # (un tema_id único por fila en logros), no un logro genérico compartido.
+        logro_resultado = (
+            supabase.table("logros")
+            .select(columnas)
+            .eq("tema_id", tema_id)
+            .limit(1)
+            .execute()
+        )
+        if not logro_resultado.data:
+            print(
+                f"[gamification] No hay logro configurado para tema_id={tema_id} "
+                "— se omite el logro de este tema, pero el progreso ya quedó guardado."
+            )
+            return None
+    else:
+        query = supabase.table("logros").select(columnas).eq("tipo_condicion", tipo_condicion)
+        if valor_condicion is not None:
+            query = query.eq("valor_condicion", valor_condicion)
+
+        logro_resultado = query.limit(1).execute()
+        if not logro_resultado.data:
+            return None
 
     logro = logro_resultado.data[0]
 

@@ -121,6 +121,7 @@ export default function LogroCelebracion({ logro, onClose }: LogroCelebracionPro
                   size={96}
                   nombre_logro={logro.titulo}
                   condicion_valor={logro.valor_condicion ?? undefined}
+                  logro_id={logro.id}
                 />
               )}
             </motion.div>

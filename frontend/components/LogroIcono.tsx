@@ -16,7 +16,54 @@ interface LogroIconoProps {
   animado?: boolean; // false = solo el SVG estático, sin loop
   nombre_logro?: string;
   condicion_valor?: number;
+  logro_id?: string;
 }
+
+// Mapeo directo por logro_id — usado solo para los logros de nivel "tema"
+// (34 logros específicos, uno por tema real de 7mo y 9no). Los nombres son
+// demasiado parecidos entre sí para desambiguar con .includes() como se hace
+// con unidad_completada, así que acá se necesita un ID exacto por fila.
+// El logro genérico viejo ("¡Tema completado!", a2d2510a-...) no está en este
+// mapa a propósito: cae al <IconoTema /> de fallback para no romper el
+// historial otorgado antes de esta migración.
+const CATEGORIA_POR_LOGRO_ID: Record<string, string> = {
+  // 7mo grado
+  "90cc77dd-e73e-4c29-8614-2ac288817642": "corazon-laureles", // Con Dignidad
+  "d3760018-a429-4a15-b4b2-54c834dd5a06": "corazon-laureles", // Dignidad en Todo Ámbito
+  "bcc99d76-e75e-4e92-afb3-3fa73ce68508": "corazon-laureles", // Dignidad Cotidiana
+  "e309ff3a-7287-4ee9-a4e7-471662e72e7d": "flor-tejido", // Raíces y Cultura
+  "cdc5281b-6c7d-4614-b39a-bba2cb7e953d": "manos-balanza", // Conocedores de las Leyes
+  "33449cf0-3345-403f-9bcc-d577d9dea5e6": "escudo", // Ley Integral
+  "da187c5e-36aa-45db-bb86-483de1656882": "escudo", // Alerta Temprana
+  "3a99f444-3d4a-482a-b0a5-8574ed004539": "escudo", // Sé Cómo Denunciar
+  "c6ae3254-c0b2-4735-b380-95c9206ba3cf": "balanza-figuras", // Complementariedad en Casa
+  "fca04ce4-c094-4ae2-baca-f5f2218ba22d": "simbolo-igualdad", // Igualdad en Acción
+  "0cab443f-8611-42bd-94f6-51aff0ab511f": "balanza-figuras", // Roles Compartidos
+  "9e08f118-b629-4260-add4-e02d741b7ad9": "balanza-figuras", // Rompiendo Estereotipos
+  "21ed67b6-99cf-40ba-8185-8ac461cefc23": "simbolo-igualdad", // Ley de Igualdad
+  "2fefa507-9c80-4e35-a1d4-567dad15eefe": "estrella-silueta", // Nace un Liderazgo
+  "b63624cf-bf36-4bfe-be6a-f63eca23f0ea": "estrella-silueta", // Lideresa en Marcha
+  "55759f73-e827-4bf3-b055-46a42a4d70e4": "estrella-silueta", // Protagonismo Nica
+  "a1d52c5a-3496-4263-8667-cea14a4b53d1": "estrella-silueta", // Mujeres que Inspiran
+  // 9no grado
+  "1d8bc4d9-6df0-49ff-9a24-dcae6927d2b6": "corazon-laureles", // Papel en la Sociedad
+  "1ae465c5-3821-437e-bf06-b6a8be9db7be": "corazon-laureles", // En Todo Ámbito
+  "ede5606d-e12a-4715-8f9f-f194a3522bc6": "corazon-laureles", // Sociedad con Dignidad
+  "96be5972-deb0-4d9f-9a27-e17a944c21d4": "flor-tejido", // Cultura de Paz
+  "1a16d3b1-9404-4ac3-90e8-d87e7d8b640d": "manos-balanza", // Protegidas por la Ley
+  "19e3f2b8-4f09-422b-84b6-6c04c54877a3": "simbolo-igualdad", // Ley de Igualdad Plena
+  "548f42be-b53b-48de-8df8-a16050cd430d": "escudo", // Alerta Temprana
+  "d8dd02b4-81c0-4196-a740-954f97cce9d2": "escudo", // Sé Cómo Denunciar
+  "b23c632d-025f-49fa-9cc5-9168bd6dfdc5": "balanza-figuras", // Equidad y Solidaridad
+  "72dde93e-0ade-4995-b30c-c27b8adba9c2": "simbolo-igualdad", // Procesos de Cambio
+  "69b2be1d-b7b0-4940-bc3d-9f9e56e45ba9": "balanza-figuras", // Influencia Social
+  "c762080e-26c4-481d-9055-854bf77eb9e0": "balanza-figuras", // Relaciones que Suman
+  "7fe07846-dedc-4ae4-8651-93b3434d123f": "simbolo-igualdad", // Ley en lo Social
+  "bc1375e2-5d86-47f2-a64a-6e3383f7ef7c": "maletin-estrella", // Empoderamiento Laboral
+  "71cf2893-d7e1-47aa-9525-4701ee7ffb2a": "maletin-estrella", // Igualdad en el Trabajo
+  "5e6deb5f-d506-483a-99b1-00c9299fe3db": "maletin-estrella", // Frente al Trabajo
+  "d229ee26-7ab6-47a4-87c2-a7e60e48d05e": "estrella-silueta", // Mujeres de Historia
+};
 
 interface IconoProps {
   size: number;
@@ -369,6 +416,98 @@ function IconoProtagonismo({ size, animado }: IconoProps) {
   );
 }
 
+// ── CASO 15 — categoría "escudo" (leyes de protección / denuncia / alerta) ──
+function IconoEscudo({ size, animado }: IconoProps) {
+  return (
+    <motion.div
+      initial={{ scale: 0, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ type: "spring", stiffness: 300, damping: 15 }}
+    >
+      <motion.svg
+        width={size} height={size} viewBox="0 0 48 48" fill="none" aria-hidden
+        animate={animado ? { y: [0, -3, 0] } : undefined}
+        transition={animado ? { duration: 2.4, repeat: Infinity, ease: "easeInOut" } : undefined}
+      >
+        <path d="M24 6l14 5v11c0 10-6 17-14 20-8-3-14-10-14-20V11z" fill={CELESTE} stroke={PURPURA} strokeWidth="1.2" strokeLinejoin="round" />
+        <path d="M17 24l5 5 9-11" stroke={BLANCO} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      </motion.svg>
+    </motion.div>
+  );
+}
+
+// ── CASO 16 — categoría "simbolo-igualdad" (igualdad de género / de derechos) ──
+function IconoSimboloIgualdad({ size, animado }: IconoProps) {
+  return (
+    <motion.div
+      initial={{ scale: 0, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ type: "spring", stiffness: 300, damping: 15 }}
+    >
+      <motion.svg
+        width={size} height={size} viewBox="0 0 48 48" fill="none" aria-hidden
+        animate={animado ? { scale: [1, 1.08, 1] } : undefined}
+        transition={animado ? { duration: 2.2, repeat: Infinity, ease: "easeInOut" } : undefined}
+      >
+        <circle cx="24" cy="24" r="22" fill={PURPURA} fillOpacity="0.06" />
+        <rect x="10" y="18" width="28" height="4.5" rx="2.25" fill={ROSA} />
+        <rect x="10" y="27" width="28" height="4.5" rx="2.25" fill={CELESTE} />
+      </motion.svg>
+    </motion.div>
+  );
+}
+
+// ── CASO 17 — categoría "flor-tejido" (identidad indígena / afrodescendiente / cultura de paz) ──
+function IconoFlorTejido({ size, animado }: IconoProps) {
+  const petalos = [0, 60, 120, 180, 240, 300];
+  return (
+    <motion.div
+      initial={{ scale: 0, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ type: "spring", stiffness: 300, damping: 15 }}
+    >
+      <motion.svg
+        width={size} height={size} viewBox="0 0 48 48" fill="none" aria-hidden
+        animate={animado ? { rotate: [0, 8, -8, 0] } : undefined}
+        transition={animado ? { duration: 4, repeat: Infinity, ease: "easeInOut" } : undefined}
+        style={{ transformOrigin: "24px 24px" }}
+      >
+        {petalos.map((angulo, idx) => (
+          <ellipse
+            key={angulo}
+            cx="24" cy="13" rx="5" ry="8"
+            fill={idx % 2 === 0 ? ROSA : CELESTE}
+            transform={`rotate(${angulo} 24 24)`}
+          />
+        ))}
+        <circle cx="24" cy="24" r="5" fill={NARANJA} />
+      </motion.svg>
+    </motion.div>
+  );
+}
+
+// ── CASO 18 — categoría "maletin-estrella" (empoderamiento e igualdad laboral) ──
+function IconoMaletinEstrella({ size, animado }: IconoProps) {
+  return (
+    <motion.div
+      initial={{ y: 15, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ type: "spring", stiffness: 300, damping: 18 }}
+    >
+      <motion.svg
+        width={size} height={size} viewBox="0 0 48 48" fill="none" aria-hidden
+        animate={animado ? { y: [0, -3, 0] } : undefined}
+        transition={animado ? { duration: 2.6, repeat: Infinity, ease: "easeInOut" } : undefined}
+      >
+        <rect x="8" y="18" width="32" height="20" rx="3" fill={CELESTE} stroke={PURPURA} strokeWidth="1.2" />
+        <path d="M18 18v-4a3 3 0 013-3h6a3 3 0 013 3v4" stroke={PURPURA} strokeWidth="2" fill="none" strokeLinecap="round" />
+        <rect x="8" y="26" width="32" height="4" fill={PURPURA} fillOpacity="0.15" />
+        <path d="M24 24l1.4 3.2 3.4.3-2.6 2.3.8 3.4-3-1.8-3 1.8.8-3.4-2.6-2.3 3.4-.3z" fill={ROSA} />
+      </motion.svg>
+    </motion.div>
+  );
+}
+
 // ── CASO 14 — fallback genérico ─────────────────────────────────────────────
 function IconoFallback({ size }: { size: number }) {
   return (
@@ -392,10 +531,24 @@ export default function LogroIcono({
   animado = true,
   nombre_logro,
   condicion_valor,
+  logro_id,
 }: LogroIconoProps) {
   const props: IconoProps = { size, animado };
 
-  if (nivel === "tema") return <IconoTema {...props} />;
+  if (nivel === "tema") {
+    const categoria = logro_id ? CATEGORIA_POR_LOGRO_ID[logro_id] : undefined;
+    if (categoria === "corazon-laureles") return <IconoUnidadDignidad {...props} />;
+    if (categoria === "manos-balanza") return <IconoUnidadLey {...props} />;
+    if (categoria === "balanza-figuras") return <IconoUnidadEquidad {...props} />;
+    if (categoria === "estrella-silueta") return <IconoUnidadLideres {...props} />;
+    if (categoria === "escudo") return <IconoEscudo {...props} />;
+    if (categoria === "simbolo-igualdad") return <IconoSimboloIgualdad {...props} />;
+    if (categoria === "flor-tejido") return <IconoFlorTejido {...props} />;
+    if (categoria === "maletin-estrella") return <IconoMaletinEstrella {...props} />;
+    // Sin categoría asignada: logro genérico viejo ("¡Tema completado!") u
+    // otro logro de tema sin mapear — se conserva el ícono genérico de siempre.
+    return <IconoTema {...props} />;
+  }
 
   if (tipo_condicion === "primer_tema") return <IconoPrimerPaso {...props} />;
 

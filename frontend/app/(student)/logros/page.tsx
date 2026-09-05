@@ -10,6 +10,7 @@ interface LogroDesbloqueado {
   id: string;
   desbloqueado_en: string;
   logro: {
+    id: string;
     titulo: string;
     descripcion: string | null;
     tipo_condicion: string;
@@ -73,6 +74,7 @@ export default function LogrosPage() {
         id: item.id,
         desbloqueado_en: item.desbloqueado_en,
         logro: {
+          id: item.logros?.id ?? "",
           titulo: item.logros?.titulo ?? "",
           descripcion: item.logros?.descripcion ?? null,
           tipo_condicion: item.logros?.tipo_condicion ?? "",
@@ -159,6 +161,7 @@ export default function LogrosPage() {
                     size={44}
                     nombre_logro={item.logro.titulo}
                     condicion_valor={item.logro.valor_condicion ?? undefined}
+                    logro_id={item.logro.id}
                   />
                 </motion.div>
                 <div className="flex-1 min-w-0">
