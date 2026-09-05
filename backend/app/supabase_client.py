@@ -1,14 +1,19 @@
 import os
-from functools import lru_cache
+import threading
 
 from dotenv import load_dotenv
 from supabase import Client, create_client
 
 load_dotenv()
 
+_thread_local = threading.local()
 
-@lru_cache
+
 def get_supabase_client() -> Client:
-    url = os.environ["SUPABASE_URL"]
-    key = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
-    return create_client(url, key)
+    client = getattr(_thread_local, "client", None)
+    if client is None:
+        url = os.environ["SUPABASE_URL"]
+        key = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
+        client = create_client(url, key)
+        _thread_local.client = client
+    return client
