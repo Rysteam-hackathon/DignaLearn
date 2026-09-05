@@ -47,6 +47,29 @@ def verificar_token(token: str) -> dict:
         raise HTTPException(status_code=401, detail="Token inválido.")
 
 
+def verificar_docente_autenticado(authorization: str | None) -> str:
+    """Verifica el token Supabase Auth del docente y devuelve su usuario_id
+    (auth.uid()). Lanza 401 si falta el token o es inválido/expiró."""
+    from app.supabase_client import get_supabase_client
+
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Falta el token de autenticación.")
+
+    token = authorization.removeprefix("Bearer ").strip()
+    supabase = get_supabase_client()
+
+    try:
+        respuesta = supabase.auth.get_user(token)
+    except Exception:
+        raise HTTPException(status_code=401, detail="Token inválido o expirado.")
+
+    usuario = respuesta.user if respuesta else None
+    if not usuario:
+        raise HTTPException(status_code=401, detail="Token inválido o expirado.")
+
+    return usuario.id
+
+
 def verificar_estudiante_autenticado(authorization: str | None, estudiante_id: str) -> str:
     """Verifica el JWT del estudiante y devuelve el estudiante_id real (campo "sub"
     del token). Lanza 401 si falta el token, es inválido/expiró, o no corresponde

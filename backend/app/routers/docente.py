@@ -66,6 +66,7 @@ class CrearEstudianteRequest(BaseModel):
     nombre_display: str
     grado_id: int
     pin: str
+    grupo_id: str | None = None
 
 
 class ResetearPinRequest(BaseModel):
@@ -192,6 +193,18 @@ def crear_estudiante(
         raise HTTPException(status_code=400, detail="Grado no válido.")
     grado_id_real = grado_resultado.data["id"]
 
+    if body.grupo_id is not None:
+        acceso = (
+            supabase.table("docente_grupos")
+            .select("grupo_id")
+            .eq("docente_id", perfil_docente["id"])
+            .eq("grupo_id", body.grupo_id)
+            .maybe_single()
+            .execute()
+        )
+        if not acceso or not acceso.data:
+            raise HTTPException(status_code=403, detail="No tenés acceso a ese grupo.")
+
     for _ in range(10):
         codigo = _generar_codigo()
         existe = (
@@ -217,14 +230,18 @@ def crear_estudiante(
     }).execute()
 
     try:
+        nuevo_perfil = {
+            "usuario_id": usuario_id,
+            "grado_id": grado_id_real,
+            "codigo_acceso": codigo,
+            "pin_hash": pin_hash,
+        }
+        if body.grupo_id is not None:
+            nuevo_perfil["grupo_id"] = body.grupo_id
+
         perfil_resultado = (
             supabase.table("perfiles_estudiante")
-            .insert({
-                "usuario_id": usuario_id,
-                "grado_id": grado_id_real,
-                "codigo_acceso": codigo,
-                "pin_hash": pin_hash,
-            })
+            .insert(nuevo_perfil)
             .execute()
         )
         estudiante_id = perfil_resultado.data[0]["id"]
