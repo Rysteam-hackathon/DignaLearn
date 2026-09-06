@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200">
+  <!-- Familiar (0,0) -->
+  <rect x="0" y="0" width="100" height="100" fill="#F0A8B6"/>
+  <path d="M50 22 L82 50 L74 50 L74 78 L26 78 L26 50 L18 50 Z" fill="#160B24"/>
+  <rect x="42" y="58" width="16" height="20" fill="#F0A8B6"/>
+
+  <!-- Educativo (100,0) -->
+  <rect x="100" y="0" width="100" height="100" fill="#A4CDD5"/>
+  <path d="M122 42 L150 30 L178 42 L150 54 Z" fill="#160B24"/>
+  <path d="M132 47 L132 66 Q150 76 168 66 L168 47" stroke="#160B24" stroke-width="4" fill="none"/>
+  <line x1="178" y1="42" x2="178" y2="62" stroke="#160B24" stroke-width="3"/>
+
+  <!-- Laboral (200,0) -->
+  <rect x="200" y="0" width="100" height="100" fill="#160B24"/>
+  <rect x="228" y="46" width="44" height="32" rx="4" fill="#F0A8B6"/>
+  <path d="M240 46 L240 38 Q240 34 244 34 L256 34 Q260 34 260 38 L260 46" stroke="#F0A8B6" stroke-width="4" fill="none"/>
+  <rect x="246" y="58" width="8" height="8" fill="#160B24"/>
+
+  <!-- Cultural (0,100) -->
+  <rect x="0" y="100" width="100" height="100" fill="#A4CDD5"/>
+  <path d="M50 122 C40 122 33 130 33 141 C33 152 42 159 50 166 C58 159 67 152 67 141 C67 130 60 122 50 122 Z" fill="#160B24"/>
+  <circle cx="42" cy="140" r="3.5" fill="#A4CDD5"/>
+  <circle cx="58" cy="140" r="3.5" fill="#A4CDD5"/>
+
+  <!-- Político (100,100) -->
+  <rect x="100" y="100" width="100" height="100" fill="#F0A8B6"/>
+  <path d="M150 122 L157 140 L176 140 L161 151 L167 169 L150 158 L133 169 L139 151 L124 140 L143 140 Z" fill="#160B24"/>
+
+  <!-- Comunitario (200,100) -->
+  <rect x="200" y="100" width="100" height="100" fill="#160B24"/>
+  <circle cx="235" cy="148" r="14" fill="#F0A8B6"/>
+  <circle cx="265" cy="148" r="14" fill="#A4CDD5"/>
+  <circle cx="250" cy="130" r="14" fill="#F0A8B6" opacity="0.85"/>
+</svg>

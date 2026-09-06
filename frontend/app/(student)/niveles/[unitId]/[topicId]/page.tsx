@@ -9,6 +9,7 @@ import WordSearch from "@/components/games/WordSearch";
 import Quiz from "@/components/games/Quiz";
 import Conectores from "@/components/games/Conectores";
 import Clasificacion from "@/components/games/Clasificacion";
+import Rompecabezas from "@/components/games/Rompecabezas";
 import ProgresoLectura from "@/components/ProgresoLectura";
 import Reflexion from "@/components/Reflexion";
 
@@ -62,6 +63,12 @@ interface ClasificacionConfig {
   situaciones: { texto: string; es_correcto: boolean; explicacion: string }[];
 }
 
+interface RompecabezasConfig {
+  imagen_url: string;
+  filas: number;
+  columnas: number;
+}
+
 interface TemaData {
   titulo: string;
   contenido_lectura: string | null;
@@ -97,6 +104,7 @@ export default function TemaPage({
   const [quizConfig, setQuizConfig] = useState<QuizConfig | undefined>();
   const [conectoresConfig, setConectoresConfig] = useState<ConectoresConfig | undefined>();
   const [clasificacionConfig, setClasificacionConfig] = useState<ClasificacionConfig | undefined>();
+  const [rompecabezasConfig, setRompecabezasConfig] = useState<RompecabezasConfig | undefined>();
   const [reflexionConfig, setReflexionConfig] = useState<ReflexionConfig | undefined>();
   const [cargando, setCargando] = useState(true);
 
@@ -151,6 +159,15 @@ export default function TemaPage({
 
       const clasificacionActividad = elegirActividad(clasificacionActividades ?? [], actividadYaCompletada);
       setClasificacionConfig(clasificacionActividad?.config_json as ClasificacionConfig | undefined);
+
+      const { data: rompecabezasActividades } = await supabaseEstudiante
+        .from("actividades")
+        .select("config_json, grupo_variante, tipos_actividad!inner(nombre)")
+        .eq("tema_id", params.topicId)
+        .eq("tipos_actividad.nombre", "rompecabezas");
+
+      const rompecabezasActividad = elegirActividad(rompecabezasActividades ?? [], actividadYaCompletada);
+      setRompecabezasConfig(rompecabezasActividad?.config_json as RompecabezasConfig | undefined);
 
       const { data: scenarioActividades } = await supabaseEstudiante
         .from("actividades")
@@ -268,6 +285,21 @@ export default function TemaPage({
                 Clasificación
               </h2>
               <Clasificacion config={clasificacionConfig} temaId={params.topicId} />
+            </motion.div>
+          )}
+
+          {rompecabezasConfig && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 24, delay: 0.38 }}
+              className="mt-4"
+            >
+              <Separador emoji="🧩" esOscuro={esOscuro} />
+              <h2 className="text-xl font-bold mb-4" style={{ color: colorTitulo }}>
+                Rompecabezas
+              </h2>
+              <Rompecabezas config={rompecabezasConfig} temaId={params.topicId} />
             </motion.div>
           )}
 
