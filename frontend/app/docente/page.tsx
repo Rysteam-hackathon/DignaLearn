@@ -338,25 +338,25 @@ export default function DocentePage() {
         className="sticky top-0 z-50 px-6 py-4 flex justify-between items-center border-b"
         style={{ backgroundColor: bgHeader, borderColor: bordeSutil, backdropFilter: "blur(12px)" }}
       >
-        <div>
+        <div className="min-w-0 shrink">
           <div className="flex items-center gap-2">
             <Image src="/logo-isotipo.svg" width={36} height={36} style={{ width: 36, height: 36 }} priority alt="DignaLearn" />
-            <span style={{ fontFamily: "var(--font-heading)" }} className="text-lg font-bold">
+            <span style={{ fontFamily: "var(--font-heading)" }} className="text-lg font-bold hidden sm:inline">
               <span style={{ color: colorTexto }}>Digna</span>
               <span style={{ color: "#F0A8B6" }}>Learn</span>
             </span>
           </div>
-          {institucion && <p className="text-sm mt-1" style={{ color: colorTexto50 }}>{institucion.nombre}</p>}
+          {institucion && <p className="text-sm mt-1 truncate" style={{ color: colorTexto50 }}>{institucion.nombre}</p>}
         </div>
 
-        <div className="relative" ref={menuRef}>
+        <div className="relative shrink-0" ref={menuRef}>
           <button
             type="button"
             onClick={() => setMenuAbierto((v) => !v)}
-            className="flex items-center gap-2 text-sm transition-colors"
+            className="flex items-center gap-2 text-sm transition-colors max-w-[140px] sm:max-w-none"
             style={{ color: colorTexto70 }}
           >
-            {docente?.nombre ?? "Docente"}
+            <span className="truncate">{docente?.nombre ?? "Docente"}</span>
             <motion.span
               animate={{ rotate: menuAbierto ? 180 : 0 }}
               transition={{ duration: 0.2 }}

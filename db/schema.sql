@@ -24,7 +24,7 @@ CREATE TABLE roles (
 CREATE TABLE tipos_actividad (
     id          SERIAL       PRIMARY KEY,
     nombre      VARCHAR(50)  NOT NULL UNIQUE
-                CHECK (nombre IN ('sopa_letras', 'quiz', 'drag_drop', 'scenario')),
+                CHECK (nombre IN ('sopa_letras', 'quiz', 'drag_drop', 'scenario', 'conectores', 'clasificacion', 'rompecabezas')),
     descripcion VARCHAR(200)
 );
 
@@ -94,6 +94,61 @@ CREATE TABLE docente_estudiantes (
 
 
 -- ============================================================
+-- DOMINIO 2B: MODELO MULTI-INSTITUCIÓN
+-- Institución → Admin de Institución
+--            → Docente (uno o varios grupos, vía docente_grupos)
+--            → Grupo/Sección ("7mo A", "9no A")
+--            → Estudiante (pertenece a un grupo)
+-- Agregado en Sesión 8, documentado recién acá — ver
+-- db/migrations/004_rls_instituciones_grupos.sql y 005 para el RLS real.
+-- ============================================================
+
+CREATE TABLE instituciones (
+    id                 UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+    nombre             VARCHAR(200) NOT NULL CHECK (LENGTH(TRIM(nombre)) >= 3),
+    ciudad             VARCHAR(100),
+    codigo_institucion VARCHAR(30)  NOT NULL UNIQUE,
+    activa             BOOLEAN      DEFAULT TRUE,
+    created_at         TIMESTAMPTZ  DEFAULT NOW()
+);
+
+CREATE TABLE grupos (
+    id             UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    nombre         VARCHAR(100) NOT NULL CHECK (LENGTH(TRIM(nombre)) >= 1),
+    grado_id       INT         NOT NULL REFERENCES grados(id),
+    institucion_id UUID        NOT NULL REFERENCES instituciones(id) ON DELETE CASCADE,
+    anio_lectivo   INT         DEFAULT 2026,
+    activo         BOOLEAN     DEFAULT TRUE,
+    created_at     TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- NOTA de deuda técnica conocida: docente_id NO tiene FK real a
+-- perfiles_docente.id en la base actual (se agregó así originalmente y
+-- nunca se corrigió) — el código siempre lo usa correctamente, pero
+-- Postgres no lo garantiza. Pendiente de sincronizar en una migración futura.
+CREATE TABLE docente_grupos (
+    id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    docente_id UUID        NOT NULL,
+    grupo_id   UUID        NOT NULL REFERENCES grupos(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- NOTA de deuda técnica conocida: usuario_id NO tiene FK real a
+-- auth.users.id en la base actual, mismo motivo que docente_grupos.docente_id.
+CREATE TABLE perfiles_admin_institucion (
+    id               UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    usuario_id       UUID        NOT NULL,
+    institucion_id   UUID        NOT NULL REFERENCES instituciones(id) ON DELETE CASCADE,
+    nombre_completo  VARCHAR(150) NOT NULL,
+    created_at       TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Columnas agregadas a tablas de DOMINIO 2 por el modelo multi-institución
+ALTER TABLE perfiles_docente ADD COLUMN institucion_id UUID REFERENCES instituciones(id);
+ALTER TABLE perfiles_estudiante ADD COLUMN grupo_id UUID REFERENCES grupos(id);
+
+
+-- ============================================================
 -- DOMINIO 3: CURRÍCULO (contenido MINED)
 -- Jerarquía: grados → unidades → temas
 -- ============================================================
@@ -137,11 +192,21 @@ CREATE TABLE actividades (
 );
 
 -- Pistas de la mascota — máximo 5 por variante, reveladas progresivamente
+-- (pensada para una pista por ACTIVIDAD puntual; hoy no tiene filas cargadas)
 CREATE TABLE pistas_actividad (
     id           UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
     actividad_id UUID         NOT NULL REFERENCES actividades(id) ON DELETE CASCADE,
     orden_pista  INT          NOT NULL CHECK (orden_pista BETWEEN 1 AND 5),
     texto_pista  VARCHAR(500) NOT NULL CHECK (LENGTH(TRIM(texto_pista)) >= 5)
+);
+
+-- Pista genérica por TIPO de actividad (no por actividad puntual) — lo que
+-- usa hoy la Mascota guía. UNIQUE(tipo_actividad_id) porque hoy es 1 pista
+-- por tipo; si se quiere más de una en el futuro, sacar el UNIQUE.
+CREATE TABLE pistas_por_tipo_actividad (
+    id                UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+    tipo_actividad_id INT          NOT NULL UNIQUE REFERENCES tipos_actividad(id),
+    texto_pista       VARCHAR(500) NOT NULL CHECK (LENGTH(TRIM(texto_pista)) >= 5)
 );
 
 
@@ -185,7 +250,11 @@ CREATE TABLE logros (
     icono_url       TEXT,
     nivel_logro_id  INT          NOT NULL REFERENCES niveles_logro(id),
     tipo_condicion  VARCHAR(50),
-    valor_condicion INT          CHECK (valor_condicion IS NULL OR valor_condicion > 0)
+    valor_condicion INT          CHECK (valor_condicion IS NULL OR valor_condicion > 0),
+    -- tema_id: agregado en migración 001. Si está seteado, el logro es
+    -- específico de ESE tema (34 logros de tema únicos); si es NULL, el
+    -- logro se evalúa por tipo_condicion/valor_condicion (racha, unidad, etc.)
+    tema_id         UUID         REFERENCES temas(id)
 );
 
 -- Tabla intermedia: insignias desbloqueadas por estudiante
@@ -195,8 +264,24 @@ CREATE TABLE estudiante_logros (
     estudiante_id   UUID        NOT NULL REFERENCES perfiles_estudiante(id),
     logro_id        UUID        NOT NULL REFERENCES logros(id),
     desbloqueado_en TIMESTAMPTZ DEFAULT NOW(),
+    -- tema_id: copia de logros.tema_id al momento de desbloquear, para que
+    -- el chequeo de duplicados pueda distinguir "ya tiene el logro de ESTE
+    -- tema" de "ya tiene el logro genérico" sin tener que joinear logros.
+    tema_id         UUID        REFERENCES temas(id),
     UNIQUE(estudiante_id, logro_id)
 );
+
+-- Un mismo logro_id (ej. el genérico viejo) puede repetirse para distintos
+-- tema_id sin violar unicidad, pero nunca duplicarse para el MISMO tema_id
+-- (o el mismo NULL). Partial indexes porque UNIQUE normal trata NULL como
+-- "distinto de todo", lo cual ya alcanza para el caso NULL, pero no acota
+-- el caso con tema_id repetido si además querés permitir el mismo logro_id.
+CREATE UNIQUE INDEX estudiante_logros_tema_unico
+    ON estudiante_logros (estudiante_id, logro_id, tema_id)
+    WHERE tema_id IS NOT NULL;
+CREATE UNIQUE INDEX estudiante_logros_generico_unico
+    ON estudiante_logros (estudiante_id, logro_id)
+    WHERE tema_id IS NULL;
 
 
 -- ============================================================
@@ -241,10 +326,13 @@ INSERT INTO roles (nombre, descripcion) VALUES
     ('admin',   'Administrador del sistema — gestiona desde Supabase Studio');
 
 INSERT INTO tipos_actividad (nombre, descripcion) VALUES
-    ('sopa_letras', 'Sopa de letras con términos clave del tema'),
-    ('quiz',        'Quiz con casos reales y retroalimentación explicativa'),
-    ('drag_drop',   'Arrastra y suelta para ordenar o clasificar conceptos'),
-    ('scenario',    'Escenario de elección: ¿Esta acción respeta los derechos?');
+    ('sopa_letras',   'Sopa de letras con términos clave del tema'),
+    ('quiz',          'Quiz con casos reales y retroalimentación explicativa'),
+    ('drag_drop',     'Arrastra y suelta para ordenar o clasificar conceptos'),
+    ('scenario',      'Escenario de elección: ¿Esta acción respeta los derechos?'),
+    ('conectores',    'Emparejar conceptos con su definición o consecuencia correcta'),
+    ('clasificacion', 'Decidir si una situación respeta o viola un derecho, con retroalimentación inmediata'),
+    ('rompecabezas',  'Arma la imagen del tema ordenando las piezas');
 
 INSERT INTO niveles_logro (nombre, descripcion) VALUES
     ('tema',     'Insignia pequeña al completar los 3 elementos de un tema'),
@@ -260,12 +348,18 @@ INSERT INTO grados (numero_grado, nivel, nombre_display) VALUES
 -- ============================================================
 -- RESUMEN
 -- ============================================================
--- TABLAS: 17 en 7 dominios
--- Catálogos (4):   roles, tipos_actividad, niveles_logro, grados
--- Usuarios (4):    usuarios, perfiles_estudiante, perfiles_docente, docente_estudiantes
--- Currículo (2):   unidades, temas
--- Actividades (2): actividades, pistas_actividad
--- Progreso (2):    progreso_estudiante, actividad_diaria
--- Logros (2):      logros, estudiante_logros
--- Historia (2):    capitulos_historia, progreso_historia_estudiante
+-- TABLAS: 22 en 8 dominios
+-- Catálogos (4):          roles, tipos_actividad (7 tipos), niveles_logro, grados
+-- Usuarios (4):           usuarios, perfiles_estudiante, perfiles_docente, docente_estudiantes
+-- Multi-institución (4):  instituciones, grupos, docente_grupos, perfiles_admin_institucion
+-- Currículo (2):          unidades, temas
+-- Actividades (3):        actividades, pistas_actividad, pistas_por_tipo_actividad
+-- Progreso (2):           progreso_estudiante, actividad_diaria
+-- Logros (2):             logros (con tema_id), estudiante_logros (con tema_id)
+-- Historia (2):           capitulos_historia, progreso_historia_estudiante
+--
+-- RLS: este archivo NO incluye políticas de Row Level Security — viven en
+-- db/migrations/002 a 005, y hay que aplicarlas EN ORDEN después de correr
+-- este schema (002_rls_logros_actividad, 003_rls_docente,
+-- 004_rls_instituciones_grupos, 005_rls_docente_scoped).
 -- ============================================================
