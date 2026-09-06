@@ -11,6 +11,16 @@ interface Tema {
   id: string;
   titulo: string;
   orden: number;
+  contenido_lectura: string | null;
+}
+
+const PALABRAS_PREVIEW = 100;
+
+function truncarPreview(texto: string | null): string {
+  if (!texto) return "";
+  const palabras = texto.trim().split(/\s+/);
+  if (palabras.length <= PALABRAS_PREVIEW) return texto.trim();
+  return palabras.slice(0, PALABRAS_PREVIEW).join(" ") + "...";
 }
 
 interface UnidadInfo {
@@ -26,6 +36,7 @@ export default function UnidadPage({ params }: { params: { unitId: string } }) {
   const [esOscuro, setEsOscuro] = useState(false);
   const [temaShakeId, setTemaShakeId] = useState<string | null>(null);
   const shakeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [temaExpandidoId, setTemaExpandidoId] = useState<string | null>(null);
 
   useEffect(() => {
     const detectar = () => setEsOscuro(document.documentElement.classList.contains("dark"));
@@ -49,7 +60,7 @@ export default function UnidadPage({ params }: { params: { unitId: string } }) {
 
       const { data: temasData } = await supabaseEstudiante
         .from("temas")
-        .select("id, titulo, orden")
+        .select("id, titulo, orden, contenido_lectura")
         .eq("unidad_id", params.unitId)
         .order("orden", { ascending: true });
 
@@ -83,6 +94,10 @@ export default function UnidadPage({ params }: { params: { unitId: string } }) {
     if (shakeTimeoutRef.current) clearTimeout(shakeTimeoutRef.current);
     setTemaShakeId(temaId);
     shakeTimeoutRef.current = setTimeout(() => setTemaShakeId(null), 1500);
+  }
+
+  function toggleExpandir(temaId: string) {
+    setTemaExpandidoId((prev) => (prev === temaId ? null : temaId));
   }
 
   const colorTitulo = esOscuro ? "#ffffff" : "#160B24";
@@ -211,31 +226,34 @@ export default function UnidadPage({ params }: { params: { unitId: string } }) {
               );
             }
 
+            const expandido = temaExpandidoId === tema.id;
+            const preview = truncarPreview(tema.contenido_lectura);
+
             return (
               <motion.div
                 key={tema.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ type: "spring", stiffness: 300, damping: 24, delay: idx * 0.08 }}
-                whileHover={{ scale: 1.02 }}
-                className="tema-card rounded-2xl"
+                whileHover={{ scale: 1.01 }}
+                className="tema-card rounded-2xl overflow-hidden"
+                style={{
+                  backgroundColor: cardBg,
+                  border: `1px solid ${cardBorder}`,
+                }}
               >
-                <Link
-                  href={`/niveles/${params.unitId}/${tema.id}`}
-                  className="block rounded-2xl p-5"
-                  style={{
-                    backgroundColor: cardBg,
-                    border: `1px solid ${cardBorder}`,
-                  }}
-                >
-                  <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 p-5">
+                  <Link
+                    href={`/niveles/${params.unitId}/${tema.id}`}
+                    className="flex items-center gap-4 flex-1 min-w-0"
+                  >
                     <div
                       className="w-11 h-11 rounded-xl flex items-center justify-center text-sm font-bold shrink-0"
                       style={{ backgroundColor: "#F0A8B6", color: "#160B24" }}
                     >
                       {tema.orden}
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <h2 className="text-base font-bold" style={{ color: colorTitulo }}>
                         {tema.titulo}
                       </h2>
@@ -249,8 +267,45 @@ export default function UnidadPage({ params }: { params: { unitId: string } }) {
                         {completado ? "✓ Completado" : "Pendiente"}
                       </span>
                     </div>
-                  </div>
-                </Link>
+                  </Link>
+
+                  {preview && (
+                    <button
+                      type="button"
+                      onClick={() => toggleExpandir(tema.id)}
+                      aria-label={expandido ? "Ocultar vista previa" : "Ver vista previa de la lectura"}
+                      className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+                      style={{ backgroundColor: cardBgBloqueado, color: colorTitulo }}
+                    >
+                      <motion.span
+                        animate={{ rotate: expandido ? 180 : 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="text-xs"
+                      >
+                        ▼
+                      </motion.span>
+                    </button>
+                  )}
+                </div>
+
+                <AnimatePresence initial={false}>
+                  {expandido && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.25, ease: "easeInOut" }}
+                      className="overflow-hidden"
+                    >
+                      <p
+                        className="text-sm px-5 pb-5 -mt-1 leading-relaxed"
+                        style={{ color: esOscuro ? "rgba(255,255,255,0.7)" : "rgba(22,11,36,0.7)" }}
+                      >
+                        {preview}
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </motion.div>
             );
           })}

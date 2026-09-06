@@ -4,6 +4,9 @@ import { useCallback, useEffect, useState, type CSSProperties } from "react";
 import { getEstudianteLocal } from "@/lib/auth";
 import { marcarElementoCompletado, mapLogrosDesbloqueados, PROGRESO_ACTUALIZADO_EVENT } from "@/lib/progress";
 import LogroCelebracion, { type Logro } from "@/components/LogroCelebracion";
+import ToastError from "@/components/ToastError";
+
+const MENSAJE_ERROR_GUARDADO = "No se pudo guardar tu progreso, verificá tu conexión.";
 
 interface QuizOption {
   id: string;
@@ -51,6 +54,7 @@ export default function Quiz({ config, temaId }: QuizProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState(false);
   const [logrosQueue, setLogrosQueue] = useState<Logro[]>([]);
+  const [errorGuardado, setErrorGuardado] = useState<string | null>(null);
 
   const esCorrecta = confirmed && selectedId === respuesta_correcta;
 
@@ -80,6 +84,7 @@ export default function Quiz({ config, temaId }: QuizProps) {
         })
         .catch((error) => {
           console.error("Error al guardar progreso (Quiz):", error);
+          setErrorGuardado(MENSAJE_ERROR_GUARDADO);
         });
     }
   }
@@ -121,6 +126,8 @@ export default function Quiz({ config, temaId }: QuizProps) {
 
   return (
     <>
+      <ToastError mensaje={errorGuardado} onCerrar={() => setErrorGuardado(null)} esOscuro={esOscuro} />
+
       {logrosQueue.length > 0 && (
         <LogroCelebracion
           key={logrosQueue[0].id}

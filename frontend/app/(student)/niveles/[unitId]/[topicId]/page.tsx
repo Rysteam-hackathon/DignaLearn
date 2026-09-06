@@ -12,6 +12,7 @@ import Clasificacion from "@/components/games/Clasificacion";
 import Rompecabezas from "@/components/games/Rompecabezas";
 import ProgresoLectura from "@/components/ProgresoLectura";
 import Reflexion from "@/components/Reflexion";
+import Mascota from "@/components/mascot/Mascota";
 
 // Elige qué variante de actividad mostrar:
 // - Si el estudiante todavía no completó la actividad de este tema, siempre
@@ -188,8 +189,17 @@ export default function TemaPage({
   const cardBg = esOscuro ? "rgba(255,255,255,0.05)" : "rgba(22,11,36,0.03)";
   const cardBorder = esOscuro ? "rgba(255,255,255,0.08)" : "rgba(22,11,36,0.08)";
 
+  const tiposActividadPresentes = [
+    sopaConfig && "sopa_letras",
+    quizConfig && "quiz",
+    conectoresConfig && "conectores",
+    clasificacionConfig && "clasificacion",
+    rompecabezasConfig && "rompecabezas",
+  ].filter((tipo): tipo is string => Boolean(tipo));
+
   return (
     <main className="max-w-2xl mx-auto p-6">
+      {!cargando && <Mascota tiposActividad={tiposActividadPresentes} />}
       {cargando ? (
         <p className="text-sm" style={{ color: colorSecundario }}>Cargando tema...</p>
       ) : (

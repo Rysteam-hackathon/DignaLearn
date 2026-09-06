@@ -5,6 +5,9 @@ import { motion, type PanInfo } from "framer-motion";
 import { getEstudianteLocal } from "@/lib/auth";
 import { marcarElementoCompletado, mapLogrosDesbloqueados, PROGRESO_ACTUALIZADO_EVENT } from "@/lib/progress";
 import LogroCelebracion, { type Logro } from "@/components/LogroCelebracion";
+import ToastError from "@/components/ToastError";
+
+const MENSAJE_ERROR_GUARDADO = "No se pudo guardar tu progreso, verificá tu conexión.";
 
 interface RompecabezasConfig {
   imagen_url: string;
@@ -59,6 +62,7 @@ export default function Rompecabezas({ config, temaId }: RompecabezasProps) {
   const [orden, setOrden] = useState<number[]>(() => mezclar(total));
   const [progresoGuardado, setProgresoGuardado] = useState(false);
   const [logrosQueue, setLogrosQueue] = useState<Logro[]>([]);
+  const [errorGuardado, setErrorGuardado] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const handleLogroCierre = useCallback(() => {
@@ -104,11 +108,14 @@ export default function Rompecabezas({ config, temaId }: RompecabezasProps) {
       })
       .catch((error) => {
         console.error("Error al guardar progreso (Rompecabezas):", error);
+        setErrorGuardado(MENSAJE_ERROR_GUARDADO);
       });
   }, [completo, progresoGuardado, temaId]);
 
   return (
     <>
+      <ToastError mensaje={errorGuardado} onCerrar={() => setErrorGuardado(null)} esOscuro={esOscuro} />
+
       {logrosQueue.length > 0 && (
         <LogroCelebracion
           key={logrosQueue[0].id}

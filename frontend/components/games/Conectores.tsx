@@ -5,6 +5,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { getEstudianteLocal } from "@/lib/auth";
 import { marcarElementoCompletado, mapLogrosDesbloqueados, PROGRESO_ACTUALIZADO_EVENT } from "@/lib/progress";
 import LogroCelebracion, { type Logro } from "@/components/LogroCelebracion";
+import ToastError from "@/components/ToastError";
+
+const MENSAJE_ERROR_GUARDADO = "No se pudo guardar tu progreso, verificá tu conexión.";
 
 interface Par {
   concepto: string;
@@ -61,6 +64,7 @@ export default function Conectores({ config, temaId }: ConectoresProps) {
   const [shakeDefinicion, setShakeDefinicion] = useState<number | null>(null);
   const [progresoGuardado, setProgresoGuardado] = useState(false);
   const [logrosQueue, setLogrosQueue] = useState<Logro[]>([]);
+  const [errorGuardado, setErrorGuardado] = useState<string | null>(null);
   const shakeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleLogroCierre = useCallback(() => {
@@ -117,6 +121,7 @@ export default function Conectores({ config, temaId }: ConectoresProps) {
       })
       .catch((error) => {
         console.error("Error al guardar progreso (Conectores):", error);
+        setErrorGuardado(MENSAJE_ERROR_GUARDADO);
       });
   }, [completado, progresoGuardado, temaId]);
 
@@ -143,6 +148,8 @@ export default function Conectores({ config, temaId }: ConectoresProps) {
 
   return (
     <>
+      <ToastError mensaje={errorGuardado} onCerrar={() => setErrorGuardado(null)} esOscuro={esOscuro} />
+
       {logrosQueue.length > 0 && (
         <LogroCelebracion
           key={logrosQueue[0].id}

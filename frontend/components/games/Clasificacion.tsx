@@ -5,6 +5,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { getEstudianteLocal } from "@/lib/auth";
 import { marcarElementoCompletado, mapLogrosDesbloqueados, PROGRESO_ACTUALIZADO_EVENT } from "@/lib/progress";
 import LogroCelebracion, { type Logro } from "@/components/LogroCelebracion";
+import ToastError from "@/components/ToastError";
+
+const MENSAJE_ERROR_GUARDADO = "No se pudo guardar tu progreso, verificá tu conexión.";
 
 interface Situacion {
   texto: string;
@@ -44,6 +47,7 @@ export default function Clasificacion({ config, temaId }: ClasificacionProps) {
   const [completado, setCompletado] = useState(false);
   const [progresoGuardado, setProgresoGuardado] = useState(false);
   const [logrosQueue, setLogrosQueue] = useState<Logro[]>([]);
+  const [errorGuardado, setErrorGuardado] = useState<string | null>(null);
   // Ref, no state: se muta de forma síncrona en el momento del click, sin la
   // ventana de carrera que tiene `respuesta` (estado de React, actualiza
   // recién en el próximo render). Un doble-click/doble-toque muy rápido — o
@@ -101,11 +105,14 @@ export default function Clasificacion({ config, temaId }: ClasificacionProps) {
       })
       .catch((error) => {
         console.error("Error al guardar progreso (Clasificacion):", error);
+        setErrorGuardado(MENSAJE_ERROR_GUARDADO);
       });
   }, [completado, progresoGuardado, temaId]);
 
   return (
     <>
+      <ToastError mensaje={errorGuardado} onCerrar={() => setErrorGuardado(null)} esOscuro={esOscuro} />
+
       {logrosQueue.length > 0 && (
         <LogroCelebracion
           key={logrosQueue[0].id}

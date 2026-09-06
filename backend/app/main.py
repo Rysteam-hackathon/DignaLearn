@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import auth, docente, gamification, grupos, progress
+from app.routers import auth, docente, gamification, grupos, pistas, progress
 
 load_dotenv()
 
@@ -29,6 +29,7 @@ app.include_router(docente.router)
 app.include_router(grupos.router)
 app.include_router(auth.router)
 app.include_router(progress.router)
+app.include_router(pistas.router)
 
 
 @app.get("/")

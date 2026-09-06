@@ -4,6 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { getEstudianteLocal } from "@/lib/auth";
 import { marcarElementoCompletado, mapLogrosDesbloqueados, PROGRESO_ACTUALIZADO_EVENT } from "@/lib/progress";
 import LogroCelebracion, { type Logro } from "@/components/LogroCelebracion";
+import ToastError from "@/components/ToastError";
+
+const MENSAJE_ERROR_GUARDADO = "No se pudo guardar tu progreso, verificá tu conexión.";
 
 interface WordSearchConfig {
   palabras: string[];
@@ -176,6 +179,7 @@ export default function WordSearch({ config, temaId }: WordSearchProps) {
   const [foundCells, setFoundCells] = useState<Record<string, Cell[]>>({});
   const [progresoGuardado, setProgresoGuardado] = useState(false);
   const [logrosQueue, setLogrosQueue] = useState<Logro[]>([]);
+  const [errorGuardado, setErrorGuardado] = useState<string | null>(null);
 
   const handleLogroCierre = useCallback(() => {
     setTimeout(() => {
@@ -256,11 +260,14 @@ export default function WordSearch({ config, temaId }: WordSearchProps) {
       })
       .catch((error) => {
         console.error("Error al guardar progreso (WordSearch):", error);
+        setErrorGuardado(MENSAJE_ERROR_GUARDADO);
       });
   }, [completado, progresoGuardado, temaId]);
 
   return (
     <>
+      <ToastError mensaje={errorGuardado} onCerrar={() => setErrorGuardado(null)} esOscuro={esOscuro} />
+
       {logrosQueue.length > 0 && (
         <LogroCelebracion
           key={logrosQueue[0].id}
