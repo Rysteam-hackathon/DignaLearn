@@ -283,4 +283,4 @@ def resetear_pin(
         {"pin_hash": pin_hash}
     ).eq("id", body.estudiante_id).execute()
 
-    return {"ok": True}
+    return {"ok": True, "nuevo_pin": body.nuevo_pin}

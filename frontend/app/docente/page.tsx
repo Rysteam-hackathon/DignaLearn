@@ -75,6 +75,7 @@ interface PinForm {
   valor: string;
   cargando: boolean;
   mensaje: string;
+  pinGenerado: string;
 }
 
 function estaActivoEstaSemana(fecha: string | null): boolean {
@@ -106,7 +107,7 @@ export default function DocentePage() {
   const [stats, setStats] = useState<GrupoStats>({ total: 0, promedio: 0, activos_semana: 0, sin_actividad: 0 });
   const [modalAgregar, setModalAgregar] = useState(false);
   const [estudianteExpandido, setEstudianteExpandido] = useState<string | null>(null);
-  const [pinForm, setPinForm] = useState<PinForm>({ estudianteId: "", valor: "", cargando: false, mensaje: "" });
+  const [pinForm, setPinForm] = useState<PinForm>({ estudianteId: "", valor: "", cargando: false, mensaje: "", pinGenerado: "" });
   const [pinUsado, setPinUsado] = useState("");
   const [nuevoEstudiante, setNuevoEstudiante] = useState({ nombre: "", grado_id: "", pin: "" });
   const [creandoEstudiante, setCreandoEstudiante] = useState(false);
@@ -288,11 +289,16 @@ export default function DocentePage() {
         }),
       });
       if (!res.ok) throw new Error();
-      setPinForm((prev) => ({ ...prev, cargando: false, mensaje: "PIN actualizado correctamente." }));
+      const data = await res.json();
+      setPinForm((prev) => ({ ...prev, cargando: false, mensaje: "", pinGenerado: data.nuevo_pin }));
     } catch (error) {
       console.error("Error al resetear PIN:", error);
       setPinForm((prev) => ({ ...prev, cargando: false, mensaje: "No se pudo actualizar el PIN. Intentá de nuevo." }));
     }
+  }
+
+  function cerrarExitoPin() {
+    setPinForm({ estudianteId: "", valor: "", cargando: false, mensaje: "", pinGenerado: "" });
   }
 
   function cerrarModalExito() {
@@ -580,11 +586,30 @@ export default function DocentePage() {
                         {pinForm.estudianteId !== est.id ? (
                           <button
                             type="button"
-                            onClick={() => setPinForm({ estudianteId: est.id, valor: "", cargando: false, mensaje: "" })}
+                            onClick={() => setPinForm({ estudianteId: est.id, valor: "", cargando: false, mensaje: "", pinGenerado: "" })}
                             className="border border-[#A4CDD5]/50 text-[#A4CDD5] rounded-lg px-3 py-1.5 text-sm hover:bg-[#A4CDD5]/10 transition-colors"
                           >
                             Resetear PIN
                           </button>
+                        ) : pinForm.pinGenerado ? (
+                          <div className="bg-[#A4CDD5]/10 border border-[#A4CDD5]/30 rounded-xl p-4 text-center">
+                            <p className="text-xs mb-2" style={{ color: colorTexto50 }}>
+                              Nuevo PIN de {est.nombre ?? "este estudiante"}
+                            </p>
+                            <p className="text-[#A4CDD5] font-mono text-2xl font-bold tracking-widest mb-3">
+                              {pinForm.pinGenerado}
+                            </p>
+                            <p className="text-xs mb-3" style={{ color: colorTexto40 }}>
+                              Compartí este PIN con el estudiante
+                            </p>
+                            <button
+                              type="button"
+                              onClick={cerrarExitoPin}
+                              className="bg-[#A4CDD5] text-[#160B24] font-semibold text-sm px-4 py-1.5 rounded-lg"
+                            >
+                              Listo
+                            </button>
+                          </div>
                         ) : (
                           <div className="flex flex-col gap-2">
                             <div className="flex items-center gap-2">
@@ -608,7 +633,7 @@ export default function DocentePage() {
                               </button>
                               <button
                                 type="button"
-                                onClick={() => setPinForm({ estudianteId: "", valor: "", cargando: false, mensaje: "" })}
+                                onClick={() => setPinForm({ estudianteId: "", valor: "", cargando: false, mensaje: "", pinGenerado: "" })}
                                 className="text-sm transition-colors"
                                 style={{ color: colorTexto40 }}
                               >
@@ -616,7 +641,7 @@ export default function DocentePage() {
                               </button>
                             </div>
                             {pinForm.mensaje && (
-                              <p className={pinForm.mensaje.includes("correctamente") ? "text-[#A4CDD5] text-sm" : "text-red-400 text-sm"}>
+                              <p className="text-red-400 text-sm">
                                 {pinForm.mensaje}
                               </p>
                             )}

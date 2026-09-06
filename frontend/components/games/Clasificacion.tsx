@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getEstudianteLocal } from "@/lib/auth";
 import { marcarElementoCompletado, mapLogrosDesbloqueados, PROGRESO_ACTUALIZADO_EVENT } from "@/lib/progress";
@@ -44,6 +44,20 @@ export default function Clasificacion({ config, temaId }: ClasificacionProps) {
   const [completado, setCompletado] = useState(false);
   const [progresoGuardado, setProgresoGuardado] = useState(false);
   const [logrosQueue, setLogrosQueue] = useState<Logro[]>([]);
+  // Ref, no state: se muta de forma síncrona en el momento del click, sin la
+  // ventana de carrera que tiene `respuesta` (estado de React, actualiza
+  // recién en el próximo render). Un doble-click/doble-toque muy rápido — o
+  // tocar los dos botones casi a la vez — podía colar una segunda llamada a
+  // handleResponder mientras `respuesta` seguía leyendo null, disparando dos
+  // setTimeout que avanzaban el índice dos veces y saltaban una situación.
+  const respondiendoRef = useRef(false);
+  const avanceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (avanceTimeoutRef.current) clearTimeout(avanceTimeoutRef.current);
+    };
+  }, []);
 
   const handleLogroCierre = useCallback(() => {
     setTimeout(() => {
@@ -56,13 +70,15 @@ export default function Clasificacion({ config, temaId }: ClasificacionProps) {
   const acerto = enFeedback && respuesta === situacionActual.es_correcto;
 
   function handleResponder(valor: boolean) {
-    if (enFeedback) return;
+    if (respondiendoRef.current) return;
+    respondiendoRef.current = true;
     setRespuesta(valor);
 
-    setTimeout(() => {
+    avanceTimeoutRef.current = setTimeout(() => {
       if (indice + 1 < situaciones.length) {
         setIndice((i) => i + 1);
         setRespuesta(null);
+        respondiendoRef.current = false;
       } else {
         setCompletado(true);
       }

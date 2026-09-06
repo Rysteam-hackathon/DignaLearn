@@ -31,16 +31,23 @@ function useModoOscuro(): boolean {
   return esOscuro;
 }
 
+// Derangement: ninguna pieza puede empezar en su propio slot correcto.
+// El shuffle anterior solo rechazaba el caso de que TODO el rompecabezas
+// saliera resuelto, pero dejaba pasar (63% de las veces, medido) el caso de
+// que una pieza individual cayera en su lugar por azar — esa pieza nace con
+// drag={false} de entrada, indistinguible visualmente de "trabada" para
+// alguien que no sabe que ya estaba bien puesta.
 function mezclar(total: number): number[] {
-  const orden = Array.from({ length: total }, (_, i) => i);
-  let resuelto = true;
+  if (total <= 1) return Array.from({ length: total }, (_, i) => i);
+
+  let orden: number[];
   do {
+    orden = Array.from({ length: total }, (_, i) => i);
     for (let i = orden.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [orden[i], orden[j]] = [orden[j], orden[i]];
     }
-    resuelto = orden.every((v, i) => v === i);
-  } while (resuelto && total > 1);
+  } while (orden.some((v, i) => v === i));
   return orden;
 }
 
@@ -111,8 +118,30 @@ export default function Rompecabezas({ config, temaId }: RompecabezasProps) {
       )}
 
       <p className="text-sm mb-3" style={{ color: esOscuro ? "rgba(255,255,255,0.6)" : "rgba(22,11,36,0.5)" }}>
-        Arrastrá las piezas para armar la imagen completa.
+        Arrastrá las piezas para armar la imagen completa. Fijate en la miniatura para saber cómo queda.
       </p>
+
+      <div className="flex items-center gap-3 mb-4">
+        <div
+          className="rounded-lg overflow-hidden shrink-0"
+          style={{
+            width: 80,
+            height: 53,
+            border: "2px solid #F0A8B6",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.25)",
+          }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={imagen_url}
+            alt="Imagen completa de referencia"
+            className="w-full h-full object-cover"
+          />
+        </div>
+        <span className="text-xs" style={{ color: esOscuro ? "rgba(255,255,255,0.5)" : "rgba(22,11,36,0.45)" }}>
+          Así se ve completa
+        </span>
+      </div>
 
       <div
         ref={containerRef}
@@ -138,7 +167,6 @@ export default function Rompecabezas({ config, temaId }: RompecabezasProps) {
               dragElastic={0.15}
               dragConstraints={containerRef}
               onDragEnd={(_e, info) => handleDragEnd(slotIndex, info)}
-              layout
               transition={{ type: "spring", stiffness: 400, damping: 32 }}
               animate={{
                 x: slotCol * CELDA_PX,

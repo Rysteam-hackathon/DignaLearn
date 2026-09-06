@@ -66,7 +66,7 @@ export default function Quiz({ config, temaId }: QuizProps) {
   }
 
   function handleConfirmar() {
-    if (!selectedId) return;
+    if (confirmed || !selectedId) return;
     setConfirmed(true);
 
     const estudiante = getEstudianteLocal();

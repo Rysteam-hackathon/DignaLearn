@@ -91,6 +91,42 @@ function generateGrid(
   return { grid, placements };
 }
 
+const MAX_INTENTOS_GRILLA = 20;
+
+// generateGrid() puede fallar en colocar una palabra larga tras 300 intentos
+// (medido: ~0.33% de las veces con listas reales de 7-8 palabras en grillas
+// 10x10) — si eso pasa y la palabra igual queda en la lista visible, el
+// estudiante nunca puede completar la sopa porque esa palabra no existe en
+// ningún lado de la grilla para seleccionar. Reintentamos la generación
+// completa (igual que el derangement de Rompecabezas) en vez de aceptar un
+// resultado parcial silencioso.
+function generarGridConReintento(
+  palabras: string[],
+  size: number
+): { grid: string[][]; placements: Record<string, Cell[]>; palabrasColocadas: string[] } {
+  let mejor: { grid: string[][]; placements: Record<string, Cell[]> } | null = null;
+
+  for (let intento = 0; intento < MAX_INTENTOS_GRILLA; intento++) {
+    const resultado = generateGrid(palabras, size);
+    if (Object.keys(resultado.placements).length === palabras.length) {
+      return { ...resultado, palabrasColocadas: palabras };
+    }
+    if (!mejor || Object.keys(resultado.placements).length > Object.keys(mejor.placements).length) {
+      mejor = resultado;
+    }
+  }
+
+  console.error(
+    `[WordSearch] No se pudieron colocar todas las palabras tras ${MAX_INTENTOS_GRILLA} intentos de grilla. ` +
+      `palabras=${JSON.stringify(palabras)} tamaño=${size}. Se continúa solo con las que sí entraron para no bloquear al estudiante.`
+  );
+  const colocacionFinal = mejor as { grid: string[][]; placements: Record<string, Cell[]> };
+  return {
+    ...colocacionFinal,
+    palabrasColocadas: palabras.filter((p) => colocacionFinal.placements[p]),
+  };
+}
+
 function getLine(start: Cell, end: Cell): Cell[] | null {
   const dRow = end.row - start.row;
   const dCol = end.col - start.col;
@@ -121,10 +157,18 @@ export default function WordSearch({ config, temaId }: WordSearchProps) {
     return () => obs.disconnect();
   }, []);
 
-  const { grid } = useMemo(
-    () => generateGrid(palabras, tamaño),
+  const { grid, palabrasColocadas } = useMemo(
+    () => generarGridConReintento(palabras, tamaño),
     [palabras, tamaño]
   );
+
+  const pistaPorPalabra = useMemo(() => {
+    const mapa: Record<string, string> = {};
+    palabras.forEach((palabra, i) => {
+      mapa[palabra] = pistas[i] ?? palabra;
+    });
+    return mapa;
+  }, [palabras, pistas]);
 
   const [selStart, setSelStart] = useState<Cell | null>(null);
   const [activeCells, setActiveCells] = useState<Cell[]>([]);
@@ -171,7 +215,7 @@ export default function WordSearch({ config, temaId }: WordSearchProps) {
 
     const palabra = line.map((cell) => grid[cell.row][cell.col]).join("");
     const palabraInvertida = palabra.split("").reverse().join("");
-    const encontrada = palabras.find(
+    const encontrada = palabrasColocadas.find(
       (p) => (p === palabra || p === palabraInvertida) && !foundWords.includes(p)
     );
 
@@ -194,7 +238,7 @@ export default function WordSearch({ config, temaId }: WordSearchProps) {
       : "bg-white border-gray-200 hover:bg-[#160B24]/5";
   }
 
-  const completado = foundWords.length === palabras.length;
+  const completado = foundWords.length === palabrasColocadas.length;
 
   useEffect(() => {
     if (!completado || progresoGuardado) return;
@@ -258,10 +302,10 @@ export default function WordSearch({ config, temaId }: WordSearchProps) {
           }
         `}</style>
         <p className="text-sm mb-3" style={{ color: esOscuro ? "rgba(255,255,255,0.6)" : "rgba(22,11,36,0.5)" }}>
-          {foundWords.length} de {palabras.length} palabras encontradas
+          {foundWords.length} de {palabrasColocadas.length} palabras encontradas
         </p>
         <div className="flex flex-wrap gap-2 mb-4">
-          {palabras.map((palabra, i) => {
+          {palabrasColocadas.map((palabra) => {
             const encontrada = foundWords.includes(palabra);
             return (
               <span
@@ -277,7 +321,7 @@ export default function WordSearch({ config, temaId }: WordSearchProps) {
                       }
                 }
               >
-                {pistas[i] ?? palabra}
+                {pistaPorPalabra[palabra]}
               </span>
             );
           })}
