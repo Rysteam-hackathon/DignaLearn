@@ -306,35 +306,56 @@ export default function DocentePage() {
 
   const grupoActivoObj = grupos.find((g) => g.id === grupoActivo) ?? null;
 
+  const colorTexto = modoOscuro ? "#ffffff" : "#160B24";
+  const colorTexto80 = modoOscuro ? "rgba(255,255,255,0.8)" : "rgba(22,11,36,0.8)";
+  const colorTexto70 = modoOscuro ? "rgba(255,255,255,0.7)" : "rgba(22,11,36,0.7)";
+  const colorTexto60 = modoOscuro ? "rgba(255,255,255,0.6)" : "rgba(22,11,36,0.6)";
+  const colorTexto50 = modoOscuro ? "rgba(255,255,255,0.5)" : "rgba(22,11,36,0.5)";
+  const colorTexto40 = modoOscuro ? "rgba(255,255,255,0.4)" : "rgba(22,11,36,0.4)";
+  const bgPagina = modoOscuro ? "#160B24" : "#ffffff";
+  const bgHeader = modoOscuro ? "rgba(22,11,36,0.9)" : "rgba(255,255,255,0.9)";
+  const bordeSutil = modoOscuro ? "rgba(255,255,255,0.1)" : "rgba(22,11,36,0.1)";
+  const bordeSutil20 = modoOscuro ? "rgba(255,255,255,0.2)" : "rgba(22,11,36,0.2)";
+  const cardBg = modoOscuro ? "rgba(255,255,255,0.04)" : "rgba(22,11,36,0.03)";
+  const cardBgSuave = modoOscuro ? "rgba(255,255,255,0.03)" : "rgba(22,11,36,0.02)";
+  const skeletonBg = modoOscuro ? "rgba(255,255,255,0.05)" : "rgba(22,11,36,0.05)";
+  const inputBg = modoOscuro ? "rgba(255,255,255,0.05)" : "rgba(22,11,36,0.04)";
+  const avatarInactivoBg = modoOscuro ? "rgba(255,255,255,0.1)" : "rgba(22,11,36,0.08)";
+  const avatarInactivoTexto = modoOscuro ? "rgba(255,255,255,0.4)" : "rgba(22,11,36,0.4)";
+  const barraFondo = modoOscuro ? "rgba(255,255,255,0.1)" : "rgba(22,11,36,0.1)";
+  const overlayModal = modoOscuro ? "rgba(0,0,0,0.6)" : "rgba(22,11,36,0.35)";
+
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#160B24" }}>
+    <div className="min-h-screen transition-colors duration-200" style={{ backgroundColor: bgPagina }}>
       {/* Header */}
       <header
-        className="sticky top-0 z-50 px-6 py-4 flex justify-between items-center border-b border-white/10"
-        style={{ backgroundColor: "rgba(22,11,36,0.9)", backdropFilter: "blur(12px)" }}
+        className="sticky top-0 z-50 px-6 py-4 flex justify-between items-center border-b"
+        style={{ backgroundColor: bgHeader, borderColor: bordeSutil, backdropFilter: "blur(12px)" }}
       >
         <div>
           <div className="flex items-center gap-2">
             <Image src="/logo-isotipo.svg" width={36} height={36} style={{ width: 36, height: 36 }} priority alt="DignaLearn" />
             <span style={{ fontFamily: "var(--font-heading)" }} className="text-lg font-bold">
-              <span style={{ color: "#FFFFFF" }}>Digna</span>
+              <span style={{ color: colorTexto }}>Digna</span>
               <span style={{ color: "#F0A8B6" }}>Learn</span>
             </span>
           </div>
-          {institucion && <p className="text-white/50 text-sm mt-1">{institucion.nombre}</p>}
+          {institucion && <p className="text-sm mt-1" style={{ color: colorTexto50 }}>{institucion.nombre}</p>}
         </div>
 
         <div className="relative" ref={menuRef}>
           <button
             type="button"
             onClick={() => setMenuAbierto((v) => !v)}
-            className="flex items-center gap-2 text-white/70 hover:text-white text-sm transition-colors"
+            className="flex items-center gap-2 text-sm transition-colors"
+            style={{ color: colorTexto70 }}
           >
             {docente?.nombre ?? "Docente"}
             <motion.span
               animate={{ rotate: menuAbierto ? 180 : 0 }}
               transition={{ duration: 0.2 }}
-              className="text-white/40 text-xs"
+              style={{ color: colorTexto40 }}
+              className="text-xs"
             >
               ▼
             </motion.span>
@@ -347,10 +368,10 @@ export default function DocentePage() {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -8, scale: 0.96 }}
                 transition={{ duration: 0.18, ease: "easeOut" }}
-                className="absolute right-0 top-full mt-2 w-64 rounded-2xl border border-white/10 p-4 z-50"
-                style={{ backgroundColor: "#160B24", boxShadow: "0 16px 36px rgba(0,0,0,0.4)" }}
+                className="absolute right-0 top-full mt-2 w-64 rounded-2xl border p-4 z-50"
+                style={{ backgroundColor: bgPagina, borderColor: bordeSutil, boxShadow: "0 16px 36px rgba(0,0,0,0.4)" }}
               >
-                <div className="flex items-center justify-between gap-3 pb-4 mb-4 border-b border-white/10">
+                <div className="flex items-center justify-between gap-3 pb-4 mb-4 border-b" style={{ borderColor: bordeSutil }}>
                   <div className="flex items-center gap-3">
                     <div
                       className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
@@ -369,7 +390,7 @@ export default function DocentePage() {
                         </motion.span>
                       </AnimatePresence>
                     </div>
-                    <span className="text-sm text-white/80">Modo oscuro</span>
+                    <span className="text-sm" style={{ color: colorTexto80 }}>Modo oscuro</span>
                   </div>
                   <button
                     type="button"
@@ -388,7 +409,8 @@ export default function DocentePage() {
                 <button
                   type="button"
                   onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }}
-                  className="w-full border border-white/20 text-white/60 hover:text-white px-3 py-2 rounded-lg text-sm transition-colors text-left"
+                  className="w-full border px-3 py-2 rounded-lg text-sm transition-colors text-left"
+                  style={{ borderColor: bordeSutil20, color: colorTexto60 }}
                 >
                   Salir
                 </button>
@@ -399,10 +421,10 @@ export default function DocentePage() {
       </header>
 
       <div className="px-6 pt-6">
-        <h1 className="text-2xl font-bold text-white" style={{ fontFamily: "var(--font-heading)" }}>
+        <h1 className="text-2xl font-bold" style={{ fontFamily: "var(--font-heading)", color: colorTexto }}>
           Mi panel docente
         </h1>
-        <p className="text-white/50 text-sm mt-1">Seleccioná un grupo para ver su progreso</p>
+        <p className="text-sm mt-1" style={{ color: colorTexto50 }}>Seleccioná un grupo para ver su progreso</p>
 
         {/* Tabs de grupos */}
         <div className="flex gap-2 mt-4 flex-wrap">
@@ -412,7 +434,7 @@ export default function DocentePage() {
               type="button"
               onClick={() => setGrupoActivo(grupo.id)}
               className="relative px-5 py-2 rounded-full text-sm font-semibold"
-              style={{ color: grupoActivo === grupo.id ? "#160B24" : "rgba(255,255,255,0.5)" }}
+              style={{ color: grupoActivo === grupo.id ? "#160B24" : colorTexto50 }}
             >
               {grupoActivo === grupo.id && (
                 <motion.div
@@ -443,17 +465,18 @@ export default function DocentePage() {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.1, duration: 0.4, ease: "easeOut" }}
-            className="border border-white/10 rounded-2xl p-5 bg-white/[0.04]"
+            className="border rounded-2xl p-5"
+            style={{ borderColor: bordeSutil, backgroundColor: cardBg }}
           >
             <p className="text-3xl font-bold" style={{ color: stat.color }}>{stat.valor}</p>
-            <p className="text-white/50 text-xs mt-1">{stat.label}</p>
+            <p className="text-xs mt-1" style={{ color: colorTexto50 }}>{stat.label}</p>
           </motion.div>
         ))}
       </div>
 
       {/* Lista de estudiantes */}
       <div className="flex justify-between items-center px-6 mt-8 mb-4">
-        <p className="text-white font-semibold">
+        <p className="font-semibold" style={{ color: colorTexto }}>
           Estudiantes — {grupoActivoObj?.nombre ?? ""}
         </p>
         <motion.button
@@ -470,12 +493,12 @@ export default function DocentePage() {
       {cargando ? (
         <div className="px-6 space-y-3">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="bg-white/5 rounded-2xl animate-pulse h-20" />
+            <div key={i} className="rounded-2xl animate-pulse h-20" style={{ backgroundColor: skeletonBg }} />
           ))}
         </div>
       ) : estudiantes.length === 0 ? (
         <div className="text-center py-16 px-6">
-          <p className="text-white/50 text-sm">Aún no hay estudiantes en este grupo.</p>
+          <p className="text-sm" style={{ color: colorTexto50 }}>Aún no hay estudiantes en este grupo.</p>
         </div>
       ) : (
         <div className="px-6 space-y-3 pb-10">
@@ -488,7 +511,8 @@ export default function DocentePage() {
                 initial={{ opacity: 0, x: -16 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: idx * 0.08, duration: 0.35, ease: "easeOut" }}
-                className="border border-white/10 rounded-2xl overflow-hidden bg-white/[0.03]"
+                className="border rounded-2xl overflow-hidden"
+                style={{ borderColor: bordeSutil, backgroundColor: cardBgSuave }}
               >
                 <div
                   onClick={() => setEstudianteExpandido(expandido ? null : est.id)}
@@ -497,20 +521,20 @@ export default function DocentePage() {
                   <div className="flex items-center">
                     <div
                       className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0"
-                      style={activo ? { backgroundColor: "#F0A8B633", color: "#F0A8B6" } : { backgroundColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.4)" }}
+                      style={activo ? { backgroundColor: "#F0A8B633", color: "#F0A8B6" } : { backgroundColor: avatarInactivoBg, color: avatarInactivoTexto }}
                     >
                       {iniciales(est.nombre)}
                     </div>
                     <div className="ml-3">
-                      <p className="text-white font-medium text-sm">{est.nombre ?? "Sin nombre"}</p>
-                      <p className="text-white/40 text-xs mt-0.5">
+                      <p className="font-medium text-sm" style={{ color: colorTexto }}>{est.nombre ?? "Sin nombre"}</p>
+                      <p className="text-xs mt-0.5" style={{ color: colorTexto40 }}>
                         {est.codigo_acceso} · {grupoActivoObj?.grado_nombre ?? ""}
                       </p>
                     </div>
                   </div>
 
                   <div className="hidden sm:block">
-                    <div className="w-32 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                    <div className="w-32 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: barraFondo }}>
                       <motion.div
                         className="h-full rounded-full bg-[#F0A8B6]"
                         initial={{ width: 0 }}
@@ -518,18 +542,19 @@ export default function DocentePage() {
                         transition={{ duration: 0.8, ease: "easeOut", delay: idx * 0.08 }}
                       />
                     </div>
-                    <p className="text-white/50 text-xs mt-1 text-center">{est.porcentaje || 0}%</p>
+                    <p className="text-xs mt-1 text-center" style={{ color: colorTexto50 }}>{est.porcentaje || 0}%</p>
                   </div>
 
                   <div className="flex items-center gap-4 shrink-0">
                     <div className="text-right">
-                      <p className="text-white/70 text-sm">{est.temas_completados} temas</p>
-                      <p className="text-white/40 text-xs">{formatearFecha(est.ultima_actividad)}</p>
+                      <p className="text-sm" style={{ color: colorTexto70 }}>{est.temas_completados} temas</p>
+                      <p className="text-xs" style={{ color: colorTexto40 }}>{formatearFecha(est.ultima_actividad)}</p>
                     </div>
                     <motion.span
                       animate={{ rotate: expandido ? 180 : 0 }}
                       transition={{ duration: 0.2 }}
-                      className="text-white/40 text-xs"
+                      className="text-xs"
+                      style={{ color: colorTexto40 }}
                     >
                       ▼
                     </motion.span>
@@ -543,13 +568,14 @@ export default function DocentePage() {
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.25, ease: "easeInOut" }}
-                      className="border-t border-white/10 overflow-hidden"
+                      className="border-t overflow-hidden"
+                      style={{ borderColor: bordeSutil }}
                     >
                       <div className="p-4 space-y-3">
-                        <p className="text-white/60 text-sm">
+                        <p className="text-sm" style={{ color: colorTexto60 }}>
                           Código: <span className="text-[#A4CDD5] font-mono">{est.codigo_acceso}</span>
                         </p>
-                        <p className="text-white/60 text-sm">Total logros: {est.total_logros}</p>
+                        <p className="text-sm" style={{ color: colorTexto60 }}>Total logros: {est.total_logros}</p>
 
                         {pinForm.estudianteId !== est.id ? (
                           <button
@@ -569,7 +595,8 @@ export default function DocentePage() {
                                 value={pinForm.valor}
                                 onChange={(e) => setPinForm((prev) => ({ ...prev, valor: e.target.value.replace(/\D/g, "") }))}
                                 placeholder="0000"
-                                className="w-24 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-[#A4CDD5]/50"
+                                className="w-24 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-[#A4CDD5]/50 border"
+                                style={{ backgroundColor: inputBg, borderColor: bordeSutil, color: colorTexto }}
                               />
                               <button
                                 type="button"
@@ -582,7 +609,8 @@ export default function DocentePage() {
                               <button
                                 type="button"
                                 onClick={() => setPinForm({ estudianteId: "", valor: "", cargando: false, mensaje: "" })}
-                                className="text-white/40 hover:text-white text-sm"
+                                className="text-sm transition-colors"
+                                style={{ color: colorTexto40 }}
                               >
                                 Cancelar
                               </button>
@@ -611,7 +639,8 @@ export default function DocentePage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm"
+            style={{ backgroundColor: overlayModal }}
             onClick={() => { if (!codigoCreado) setModalAgregar(false); }}
           >
             <motion.div
@@ -620,12 +649,12 @@ export default function DocentePage() {
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ type: "spring", stiffness: 300, damping: 25 }}
               onClick={(e) => e.stopPropagation()}
-              className="border border-white/10 rounded-2xl p-8 w-full max-w-sm mx-4"
-              style={{ backgroundColor: "#160B24" }}
+              className="border rounded-2xl p-8 w-full max-w-sm mx-4"
+              style={{ backgroundColor: bgPagina, borderColor: bordeSutil }}
             >
               {!codigoCreado ? (
                 <>
-                  <h2 className="font-bold text-xl text-white mb-6" style={{ fontFamily: "var(--font-heading)" }}>
+                  <h2 className="font-bold text-xl mb-6" style={{ fontFamily: "var(--font-heading)", color: colorTexto }}>
                     Agregar estudiante
                   </h2>
 
@@ -634,13 +663,15 @@ export default function DocentePage() {
                     value={nuevoEstudiante.nombre}
                     onChange={(e) => setNuevoEstudiante((prev) => ({ ...prev, nombre: e.target.value }))}
                     placeholder="Nombre del estudiante"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-[#F0A8B6]/50 mb-4"
+                    className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#F0A8B6]/50 mb-4 border"
+                    style={{ backgroundColor: inputBg, borderColor: bordeSutil, color: colorTexto }}
                   />
 
                   <select
                     value={nuevoEstudiante.grado_id || grupoActivoObj?.numero_grado?.toString() || ""}
                     onChange={(e) => setNuevoEstudiante((prev) => ({ ...prev, grado_id: e.target.value }))}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#F0A8B6]/50 mb-4"
+                    className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#F0A8B6]/50 mb-4 border"
+                    style={{ backgroundColor: inputBg, borderColor: bordeSutil, color: colorTexto }}
                   >
                     {Array.from(new Map(grupos.map((g) => [g.numero_grado, g.grado_nombre])).entries()).map(
                       ([numeroGrado, nombreGrado]) => (
@@ -659,7 +690,8 @@ export default function DocentePage() {
                     value={nuevoEstudiante.pin}
                     onChange={(e) => setNuevoEstudiante((prev) => ({ ...prev, pin: e.target.value.replace(/\D/g, "") }))}
                     placeholder="PIN inicial (4 dígitos)"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-[#F0A8B6]/50 mb-6"
+                    className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#F0A8B6]/50 mb-6 border"
+                    style={{ backgroundColor: inputBg, borderColor: bordeSutil, color: colorTexto }}
                   />
 
                   {errorCrear && <p className="text-red-400 text-sm mb-4">{errorCrear}</p>}
@@ -668,7 +700,8 @@ export default function DocentePage() {
                     <button
                       type="button"
                       onClick={() => setModalAgregar(false)}
-                      className="border border-white/20 text-white/60 px-4 py-2 rounded-xl text-sm"
+                      className="border px-4 py-2 rounded-xl text-sm"
+                      style={{ borderColor: bordeSutil20, color: colorTexto60 }}
                     >
                       Cancelar
                     </button>
@@ -695,23 +728,23 @@ export default function DocentePage() {
                   >
                     <span style={{ color: "#160B24" }} className="text-2xl font-bold">✓</span>
                   </motion.div>
-                  <p className="text-white font-bold text-xl text-center" style={{ fontFamily: "var(--font-heading)" }}>
+                  <p className="font-bold text-xl text-center" style={{ fontFamily: "var(--font-heading)", color: colorTexto }}>
                     ¡Estudiante creado!
                   </p>
 
                   <div className="bg-[#F0A8B6]/10 border border-[#F0A8B6]/30 rounded-xl p-4 mt-4 text-center">
-                    <p className="text-white/60 text-xs mb-3">
+                    <p className="text-xs mb-3" style={{ color: colorTexto50 }}>
                       Compartí estos datos con el estudiante
                     </p>
                     <div className="mb-3">
-                      <p className="text-white/50 text-xs">Código de acceso</p>
+                      <p className="text-xs" style={{ color: colorTexto50 }}>Código de acceso</p>
                       <p className="text-[#F0A8B6] font-mono text-2xl font-bold tracking-widest mt-1">{codigoCreado}</p>
                     </div>
                     <div>
-                      <p className="text-white/50 text-xs">PIN inicial</p>
+                      <p className="text-xs" style={{ color: colorTexto50 }}>PIN inicial</p>
                       <p className="text-[#A4CDD5] font-mono text-2xl font-bold tracking-widest mt-1">{pinUsado}</p>
                     </div>
-                    <p className="text-white/40 text-xs mt-4">
+                    <p className="text-xs mt-4" style={{ color: colorTexto40 }}>
                       El estudiante puede cambiar su PIN desde Extras → Perfil
                     </p>
                   </div>
