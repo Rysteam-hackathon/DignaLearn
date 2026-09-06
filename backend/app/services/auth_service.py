@@ -70,6 +70,22 @@ def verificar_docente_autenticado(authorization: str | None) -> str:
     return usuario.id
 
 
+def _obtener_perfil_admin(supabase, usuario_id: str) -> dict:
+    """Busca la fila de perfiles_admin_institucion del usuario autenticado.
+    Lanza 404 si no existe — este es el mecanismo real de "es admin de una
+    institución", igual que _obtener_perfil_docente hace para docentes."""
+    resultado = (
+        supabase.table("perfiles_admin_institucion")
+        .select("id, usuario_id, institucion_id, nombre_completo")
+        .eq("usuario_id", usuario_id)
+        .maybe_single()
+        .execute()
+    )
+    if not resultado or not resultado.data:
+        raise HTTPException(status_code=404, detail="Perfil de administrador no encontrado.")
+    return resultado.data
+
+
 def verificar_estudiante_autenticado(authorization: str | None, estudiante_id: str) -> str:
     """Verifica el JWT del estudiante y devuelve el estudiante_id real (campo "sub"
     del token). Lanza 401 si falta el token, es inválido/expiró, o no corresponde

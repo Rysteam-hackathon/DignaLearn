@@ -237,16 +237,7 @@ class GrupoStats(BaseModel):
     sin_actividad: int
 
 
-@router.get("/{grupo_id}/stats", response_model=GrupoStats)
-def stats_de_grupo(
-    grupo_id: str,
-    authorization: str | None = Header(default=None),
-) -> GrupoStats:
-    usuario_id = verificar_docente_autenticado(authorization)
-    supabase = get_supabase_client()
-    perfil = _obtener_perfil_docente(supabase, usuario_id)
-    _verificar_acceso_grupo(supabase, perfil["id"], grupo_id)
-
+def _calcular_stats_grupo(supabase, grupo_id: str, grado_id: int | None) -> GrupoStats:
     estudiantes_result = (
         supabase.table("perfiles_estudiante")
         .select("id")
@@ -258,7 +249,6 @@ def stats_de_grupo(
     if total == 0:
         return GrupoStats(total=0, promedio=0, activos_semana=0, sin_actividad=0)
 
-    grado_id = _obtener_grado_id_del_grupo(supabase, grupo_id)
     temas_posibles = _contar_temas_del_grado(supabase, grado_id)
 
     progreso_batch = (
@@ -296,3 +286,17 @@ def stats_de_grupo(
         promedio = 0
 
     return GrupoStats(total=total, promedio=promedio, activos_semana=activos_semana, sin_actividad=sin_actividad)
+
+
+@router.get("/{grupo_id}/stats", response_model=GrupoStats)
+def stats_de_grupo(
+    grupo_id: str,
+    authorization: str | None = Header(default=None),
+) -> GrupoStats:
+    usuario_id = verificar_docente_autenticado(authorization)
+    supabase = get_supabase_client()
+    perfil = _obtener_perfil_docente(supabase, usuario_id)
+    _verificar_acceso_grupo(supabase, perfil["id"], grupo_id)
+
+    grado_id = _obtener_grado_id_del_grupo(supabase, grupo_id)
+    return _calcular_stats_grupo(supabase, grupo_id, grado_id)
