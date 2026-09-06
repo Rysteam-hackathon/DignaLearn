@@ -65,24 +65,34 @@ GET  /api/grupos/{id}/stats — stats del grupo
 POST /api/docente/estudiantes — crear estudiante con grupo_id
 POST /api/docente/resetear-pin — resetear PIN de estudiante
 POST /api/progress/completar-elemento — progreso + evaluación de logros
+GET  /api/progress/racha/{estudiante_id} — racha del estudiante (JWT verificado)
+GET  /api/progress/logros/{estudiante_id} — logros desbloqueados (JWT verificado)
+GET  /api/progress/estudiante/{estudiante_id}?tema_id= — progreso por tema (JWT verificado)
+POST /api/progress/registrar-actividad/{estudiante_id} — actividad diaria (JWT verificado)
 POST /api/gamification/evaluar/{estudiante_id} — re-evaluar logros
 
 ## Último commit pusheado
-d925b06 — feat: rediseño panel docente con selector de grupos y fix CORS
+2958938 — docs: documentar migracion 005 - RLS real por institucion en grupos/instituciones
 
 ## Pendientes en orden de prioridad
-1. Verificar panel docente en navegador (CORS fix aplicado, no confirmado)
-2. RLS real por estudiante (progreso/actividad/logros tienen qual:true)
-3. Verificación de 9no grado end-to-end
-4. Auditoría dark mode completa
-5. Rotación de variantes de actividades (grupo_variante 1/2/3)
-6. Nuevos tipos de actividad (rompecabezas, conectores, arrastrar)
-7. Mascota guía (esquina inferior derecha, pistas desde pistas_actividad)
-8. Acordeón de lectura expandible en página de unidad
-9. Panel de Admin de Institución
-10. Revisión mobile completa
-11. Ilustraciones SVG de logros — verificar visualmente en navegador
-12. README
-13. seed.sql sincronizado
-14. CORS producción (URL de Vercel al desplegar)
-15. Modo Historia — en espera de Sidar
+1. Nuevos tipos de actividad (Rompecabezas, Conectores, ArrastrarOrdenar) — PRÓXIMO FOCO
+2. Mascota guía (esquina inferior derecha, pistas desde pistas_actividad)
+3. Acordeón de lectura expandible en página de unidad
+4. Panel de Admin de Institución (requiere definir cómo se automatiza el alta de docente/grupo — hoy es 100% manual desde Supabase Studio)
+5. Revisión mobile completa
+6. README
+7. seed.sql sincronizado
+8. CORS producción (URL de Vercel al desplegar)
+9. Modo Historia — en espera de Sidar
+
+## Resuelto en Sesión 9 (ver PARTE 22 del PRD para el detalle completo)
+- Fix de concurrencia en supabase_client.py (thread-local)
+- PENDIENTE 1: RLS real por estudiante — lecturas de progreso/racha/logros movidas al backend con JWT verificado
+- Bug de contaminación de sesión estudiante/docente — clientes supabaseDocente/supabaseEstudiante separados
+- 34 logros de tema únicos (antes 1 genérico), con backfill de progreso histórico
+- 34 reflexiones de contenido (scenario) — antes solo 1 de 34 temas tenía Reflexión funcional
+- PENDIENTE 3: rotación de variantes con memoria en [topicId]/page.tsx
+- Equipo actualizado: Jonathan Alvarado (Comunicador) agregado, rol de Eddy corregido
+- Badge del hero del landing cambiado
+- PENDIENTE 2 (dark mode): dropdown de configuración + dark/light real en panel docente
+- RLS real por institución en grupos/instituciones (antes USING(true)) — migración 005

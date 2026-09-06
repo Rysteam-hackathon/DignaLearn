@@ -1270,3 +1270,104 @@ Eddy Marenco absorbe el rol de comunicaciones. Equipo actual:
 - Sharis Peralta — Diseño
 - Sidar Perez — Frontend y Modo Historia
 
+## PARTE 22 — Decisiones y Actualizaciones (Sesión 9)
+
+### Fix de concurrencia: cliente Supabase thread-local
+
+`backend/app/supabase_client.py` reemplazó el singleton `@lru_cache` por un cliente por hilo (`threading.local()`). Bajo carga concurrente real, un único cliente `httpx` compartido entre los hilos del threadpool de FastAPI producía `RemoteProtocolError` intermitentes. Cada hilo del pool ahora crea y reutiliza su propia instancia de `Client`.
+
+### PENDIENTE 1 cerrado — RLS real por estudiante
+
+Las lecturas de progreso del estudiante (`progreso_estudiante`, `actividad_diaria`, `estudiante_logros`) que antes iban directo del navegador a Supabase con la anon key ahora pasan exclusivamente por el backend, protegidas por `verificar_estudiante_autenticado()`. Endpoints nuevos en `backend/app/routers/progress.py`:
+
+- `GET /api/progress/racha/{estudiante_id}`
+- `GET /api/progress/logros/{estudiante_id}`
+- `GET /api/progress/estudiante/{estudiante_id}?tema_id=`
+- `POST /api/progress/registrar-actividad/{estudiante_id}`
+
+`frontend/lib/progress.ts` centraliza estas llamadas (`obtenerRacha`, `obtenerLogrosEstudiante`, `obtenerProgresoEstudiante`, `registrarActividadDiaria`). Esto cierra el vector de fuga a nivel de aplicación para estas 3 tablas — las políticas RLS de base subyacentes no se tocaron en esta sesión (ver PENDIENTE 1 renovado, más abajo, sobre `instituciones`/`grupos`).
+
+### Bug de contaminación de sesión entre docente y estudiante
+
+**Causa raíz confirmada con headers HTTP reales:** `frontend/lib/supabase.ts` exportaba un único cliente `@supabase/supabase-js` compartido. Ese cliente persiste la sesión de Supabase Auth en `localStorage` y la reutiliza automáticamente en *cualquier* request futuro — incluidas las páginas de estudiante, que nunca deberían llevar una sesión de Supabase Auth (el estudiante usa JWT propio). Si un docente iniciaba sesión y luego, en el mismo navegador, se entraba a una ruta de estudiante, PostgREST evaluaba esas queries bajo la identidad del docente.
+
+**Solución (Opción B):** `frontend/lib/supabase.ts` ahora exporta dos clientes separados:
+```ts
+export const supabaseDocente = createClient(url, anonKey);
+export const supabaseEstudiante = createClient(url, anonKey, {
+  auth: { persistSession: false, autoRefreshToken: false, storageKey: "sb-estudiante-sin-uso" },
+});
+```
+Todas las páginas de estudiante migraron a `supabaseEstudiante`; `docente/page.tsx` y `lib/auth.ts` usan `supabaseDocente`. Verificado con reproducción real (ambos clientes coexistiendo en el mismo proceso, con una sesión de docente activa) que ya no hay fuga cruzada.
+
+### 34 logros de tema únicos (antes 1 genérico)
+
+El logro genérico "¡Tema completado!" (`tipo_condicion: tema_completado`, sin distinguir tema) fue reemplazado por 34 logros específicos, uno por cada tema real de 7mo y 9no, cada uno con título y descripción propios ligados al contenido real del tema. Requirió:
+
+- `ALTER TABLE logros ADD COLUMN tema_id UUID REFERENCES temas(id)` (DDL corrida por Dirk en Supabase SQL Editor).
+- `backend/app/services/gamification.py` → `_intentar_desbloquear()` ahora busca por `tema_id` cuando está presente, con fallback seguro (loguea y no rompe el progreso si un tema aún no tiene logro configurado).
+- Backfill de progreso histórico: estudiantes que ya habían completado temas antes de esta migración recibieron su logro específico con `desbloqueado_en` igual a la fecha real de finalización (no la fecha del backfill).
+- `frontend/components/LogroIcono.tsx`: mapa `CATEGORIA_POR_LOGRO_ID` (34 UUIDs → 8 categorías visuales), 4 íconos SVG nuevos (`IconoEscudo`, `IconoSimboloIgualdad`, `IconoFlorTejido`, `IconoMaletinEstrella`) y reutilización de 4 íconos de unidad ya existentes. El logro genérico viejo se mantiene intacto (`tema_id = NULL`) como fallback histórico.
+
+### 34 reflexiones de contenido (scenario) — antes solo 1 de 34 temas la tenía
+
+Auditoría de cobertura de variantes reveló que 33 de los 34 temas del currículo tenían **cero** actividades de tipo `scenario` (la fuente de datos del componente `Reflexion.tsx`) — un hueco de contenido preexistente, no relacionado con la rotación de variantes que se estaba auditando. Se confirmó (trazando `Reflexion.tsx` y comparando con pruebas anteriores que habían llamado directo a `POST /completar-elemento`, el cual no valida existencia de contenido) que la Reflexión de esos 33 temas nunca había renderizado nada real en el navegador.
+
+Se redactaron y aprobaron 33 entradas nuevas de `scenario` (16 para 7mo, 17 para 9no), cada una con pregunta situacional (no abstracta), 3 opciones (1 correcta + 2 plausibles) y un `dato_extra` verificable sobre Nicaragua, con adaptación propia del contenido MINED (no copia literal, por PRD Parte 8). Los 34 temas tienen ahora Reflexión funcional end-to-end.
+
+### PENDIENTE 3 cerrado — Rotación de variantes con memoria
+
+`frontend/app/(student)/niveles/[unitId]/[topicId]/page.tsx` ahora usa `elegirActividad()`: si el estudiante nunca completó la actividad del tema, siempre se muestra `grupo_variante = 1`; si ya la completó y vuelve a entrar, se elige al azar entre las variantes 2 y 3 (nunca la 1 de nuevo), con fallback a la 1 si el tema no tiene variantes 2/3 cargadas. Aplica a sopa de letras, quiz y scenario.
+
+### Equipo actualizado — Jonathan Alvarado incorporado
+
+Se agregó Jonathan Alvarado (Comunicador) al equipo en `frontend/app/page.tsx` y `frontend/app/(student)/extras/page.tsx`. El rol de Eddy Marenco, que en PARTE 21 decía "Líder, Marketing y Comunicaciones", se corrigió a "Líder y Marketing" ahora que Jonathan asume comunicaciones por separado.
+
+### Badge del hero del landing
+
+El badge "✨ Plataforma educativa del MINED Nicaragua" del hero (`frontend/app/page.tsx`) se reemplazó por "🏆 Tu esfuerzo de hoy es tu victoria de mañana", con el trofeo animado en loop de escala (Framer Motion).
+
+### Dropdown de configuración + dark/light mode real en panel docente
+
+`frontend/app/docente/page.tsx` tenía el fondo, cards y textos **hardcodeados a oscuro** — nunca reaccionaba al mismo mecanismo de modo oscuro/claro que ya usaban las 8 páginas del estudiante (`localStorage["dignalearn_tema"]` + clase `dark` en `<html>`, leído con un `useState` + `MutationObserver` en cada página). Se agregó:
+
+1. Un dropdown en el header (clic sobre el nombre del docente, Framer Motion `AnimatePresence`) con el mismo toggle sol/luna de `extras/page.tsx` y el botón "Salir" movido adentro.
+2. Soporte real de ambos modos en toda la página: fondo, header, tabs de grupos, cards de stats, lista de estudiantes (colapsada y expandida), inputs y modal de agregar estudiante — todos migrados de clases Tailwind fijas (`text-white`, `bg-white/X`, `#160B24` literal) a tokens de color condicionados por `modoOscuro`. Los acentos de marca (rosa/celeste) se mantienen iguales en ambos modos por diseño.
+
+Las páginas públicas pre-login (landing, login, legal, contacto) quedan **dark-only a propósito** — no se tocaron, es una decisión de diseño de marca, no un pendiente.
+
+### RLS real por institución — `instituciones` y `grupos`
+
+Auditoría encontró que, de las 4 tablas del modelo multi-institución (`instituciones`, `grupos`, `docente_grupos`, `perfiles_admin_institucion`), documentadas en PARTE 21 como con RLS habilitado, **2 de las 4 tenían política `USING (true)` para cualquier autenticado** (`instituciones`, `grupos`) — es decir, cualquier docente autenticado podía leer instituciones y grupos ajenos si llamaba directo a la REST API de Supabase, sin pasar por el backend. `docente_grupos` y `perfiles_admin_institucion` ya estaban correctamente acotadas por `auth.uid()` desde la migración 004 (`db/migrations/004_rls_instituciones_grupos.sql`).
+
+Nueva migración `db/migrations/005_rls_docente_scoped.sql` (aplicada por Dirk en Supabase SQL Editor):
+- `instituciones`: un docente solo lee su propia institución, vía `perfiles_docente.institucion_id`.
+- `grupos`: un docente solo lee los grupos donde tiene una fila en `docente_grupos`.
+
+Verificado con login real de `docente@dignalearn.com` + SELECT directo a la REST API (sin backend): sigue viendo exactamente sus 2 grupos y su 1 institución, sin regresión. El flujo del panel docente en el navegador no cambia visualmente porque `grupos.py` usa el cliente service-role internamente (bypasea RLS por diseño) — el fix cierra únicamente la vía de acceso directo por REST, que era la expuesta.
+
+**Hallazgo relacionado, documentado para cuando se construya el panel de Admin de Institución:** no existe hoy ningún endpoint ni proceso automatizado para dar de alta a un docente o asignarlo a un grupo — `perfiles_docente` y `docente_grupos` se pueblan 100% manualmente desde Supabase Studio. Esto es la decisión de scope explícita del MVP (PRD Parte 4: "Admin se gestiona desde Supabase Studio... No requiere panel frontend para el MVP"), no un bug. Confirmado que el frontend (`docente/page.tsx`) ya maneja sin errores el caso de un docente con 0 grupos asignados.
+
+### Pendientes actuales — EN ORDEN DE PRIORIDAD
+
+**PENDIENTE 1 (RLS real por estudiante) — CERRADO** en esta sesión (ver arriba).
+
+**PENDIENTE 2 (auditoría dark mode) — CERRADO** en esta sesión: las 8 páginas de estudiante ya estaban correctas; se corrigió el panel docente (único hueco real de uso diario); las páginas públicas quedan dark-only a propósito.
+
+**PENDIENTE 3 (rotación de variantes) — CERRADO** en esta sesión (ver arriba), y además se cerró un hueco de contenido no detectado antes (34 reflexiones faltantes).
+
+**PENDIENTE 4 (probar panel docente end-to-end) — CERRADO**: verificado con login real y flujo completo (mis-grupos → estudiantes → stats) en esta y sesiones anteriores.
+
+**PENDIENTE — RLS instituciones/grupos (nuevo, cerrado en esta sesión).** Ver migración 005 arriba.
+
+**Próximo foco: nuevos tipos de actividad.** Rompecabezas, Conectores y ArrastrarOrdenar (PARTE 8) siguen sin implementar — hoy solo existen sopa de letras, quiz y scenario (reflexión) como tipos funcionales; `drag_drop` está declarado en `tipos_actividad` pero con 0 filas en `actividades`.
+
+**Pendientes sin cambios desde sesiones anteriores:**
+- Mascota guía (no iniciada).
+- Integración Modo Historia — en espera de que Sidar entregue archivos compatibles a Dirk.
+- README + ejecución local.
+- `seed.sql` sincronizado con el estado real de la BD.
+- CORS de producción (URL de Vercel al desplegar).
+- Revisión mobile completa.
+- Panel de Admin de Institución (requiere primero decidir cómo se automatiza el alta de docente/grupo, ver hallazgo arriba).
+
