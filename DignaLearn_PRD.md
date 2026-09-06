@@ -18,7 +18,7 @@ El repositorio `DignaLearn` contiene únicamente **5 archivos de documentación*
 | `LÉAME.md` | Visión del proyecto, equipo, stack declarado |
 | `CONTRIBUYENDO.md` | Convenciones de ramas y commits |
 | `CÓDIGO_DE_CONDUCTA.md` | Código de conducta del equipo |
-| `Estructura.md` | Prompt para agente de IA (intención de estructura, no carpetas reales) |
+| `Estructura.md` | Borrador de estructura de carpetas propuesta (intención, no carpetas reales) |
 
 **No existen:** `package.json`, `requirements.txt`, `Dockerfile`, carpetas `frontend/`, `backend/`, `db/`, esquema de base de datos, ni ningún endpoint o componente.
 
@@ -233,7 +233,7 @@ Crea cuentas de docentes, asigna instituciones. No requiere panel frontend para 
 
 ## PARTE 5 — Modelo de Datos
 
-### ⚠️ Nota para el agente — Modelo evolutivo
+### ⚠️ Nota del equipo — Modelo evolutivo
 
 Este modelo es un **punto de partida, no una especificación cerrada.** Siempre generar una migración Alembic antes de modificar el esquema y actualizar `db/schema.sql`.
 
@@ -314,7 +314,7 @@ Los adolescentes pueden pensar hipotéticamente, analizar situaciones abstractas
 
 > ⚠️ **Corrección respecto a versiones anteriores:** inicialmente se asumieron 2 unidades por grado. Lo correcto es: **4 unidades (I, II, III, IV), divididas en 2 semestres**, 7 horas/clase por unidad, 1 frecuencia semanal — 28 H/C total por año. El contenido específico varía por grado. En primaria los documentos están organizados por pares de grados (multigrado), no por grado individual.
 
-**Nombres de unidad (confirmados para 1er-2do grado — verificar en otros grados con el agente):**
+**Nombres de unidad (confirmados para 1er-2do grado — pendiente verificar en otros grados):**
 
 | Semestre | Unidad | Nombre |
 |----------|--------|--------|
@@ -330,7 +330,7 @@ Los adolescentes pueden pensar hipotéticamente, analizar situaciones abstractas
 | **7mo** | Dignidad humana, características de la dignidad de la mujer, dignidad en familia/escuela/comunidad, mujer indígena y afrodescendiente | Declaración Universal de DDHH, derechos de la mujer como DDHH, evolución histórica de derechos en Nicaragua, igualdad de género |
 | **9no** | Papel de la mujer en la sociedad nicaragüense, mujer en la vida cotidiana, cultura de paz, mujer indígena/afrodescendiente | Igualdad de derechos en hogar/educación/trabajo/salud/política, relaciones desiguales, relaciones de poder, roles de género |
 
-> Unidades III y IV para secundaria se extraen de `Malla-Curricular-III-y-IV-Unidad-Secund-Regular....pdf` mediante el agente en VS Code (ver Parte 15).
+> Unidades III y IV para secundaria se extraen de `Malla-Curricular-III-y-IV-Unidad-Secund-Regular....pdf` siguiendo la metodología de extracción de la Parte 15.
 
 ---
 
@@ -346,7 +346,7 @@ Cada tema tiene **3 elementos secuenciales:**
 | Presentación directa, sin narrador infantil |
 | Ejemplos de situaciones sociales, históricas y de derechos ciudadanos |
 
-> **Nota sobre la mascota guía:** por tiempo del hackathon, **sin voz (audio)**. La idea en planeación: aparece en esquina inferior (no ocupa toda la pantalla), con texto sincronizado visualmente a movimiento de boca estilo pixel-art (2–3 frames, similar en espíritu a la mascota de Claude Code). Ver detalles técnicos en Parte 11.
+> **Nota sobre la mascota guía:** por tiempo del hackathon, **sin voz (audio)**. La idea en planeación: aparece en esquina inferior (no ocupa toda la pantalla), con texto sincronizado visualmente a movimiento de boca estilo pixel-art (2–3 frames). Ver detalles técnicos en Parte 11.
 
 **Elemento 2 — Actividad lúdica (el minijuego del tema)**
 
@@ -757,15 +757,7 @@ Los jueces de la categoría educación lo van a notar si no existe.
 
 ---
 
-## PARTE 15 — Documentos MINED: metodología para el agente en VS Code
-
-### Aclaración: "el repo" no es este chat
-
-Cuando esta sección dice "el repo", se refiere a **la carpeta del proyecto en tu computadora** — clon de `github.com/Rysteam-hackathon/DignaLearn` abierto en VS Code. Los PDFs MINED van directo a esa carpeta, nunca a este chat.
-
-### Por qué no aplica el límite de imágenes en VS Code
-
-Claude Code en VS Code lee archivos directamente del disco como texto — no convierte páginas de PDF a imágenes. No hay "límite de imágenes" ahí.
+## PARTE 15 — Documentos MINED: metodología de extracción de contenido curricular
 
 ### Estrategia (PDFs pesados → Markdown reutilizable)
 
@@ -774,8 +766,7 @@ Claude Code en VS Code lee archivos directamente del disco como texto — no con
    DignaLearn/docs/curriculum-source/   ← agregar línea a .gitignore
    ```
 
-2. **Antes de extraer: confirmar grado real de cada documento.** Instrucción para el agente:
-   > *"Abrí el PDF, revisá la portada y la tabla de distribución de carga horaria, decime qué grado(s) cubre antes de extraer nada más."*
+2. **Antes de extraer: confirmar el grado real de cada documento**, revisando la portada y la tabla de distribución de carga horaria, antes de extraer contenido.
 
 3. **Con grado confirmado, extraer a Markdown:**
    ```
@@ -785,9 +776,9 @@ Claude Code en VS Code lee archivos directamente del disco como texto — no con
 
 4. **El `.md` (no el PDF) alimenta `db/seed.sql`.**
 
-5. **Un documento a la vez** — no todos juntos en el mismo mensaje al agente.
+5. **Un documento a la vez** — no procesar varios juntos.
 
-### Mapeo documento → grado (verificar con el agente)
+### Mapeo documento → grado (pendiente de verificación)
 
 | Archivo fuente | Grado probable | Confirmado |
 |----------------|---------------|:---:|
@@ -814,9 +805,9 @@ Claude Code en VS Code lee archivos directamente del disco como texto — no con
 
 ---
 
-## PARTE 17 — Instrucciones para Claude Code (Agente en VS Code)
+## PARTE 17 — Lineamientos de Desarrollo del Equipo
 
-> **Leé este documento completo antes de generar cualquier código o estructura.**
+> Estos lineamientos aplican a todo el desarrollo del proyecto, de principio a fin.
 
 ### Reglas generales
 
@@ -855,7 +846,7 @@ Claude Code en VS Code lee archivos directamente del disco como texto — no con
 
 ---
 
-*Documento generado y actualizado en sesión de planeamiento con Claude (claude.ai) · Equipo Rysteam · Hackathon Nicaragua 2026 · Última actualización: 20/08/2026*
+*Documento generado y actualizado por el equipo Rysteam · Hackathon Nicaragua 2026 · Última actualización: 20/08/2026*
 
 ---
 

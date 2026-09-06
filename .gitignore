@@ -14,5 +14,9 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
-# Configuración local de Claude Code
+# Configuración local del editor
 .claude/
+
+# Notas internas de proceso — no forman parte de la entrega
+CONTEXTO_CLAUDE_CODE.md
+CONTINUIDAD_SESION_*.md
