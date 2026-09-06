@@ -7,6 +7,8 @@ import { getEstudianteLocal } from "@/lib/auth";
 import { obtenerProgresoPorTema } from "@/lib/progress";
 import WordSearch from "@/components/games/WordSearch";
 import Quiz from "@/components/games/Quiz";
+import Conectores from "@/components/games/Conectores";
+import Clasificacion from "@/components/games/Clasificacion";
 import ProgresoLectura from "@/components/ProgresoLectura";
 import Reflexion from "@/components/Reflexion";
 
@@ -52,6 +54,14 @@ interface ReflexionConfig {
   dato_extra: string;
 }
 
+interface ConectoresConfig {
+  pares: { concepto: string; definicion: string }[];
+}
+
+interface ClasificacionConfig {
+  situaciones: { texto: string; es_correcto: boolean; explicacion: string }[];
+}
+
 interface TemaData {
   titulo: string;
   contenido_lectura: string | null;
@@ -85,6 +95,8 @@ export default function TemaPage({
   const [tema, setTema] = useState<TemaData | null>(null);
   const [sopaConfig, setSopaConfig] = useState<SopaLetrasConfig | undefined>();
   const [quizConfig, setQuizConfig] = useState<QuizConfig | undefined>();
+  const [conectoresConfig, setConectoresConfig] = useState<ConectoresConfig | undefined>();
+  const [clasificacionConfig, setClasificacionConfig] = useState<ClasificacionConfig | undefined>();
   const [reflexionConfig, setReflexionConfig] = useState<ReflexionConfig | undefined>();
   const [cargando, setCargando] = useState(true);
 
@@ -121,6 +133,24 @@ export default function TemaPage({
 
       const quizActividad = elegirActividad(quizActividades ?? [], actividadYaCompletada);
       setQuizConfig(quizActividad?.config_json as QuizConfig | undefined);
+
+      const { data: conectoresActividades } = await supabaseEstudiante
+        .from("actividades")
+        .select("config_json, grupo_variante, tipos_actividad!inner(nombre)")
+        .eq("tema_id", params.topicId)
+        .eq("tipos_actividad.nombre", "conectores");
+
+      const conectoresActividad = elegirActividad(conectoresActividades ?? [], actividadYaCompletada);
+      setConectoresConfig(conectoresActividad?.config_json as ConectoresConfig | undefined);
+
+      const { data: clasificacionActividades } = await supabaseEstudiante
+        .from("actividades")
+        .select("config_json, grupo_variante, tipos_actividad!inner(nombre)")
+        .eq("tema_id", params.topicId)
+        .eq("tipos_actividad.nombre", "clasificacion");
+
+      const clasificacionActividad = elegirActividad(clasificacionActividades ?? [], actividadYaCompletada);
+      setClasificacionConfig(clasificacionActividad?.config_json as ClasificacionConfig | undefined);
 
       const { data: scenarioActividades } = await supabaseEstudiante
         .from("actividades")
@@ -208,6 +238,36 @@ export default function TemaPage({
                 Quiz
               </h2>
               <Quiz config={quizConfig} temaId={params.topicId} />
+            </motion.div>
+          )}
+
+          {conectoresConfig && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 24, delay: 0.4 }}
+              className="mt-4"
+            >
+              <Separador emoji="🔗" esOscuro={esOscuro} />
+              <h2 className="text-xl font-bold mb-4" style={{ color: colorTitulo }}>
+                Conectores
+              </h2>
+              <Conectores config={conectoresConfig} temaId={params.topicId} />
+            </motion.div>
+          )}
+
+          {clasificacionConfig && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 24, delay: 0.42 }}
+              className="mt-4"
+            >
+              <Separador emoji="⚖️" esOscuro={esOscuro} />
+              <h2 className="text-xl font-bold mb-4" style={{ color: colorTitulo }}>
+                Clasificación
+              </h2>
+              <Clasificacion config={clasificacionConfig} temaId={params.topicId} />
             </motion.div>
           )}
 
