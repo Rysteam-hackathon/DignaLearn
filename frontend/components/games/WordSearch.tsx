@@ -1,0 +1,345 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { getEstudianteLocal } from "@/lib/auth";
+import { marcarElementoCompletado, mapLogrosDesbloqueados, PROGRESO_ACTUALIZADO_EVENT } from "@/lib/progress";
+import LogroCelebracion, { type Logro } from "@/components/LogroCelebracion";
+import ToastError from "@/components/ToastError";
+
+const MENSAJE_ERROR_GUARDADO = "No se pudo guardar tu progreso, verificá tu conexión.";
+
+interface WordSearchConfig {
+  palabras: string[];
+  pistas: string[];
+  tamaño: number;
+}
+
+interface WordSearchProps {
+  config: WordSearchConfig;
+  temaId: string;
+}
+
+interface Cell {
+  row: number;
+  col: number;
+}
+
+const DIRECTIONS: [number, number][] = [
+  [1, 0],
+  [-1, 0],
+  [0, 1],
+  [0, -1],
+  [1, 1],
+  [-1, -1],
+  [1, -1],
+  [-1, 1],
+];
+
+const ALPHABET = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ";
+
+function generateGrid(
+  palabras: string[],
+  size: number
+): { grid: string[][]; placements: Record<string, Cell[]> } {
+  const grid: string[][] = Array.from({ length: size }, () => Array(size).fill(""));
+  const placements: Record<string, Cell[]> = {};
+  const ordenadas = [...palabras].sort((a, b) => b.length - a.length);
+
+  for (const palabra of ordenadas) {
+    let colocada = false;
+    let intentos = 0;
+
+    while (!colocada && intentos < 300) {
+      intentos++;
+      const [dCol, dRow] = DIRECTIONS[Math.floor(Math.random() * DIRECTIONS.length)];
+      const row = Math.floor(Math.random() * size);
+      const col = Math.floor(Math.random() * size);
+      const endRow = row + dRow * (palabra.length - 1);
+      const endCol = col + dCol * (palabra.length - 1);
+
+      if (endRow < 0 || endRow >= size || endCol < 0 || endCol >= size) continue;
+
+      let cabe = true;
+      for (let i = 0; i < palabra.length; i++) {
+        const r = row + dRow * i;
+        const c = col + dCol * i;
+        const existente = grid[r][c];
+        if (existente !== "" && existente !== palabra[i]) {
+          cabe = false;
+          break;
+        }
+      }
+      if (!cabe) continue;
+
+      const cells: Cell[] = [];
+      for (let i = 0; i < palabra.length; i++) {
+        const r = row + dRow * i;
+        const c = col + dCol * i;
+        grid[r][c] = palabra[i];
+        cells.push({ row: r, col: c });
+      }
+      placements[palabra] = cells;
+      colocada = true;
+    }
+  }
+
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      if (grid[r][c] === "") {
+        grid[r][c] = ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
+      }
+    }
+  }
+
+  return { grid, placements };
+}
+
+const MAX_INTENTOS_GRILLA = 20;
+
+// generateGrid() puede fallar en colocar una palabra larga tras 300 intentos
+// (medido: ~0.33% de las veces con listas reales de 7-8 palabras en grillas
+// 10x10) — si eso pasa y la palabra igual queda en la lista visible, el
+// estudiante nunca puede completar la sopa porque esa palabra no existe en
+// ningún lado de la grilla para seleccionar. Reintentamos la generación
+// completa (igual que el derangement de Rompecabezas) en vez de aceptar un
+// resultado parcial silencioso.
+function generarGridConReintento(
+  palabras: string[],
+  size: number
+): { grid: string[][]; placements: Record<string, Cell[]>; palabrasColocadas: string[] } {
+  let mejor: { grid: string[][]; placements: Record<string, Cell[]> } | null = null;
+
+  for (let intento = 0; intento < MAX_INTENTOS_GRILLA; intento++) {
+    const resultado = generateGrid(palabras, size);
+    if (Object.keys(resultado.placements).length === palabras.length) {
+      return { ...resultado, palabrasColocadas: palabras };
+    }
+    if (!mejor || Object.keys(resultado.placements).length > Object.keys(mejor.placements).length) {
+      mejor = resultado;
+    }
+  }
+
+  console.error(
+    `[WordSearch] No se pudieron colocar todas las palabras tras ${MAX_INTENTOS_GRILLA} intentos de grilla. ` +
+      `palabras=${JSON.stringify(palabras)} tamaño=${size}. Se continúa solo con las que sí entraron para no bloquear al estudiante.`
+  );
+  const colocacionFinal = mejor as { grid: string[][]; placements: Record<string, Cell[]> };
+  return {
+    ...colocacionFinal,
+    palabrasColocadas: palabras.filter((p) => colocacionFinal.placements[p]),
+  };
+}
+
+function getLine(start: Cell, end: Cell): Cell[] | null {
+  const dRow = end.row - start.row;
+  const dCol = end.col - start.col;
+
+  if (dRow === 0 && dCol === 0) return null;
+  if (dRow !== 0 && dCol !== 0 && Math.abs(dRow) !== Math.abs(dCol)) return null;
+
+  const steps = Math.max(Math.abs(dRow), Math.abs(dCol));
+  const stepRow = dRow === 0 ? 0 : dRow / Math.abs(dRow);
+  const stepCol = dCol === 0 ? 0 : dCol / Math.abs(dCol);
+
+  const cells: Cell[] = [];
+  for (let i = 0; i <= steps; i++) {
+    cells.push({ row: start.row + stepRow * i, col: start.col + stepCol * i });
+  }
+  return cells;
+}
+
+export default function WordSearch({ config, temaId }: WordSearchProps) {
+  const { palabras, pistas, tamaño } = config;
+
+  const [esOscuro, setEsOscuro] = useState(false);
+  useEffect(() => {
+    const actualizar = () => setEsOscuro(document.documentElement.classList.contains('dark'));
+    actualizar();
+    const obs = new MutationObserver(actualizar);
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => obs.disconnect();
+  }, []);
+
+  const { grid, palabrasColocadas } = useMemo(
+    () => generarGridConReintento(palabras, tamaño),
+    [palabras, tamaño]
+  );
+
+  const pistaPorPalabra = useMemo(() => {
+    const mapa: Record<string, string> = {};
+    palabras.forEach((palabra, i) => {
+      mapa[palabra] = pistas[i] ?? palabra;
+    });
+    return mapa;
+  }, [palabras, pistas]);
+
+  const [selStart, setSelStart] = useState<Cell | null>(null);
+  const [activeCells, setActiveCells] = useState<Cell[]>([]);
+  const [foundWords, setFoundWords] = useState<string[]>([]);
+  const [foundCells, setFoundCells] = useState<Record<string, Cell[]>>({});
+  const [progresoGuardado, setProgresoGuardado] = useState(false);
+  const [logrosQueue, setLogrosQueue] = useState<Logro[]>([]);
+  const [errorGuardado, setErrorGuardado] = useState<string | null>(null);
+
+  const handleLogroCierre = useCallback(() => {
+    setTimeout(() => {
+      setLogrosQueue((prev) => prev.slice(1));
+    }, 500);
+  }, []);
+
+  const foundCellsSet = useMemo(() => {
+    const set = new Set<string>();
+    Object.values(foundCells).forEach((cells) =>
+      cells.forEach((cell) => set.add(`${cell.row}-${cell.col}`))
+    );
+    return set;
+  }, [foundCells]);
+
+  const activeCellsSet = useMemo(
+    () => new Set(activeCells.map((cell) => `${cell.row}-${cell.col}`)),
+    [activeCells]
+  );
+
+  function handleCellClick(row: number, col: number) {
+    const clicked = { row, col };
+
+    if (!selStart) {
+      setSelStart(clicked);
+      setActiveCells([clicked]);
+      return;
+    }
+
+    const line = getLine(selStart, clicked);
+    setSelStart(null);
+
+    if (!line) {
+      setActiveCells([]);
+      return;
+    }
+
+    const palabra = line.map((cell) => grid[cell.row][cell.col]).join("");
+    const palabraInvertida = palabra.split("").reverse().join("");
+    const encontrada = palabrasColocadas.find(
+      (p) => (p === palabra || p === palabraInvertida) && !foundWords.includes(p)
+    );
+
+    if (encontrada) {
+      setFoundWords((prev) => [...prev, encontrada]);
+      setFoundCells((prev) => ({ ...prev, [encontrada]: line }));
+      setActiveCells([]);
+    } else {
+      setActiveCells(line);
+      setTimeout(() => setActiveCells([]), 400);
+    }
+  }
+
+  function cellClass(row: number, col: number): string {
+    const key = `${row}-${col}`;
+    if (foundCellsSet.has(key)) return "bg-[#A4CDD5] border-transparent";
+    if (activeCellsSet.has(key)) return "bg-[#F0A8B6] border-transparent";
+    return esOscuro
+      ? "bg-[#160B24]/60 border-white/10 hover:bg-white/10"
+      : "bg-white border-gray-200 hover:bg-[#160B24]/5";
+  }
+
+  const completado = foundWords.length === palabrasColocadas.length;
+
+  useEffect(() => {
+    if (!completado || progresoGuardado) return;
+
+    const estudiante = getEstudianteLocal();
+    if (!estudiante) return;
+
+    setProgresoGuardado(true);
+    marcarElementoCompletado(estudiante.id, temaId, "actividad")
+      .then((actualizado) => {
+        window.dispatchEvent(new Event(PROGRESO_ACTUALIZADO_EVENT));
+        if (actualizado.logros_desbloqueados.length > 0) {
+          setLogrosQueue(mapLogrosDesbloqueados(actualizado.logros_desbloqueados));
+        }
+      })
+      .catch((error) => {
+        console.error("Error al guardar progreso (WordSearch):", error);
+        setErrorGuardado(MENSAJE_ERROR_GUARDADO);
+      });
+  }, [completado, progresoGuardado, temaId]);
+
+  return (
+    <>
+      <ToastError mensaje={errorGuardado} onCerrar={() => setErrorGuardado(null)} esOscuro={esOscuro} />
+
+      {logrosQueue.length > 0 && (
+        <LogroCelebracion
+          key={logrosQueue[0].id}
+          logro={logrosQueue[0]}
+          onClose={handleLogroCierre}
+        />
+      )}
+
+      <div className="flex flex-col md:flex-row gap-8">
+      <div
+        className="grid gap-1 select-none w-fit"
+        style={{ gridTemplateColumns: `repeat(${tamaño}, minmax(0, 1fr))` }}
+      >
+        {grid.map((rowArr, r) =>
+          rowArr.map((letra, c) => (
+            <button
+              key={`${r}-${c}`}
+              type="button"
+              onClick={() => handleCellClick(r, c)}
+              className={`w-8 h-8 flex items-center justify-center text-sm font-semibold ${
+                esOscuro ? "text-white" : "text-[#160B24]"
+              } border rounded-xl transition-colors duration-200 ${cellClass(
+                r,
+                c
+              )}`}
+            >
+              {letra}
+            </button>
+          ))
+        )}
+      </div>
+
+      <div className="flex-1 min-w-[220px]">
+        <style>{`
+          @keyframes chip-pop {
+            0% { transform: scale(0.85); }
+            60% { transform: scale(1.06); }
+            100% { transform: scale(1); }
+          }
+        `}</style>
+        <p className="text-sm mb-3" style={{ color: esOscuro ? "rgba(255,255,255,0.6)" : "rgba(22,11,36,0.5)" }}>
+          {foundWords.length} de {palabrasColocadas.length} palabras encontradas
+        </p>
+        <div className="flex flex-wrap gap-2 mb-4">
+          {palabrasColocadas.map((palabra) => {
+            const encontrada = foundWords.includes(palabra);
+            return (
+              <span
+                key={palabra}
+                className={`text-sm px-3 py-1.5 rounded-full border transition-colors ${encontrada ? "line-through" : ""}`}
+                style={
+                  encontrada
+                    ? { backgroundColor: "#A4CDD5", borderColor: "transparent", color: "#160B24", animation: "chip-pop 400ms ease" }
+                    : {
+                        backgroundColor: "transparent",
+                        borderColor: esOscuro ? "rgba(255,255,255,0.2)" : "rgba(22,11,36,0.15)",
+                        color: esOscuro ? "#ffffff" : "#160B24",
+                      }
+                }
+              >
+                {pistaPorPalabra[palabra]}
+              </span>
+            );
+          })}
+        </div>
+        {completado && (
+          <p className="text-sm font-semibold text-emerald-600">
+            ¡Completaste la sopa de letras!
+          </p>
+        )}
+      </div>
+      </div>
+    </>
+  );
+}

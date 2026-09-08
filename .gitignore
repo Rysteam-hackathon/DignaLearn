@@ -10,6 +10,13 @@ __pycache__/
 .env  
 .env.local
 
-# Sistema operativo  
-.DS_Store  
+# Sistema operativo
+.DS_Store
 Thumbs.db
+
+# Configuración local del editor
+.claude/
+
+# Notas internas de proceso — no forman parte de la entrega
+CONTEXTO_CLAUDE_CODE.md
+CONTINUIDAD_SESION_*.md

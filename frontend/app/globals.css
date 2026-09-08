@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-purpura: #160B24;
+  --color-rosa: #F0A8B6;
+  --color-celeste: #A4CDD5;
+  --background: #ffffff;
+  --foreground: #160B24;
+  --font-heading: 'Sitka Small', 'Sitka', 'Cambria', Georgia, serif;
+}
+
+.dark {
+  --background: #160B24;
+  --foreground: #ffffff;
+  --font-heading: 'Sitka Small', 'Sitka', 'Cambria', Georgia, serif;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: var(--font-nunito), Arial, sans-serif;
+  transition: background-color 200ms ease, color 200ms ease;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading), Georgia, serif;
+  font-weight: 700;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .bg-brand-purpura { background-color: #160B24; }
+  .bg-brand-rosa { background-color: #F0A8B6; }
+  .bg-brand-celeste { background-color: #A4CDD5; }
+  .text-brand-purpura { color: #160B24; }
+  .text-brand-rosa { color: #F0A8B6; }
+  .text-brand-celeste { color: #A4CDD5; }
+}
+
+@keyframes flotar-fondo {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(var(--flota-dist, -20px)); }
+}
+
+.fondo-flotante {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.figura-flotante,
+.figura-flotante--alt {
+  position: absolute;
+  border-radius: 9999px;
+  background-color: #160B24;
+  opacity: var(--op-light, 0.05);
+  animation-name: flotar-fondo;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+.dark .figura-flotante {
+  background-color: #F0A8B6;
+  opacity: var(--op-dark, 0.06);
+}
+
+.dark .figura-flotante--alt {
+  background-color: #A4CDD5;
+  opacity: var(--op-dark, 0.06);
+}

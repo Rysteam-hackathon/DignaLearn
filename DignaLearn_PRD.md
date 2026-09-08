@@ -1,0 +1,1364 @@
+# DignaLearn — Documento Maestro de Planeamiento
+> **Equipo:** Rysteam · **Evento:** Hackathon Nicaragua 2026  
+> **Repositorio:** https://github.com/Rysteam-hackathon/DignaLearn  
+> **Estado del repo al inicio del planeamiento:** Greenfield (0% de código — solo documentación base)  
+> **Fecha de creación:** 07/08/2026 · **Última actualización:** 20/08/2026 · **Presentación final:** 30/08/2026
+
+---
+
+## PARTE 1 — Estado Actual del Repositorio
+
+### Qué existe hoy en el repo
+
+El repositorio `DignaLearn` contiene únicamente **5 archivos de documentación** en `main`, sin subdirectorios de código:
+
+| Archivo | Contenido |
+|---------|-----------|
+| `.gitignore` | Patrones para Python/FastAPI y Node/Next.js |
+| `LÉAME.md` | Visión del proyecto, equipo, stack declarado |
+| `CONTRIBUYENDO.md` | Convenciones de ramas y commits |
+| `CÓDIGO_DE_CONDUCTA.md` | Código de conducta del equipo |
+| `Estructura.md` | Borrador de estructura de carpetas propuesta (intención, no carpetas reales) |
+
+**No existen:** `package.json`, `requirements.txt`, `Dockerfile`, carpetas `frontend/`, `backend/`, `db/`, esquema de base de datos, ni ningún endpoint o componente.
+
+### Convenciones del equipo (respetar siempre)
+- **Ramas:** `feature/nombre-de-la-tarea`. Nunca pushear directo a `main`.
+- **Commits:** Conventional Commits — `feat:`, `fix:`, `docs:`, `chore:`, etc.
+- **Flujo:** todo cambio entra por Pull Request con revisión.
+
+### Equipo y roles
+
+| Miembro | Rol | Responsabilidad técnica |
+|---------|-----|------------------------|
+| Eddy Marenco | Líder / Marketing y Comunicaciones | Coordinación, presentación, estrategia, comunicación externa + dev backend/BD |
+| Sharis Peralta | Diseñadora | UI/UX, ilustraciones de insignias, assets visuales |
+| Dirk Martinez | Dev Backend | FastAPI, lógica de gamificación, conexión Supabase |
+| Sidar Perez | Diseñador / Dev Frontend | Módulo Modo Historia (ver Parte 10) |
+
+---
+
+## PARTE 2 — Visión del Producto
+
+### Qué es DignaLearn
+
+**DignaLearn** es una plataforma web educativa gamificada para estudiantes de Nicaragua. **Fortalece** el proceso de enseñanza-aprendizaje de la asignatura oficial del MINED **"Derechos y Dignidad de la Mujer"** mediante una experiencia interactiva que combina lectura adaptada, minijuegos y narrativa visual.
+
+> ⚠️ **Corrección de propuesta de valor (indicada por el profesor/mentor del hackathon):** el verbo correcto es **"fortalecemos"**, no "transformamos". DignaLearn no reemplaza ni transforma la metodología existente — la complementa y refuerza. La propuesta de valor oficial es: *"Fortalecemos el proceso de enseñanza-aprendizaje mediante herramientas tecnológicas que permiten al estudiante y al docente comprender la asignatura de Derechos y Dignidad de la Mujer."*
+
+### Alcance del MVP (hackathon)
+
+**Grados cubiertos en el MVP:** solo **7mo y 9no grado de secundaria**.
+
+Esta decisión es deliberada: cubrir 2 grados con contenido completo y funcionalidad real es más valioso para el hackathon que mostrar 11 grados vacíos. Los demás grados aparecen en la UI con etiqueta "Próximamente" — demuestra visión de escalabilidad sin comprometer calidad.
+
+> **Argumento para jueces:** "Lanzamos con acceso anticipado para 7mo y 9no grado, los dos grados donde la asignatura tiene mayor impacto en el ciclo básico de secundaria. La arquitectura escala a todos los niveles."
+
+### Referentes de experiencia
+- **Duolingo:** progreso por niveles, rachas, retroalimentación inmediata.
+- **ArbolABC:** actividades lúdicas educativas para niños.
+- **Coursera:** barras de progreso por módulo, estadísticas de actividad semanal.
+
+### Problema que resuelve
+
+La asignatura existe en el currículo oficial (primaria y secundaria) pero la metodología tradicional genera desconexión. No existe plataforma digital gamificada para esta asignatura en Nicaragua.
+
+> ⚠️ **Límite de contenido:** solo información alineada al programa oficial del MINED. Cualquier contenido externo queda excluido.
+
+### Lean Canvas (completado por el equipo)
+
+| Bloque | Contenido |
+|--------|-----------|
+| **Problema** | Sin herramienta digital para practicar fuera del aula; aprendizaje percibido como aburrido y abstracto; no existe plataforma gamificada para esta asignatura en Nicaragua |
+| **Solución** | 4 unidades/2 por semestre siguiendo programa MINED; insignias, progreso y racha sin presión de tiempo; web responsive sin descarga, funciona con conectividad básica |
+| **Propuesta de valor única** | Fortalecemos la enseñanza de los derechos en Nicaragua mediante plataforma digital gamificada con escenarios de vida real |
+| **Ventaja diferencial** | Recurso didáctico dentro de la asignatura oficial; contenido extraído de documentos MINED en contexto nicaragüense |
+| **Segmento clientes** | Usuario (quien usa): estudiantes 1°–6° primaria y 7°–11° secundaria. Cliente (quien paga): MINED, centros privados, UNICEF, ONU Mujeres, GIZ |
+| **Canales** | WhatsApp (docentes y alumnos), TikTok (estudiantes), Facebook (grupos de docentes y directores), MINED (distribución nacional) |
+| **Métricas clave** | Conversión (% que se registran y completan su primera unidad), Retención D7 y D30, NPS de docentes |
+| **Estructura de costos** | Desarrollo, diseño y contenido educativo, dominio y hosting, difusión digital, transporte para demos presenciales |
+| **Flujo de ingreso** | Certificados verificables, skins cosméticos de mascota, Modo Historia completo (freemium), licencia institucional + contratos de implementación con MINED |
+
+---
+
+## PARTE 3 — Stack Tecnológico y Arquitectura
+
+### Stack definitivo
+
+| Capa | Tecnología | Notas |
+|------|-----------|-------|
+| Frontend | **Next.js 14+ App Router + TypeScript** | SSR/SSG, rutas, UI |
+| Estilos | **Tailwind CSS** | Velocidad de desarrollo |
+| CRUD simple + Auth | **Supabase SDK (JS)** desde Next.js | PostgREST incluido |
+| Backend lógica de negocio | **FastAPI (Python)** | Solo gamificación, reportes y lógica compleja |
+| Base de datos | **PostgreSQL gestionado por Supabase** | Una sola BD para frontend y backend |
+| Gestor local de BD | **Supabase Studio** + DBeaver opcional | |
+| Repositorio | **GitHub (Rysteam-hackathon/DignaLearn)** | |
+
+### División clave: Supabase SDK vs FastAPI
+
+**Usar Supabase SDK directamente desde Next.js para:**
+- Leer/crear/actualizar perfiles de usuario
+- Consultar unidades, temas y lecciones
+- Registrar progreso del estudiante
+- Autenticación (login, sesión, roles vía JWT)
+
+**Usar FastAPI para:**
+- Calcular puntos/XP con reglas del sistema de insignias
+- Evaluar si se desbloquea una insignia al alcanzar umbral
+- Generar agregaciones para el panel del docente
+- Validaciones complejas de minijuegos
+- Cálculo de rachas diarias
+
+> FastAPI se conecta a la **misma BD de Supabase** mediante la connection string de Postgres — no es una BD separada.
+
+### Requisitos no funcionales
+
+- **Responsive web:** la plataforma es un sitio web, no una app móvil. Mismo código, mismo HTML, que se ve bien en celular y en computadora. En móvil: barra de navegación inferior. En desktop: sidebar o topbar.
+- **Conectividad básica:** funcionar con conexión lenta o intermitente. Cacheo de contenido estático, carga progresiva, imágenes en formato WebP con lazy load. Sin descarga ni instalación.
+- **Dark mode / Light mode:** toggle en la sección de configuración del perfil. Ambos modos deben funcionar desde el primer release.
+- **Performance:** Lighthouse score ≥ 80 en móvil. Importante para la demo del hackathon.
+
+### Patrón de arquitectura
+
+Arquitectura cliente-servidor con API REST. Backend FastAPI con patrón MVC:
+
+```
+frontend/          → Next.js (UI + llamadas a Supabase SDK y FastAPI)
+backend/           → FastAPI
+  routers/         → Controladores (endpoints REST)
+  models/          → Modelos de datos (SQLModel)
+  schemas/         → Validación (Pydantic)
+  services/        → Lógica de negocio (gamificación, reportes)
+db/                → Esquema SQL + datos semilla (contenido MINED)
+```
+
+### Estructura de carpetas propuesta (monorepo)
+
+```
+DignaLearn/
+├── frontend/
+│   ├── app/
+│   │   ├── (auth)/              # Login, registro
+│   │   ├── (student)/           # Rutas del estudiante
+│   │   │   ├── dashboard/
+│   │   │   ├── niveles/
+│   │   │   ├── units/[unitId]/
+│   │   │   │   └── topics/[topicId]/
+│   │   │   ├── historia/        # Módulo Modo Historia (Sidar)
+│   │   │   ├── progreso/
+│   │   │   └── perfil/          # Config: dark/light mode, PIN
+│   │   └── (teacher)/           # Rutas del docente
+│   │       ├── dashboard/
+│   │       ├── students/
+│   │       └── perfil/
+│   ├── components/
+│   │   ├── ui/                  # Botones, cards, barras de progreso
+│   │   ├── games/               # Componentes de cada tipo de minijuego
+│   │   ├── achievements/        # Insignias, colección, racha, calendario
+│   │   └── mascot/              # Mascota guía pixel-art
+│   └── lib/
+│       ├── supabase.ts
+│       └── api.ts               # Llamadas a FastAPI
+├── backend/
+│   ├── app/
+│   │   ├── main.py
+│   │   ├── routers/
+│   │   │   ├── progress.py
+│   │   │   ├── achievements.py
+│   │   │   └── reports.py
+│   │   ├── models/
+│   │   ├── schemas/
+│   │   └── services/
+│   │       ├── gamification.py
+│   │       └── reports.py
+│   └── requirements.txt
+├── docs/
+│   ├── curriculum-source/       # PDFs originales MINED — gitignored
+│   └── curriculum/              # Markdown extraídos — versionados
+│       ├── primaria/
+│       └── secundaria/
+└── db/
+    ├── schema.sql
+    └── seed.sql
+```
+
+---
+
+## PARTE 4 — Usuarios del Sistema y Roles
+
+### Roles del sistema
+
+Tres roles. Para el MVP del hackathon implementar **Estudiante** y **Docente**. Admin se gestiona desde Supabase Studio.
+
+### Estudiante (7mo y 9no — MVP)
+
+**Cómo accede:** Código de acceso de 6 caracteres (ej. `DL-K74X`) + PIN de 4 dígitos que él mismo define la primera vez. El código lo genera el sistema cuando el docente crea su cuenta. Sin email obligatorio.
+
+**Justificación:** No todos los estudiantes de secundaria en Nicaragua tienen correo o cuenta de Google — especialmente en zonas rurales. El código institucional elimina la fricción de acceso y no requiere recopilar datos personales del menor.
+
+**Qué puede hacer:**
+- Navegar unidades y temas de su grado
+- Completar los 3 elementos de aprendizaje por tema
+- Acceder al Modo Historia
+- Ver su progreso: racha, insignias, estadísticas semanales
+- Cambiar PIN y toggle dark/light mode en Perfil
+
+**Qué no puede hacer:**
+- Ver el progreso de otros estudiantes
+- Modificar su nivel o grado asignado
+- Acceder al panel del docente
+
+### Docente
+
+**Cómo accede:** Email + contraseña (Supabase Auth estándar). El admin crea la cuenta del docente en Supabase Studio.
+
+**Qué puede hacer:**
+- Crear perfiles de sus estudiantes (nombre + grado) desde su panel
+- Ver el código de acceso generado para cada estudiante
+- Resetear el PIN de un estudiante si lo olvidó
+- Ver el progreso del grupo: % promedio, activos esta semana, sin actividad
+- Ver el progreso individual: unidades/temas completados, insignias, última actividad
+- Toggle dark/light mode en Perfil
+
+**Qué no puede hacer:**
+- Ver respuestas individuales a preguntas o ejercicios específicos
+- Editar el contenido de la plataforma (es fijo, basado en MINED)
+
+### Administrador (MVP — desde Supabase Studio)
+
+Crea cuentas de docentes, asigna instituciones. No requiere panel frontend para el MVP.
+
+---
+
+## PARTE 5 — Modelo de Datos
+
+### ⚠️ Nota del equipo — Modelo evolutivo
+
+Este modelo es un **punto de partida, no una especificación cerrada.** Siempre generar una migración Alembic antes de modificar el esquema y actualizar `db/schema.sql`.
+
+> ⚠️ El esquema real usa nombres en español. Las tablas originales en inglés fueron renombradas durante la implementación.
+
+### Esquema real implementado (v2 — modelo multi-institución)
+
+**`instituciones`** — centros educativos que usan la plataforma  
+`id | nombre | ciudad | codigo_institucion | activa | created_at`
+
+**`perfiles_admin_institucion`** — administradores por institución  
+`id | usuario_id (FK auth.users) | institucion_id | nombre_completo | created_at`
+
+**`grupos`** — secciones de clase dentro de una institución  
+`id | nombre | grado_id | institucion_id | anio_lectivo | activo | created_at`
+
+**`docente_grupos`** — relación muchos-a-muchos docente↔grupo  
+`id | docente_id | grupo_id | created_at`
+
+**`perfiles_docente`** — perfil extendido del docente  
+`id | usuario_id (FK auth.users) | nombre_completo | institucion_id | created_at`
+
+**`perfiles_estudiante`** — perfil del estudiante (sin email)  
+`id | usuario_id | codigo_acceso (DL-XXXX) | pin_hash | grado_id | grupo_id | created_at`
+
+**`grados`** — catálogo de grados escolares  
+`id | numero_grado | nombre_display`
+
+**`unidades`** — unidades del programa MINED  
+`id | grado_id | titulo | descripcion | orden | activa`
+
+**`temas`** — temas dentro de una unidad  
+`id | unidad_id | titulo | orden | contenido_lectura | minutos_estimados`
+
+**`actividades`** — actividades lúdicas por tema  
+`id | tema_id | tipo (sopa_letras/quiz/...) | config_json | grupo_variante | puntos_recompensa`
+
+**`progreso_estudiante`** — progreso por estudiante y tema  
+`id | estudiante_id | tema_id | lectura_completada | actividad_completada | reflexion_respondida | completado_at`
+
+**`actividad_diaria`** — para cálculo de racha  
+`id | estudiante_id | fecha_actividad | elementos_completados`
+
+**`logros`** — catálogo de logros (13 logros implementados, cubiertos por 14 casos de ícono en `LogroIcono.tsx` — 13 mapeos directos + 1 fallback genérico)  
+`id | titulo | descripcion | tipo_condicion | valor_condicion | nivel_logro_id | icono_url`
+
+**`estudiante_logros`** — logros desbloqueados por estudiante  
+`id | estudiante_id | logro_id | tema_id | desbloqueado_at`
+
+**`story_chapters`** — capítulos del Modo Historia (Sidar)  
+`id | grado | unidad_id | titulo | orden | es_gratis | total_paginas | activo`
+
+**`student_story_progress`** — progreso en Modo Historia  
+`id | student_id | chapter_id | completado | paginas_leidas | last_read_at`
+
+### RLS (Row Level Security)
+
+**Habilitado en:** `instituciones`, `grupos`, `docente_grupos`, `perfiles_admin_institucion`, `grados`, `unidades`, `temas`, `actividades`, `perfiles_estudiante`, `progreso_estudiante`, `actividad_diaria`, `logros`, `estudiante_logros`, `perfiles_docente` ✅ (verificado empíricamente con la anon key pública — 0 filas legibles sin autenticación en las 4 tablas nuevas del modelo multi-institución).
+
+**Pendiente de corrección:** `progreso_estudiante`, `actividad_diaria` y `estudiante_logros` tienen políticas para el rol `anon` con `USING (true)` sin aislamiento real por estudiante — cualquiera con la anon key pública puede leer (y en los dos primeros, escribir) datos de cualquier estudiante directo contra la REST API de Supabase, sin pasar por el backend. El login del estudiante usa un JWT propio (ver Parte 9), no Supabase Auth, así que Postgres no tiene forma nativa de saber "quién es" el estudiante que llama — el fix requiere una función Postgres que valide ese JWT propio, o mover todas las lecturas de progreso a través del backend FastAPI. Fix pendiente.
+
+---
+
+## PARTE 6 — Sistema de Progreso e Insignias (Gamificación)
+
+> El sistema NO incluye certificaciones obligatorias, NO impone objetivos diarios, NO cronometra ni presiona. La plataforma celebra el avance; el ritmo lo define el docente o el estudiante.
+
+### Base pedagógica
+
+**7mo y 9no grado (12–15 años) — Operaciones Formales (Piaget) + Zona de Desarrollo Próximo (Vygotsky):**
+Los adolescentes pueden pensar hipotéticamente, analizar situaciones abstractas y desarrollar metacognición. Les motiva sentir que sus opiniones importan, debatir y analizar casos reales. Las actividades deben retar su pensamiento crítico. Los escenarios de la vida real y el aprendizaje reflexivo son especialmente poderosos a esta edad.
+
+> **Principio transversal:** la gamificación sin base pedagógica produce motivación superficial. Cada elemento lúdico de DignaLearn debe estar directamente alineado a un **indicador de logro del currículo MINED** — el juego refuerza el contenido, no lo reemplaza.
+
+---
+
+### Estructura curricular real del MINED (confirmada — correcciones importantes)
+
+> ⚠️ **Corrección respecto a versiones anteriores:** inicialmente se asumieron 2 unidades por grado. Lo correcto es: **4 unidades (I, II, III, IV), divididas en 2 semestres**, 7 horas/clase por unidad, 1 frecuencia semanal — 28 H/C total por año. El contenido específico varía por grado. En primaria los documentos están organizados por pares de grados (multigrado), no por grado individual.
+
+**Nombres de unidad (confirmados para 1er-2do grado — pendiente verificar en otros grados):**
+
+| Semestre | Unidad | Nombre |
+|----------|--------|--------|
+| I | I | Dignidad y Respeto para Vivir en Armonía |
+| I | II | Viviendo y Practicando Nuestros Derechos |
+| II | III | Relaciones Complementarias con Equidad e Igualdad |
+| II | IV | Protagonismo y Liderazgo en Unidad |
+
+**Contenido por grado — Secundaria (7mo y 9no, MVP):**
+
+| Grado | Unidad I | Unidad II |
+|-------|----------|-----------|
+| **7mo** | Dignidad humana, características de la dignidad de la mujer, dignidad en familia/escuela/comunidad, mujer indígena y afrodescendiente | Declaración Universal de DDHH, derechos de la mujer como DDHH, evolución histórica de derechos en Nicaragua, igualdad de género |
+| **9no** | Papel de la mujer en la sociedad nicaragüense, mujer en la vida cotidiana, cultura de paz, mujer indígena/afrodescendiente | Igualdad de derechos en hogar/educación/trabajo/salud/política, relaciones desiguales, relaciones de poder, roles de género |
+
+> Unidades III y IV para secundaria se extraen de `Malla-Curricular-III-y-IV-Unidad-Secund-Regular....pdf` siguiendo la metodología de extracción de la Parte 15.
+
+---
+
+### Capa 1 — Elementos de aprendizaje por tema
+
+Cada tema tiene **3 elementos secuenciales:**
+
+**Elemento 1 — Exploración del contenido (lectura + visual)**
+
+| Secundaria (7mo y 9no) |
+|------------------------|
+| Texto de hasta 300 palabras con datos reales o contexto histórico de Nicaragua |
+| Presentación directa, sin narrador infantil |
+| Ejemplos de situaciones sociales, históricas y de derechos ciudadanos |
+
+> **Nota sobre la mascota guía:** por tiempo del hackathon, **sin voz (audio)**. La idea en planeación: aparece en esquina inferior (no ocupa toda la pantalla), con texto sincronizado visualmente a movimiento de boca estilo pixel-art (2–3 frames). Ver detalles técnicos en Parte 11.
+
+**Elemento 2 — Actividad lúdica (el minijuego del tema)**
+
+Para secundaria: actividades de análisis — quizzes con casos reales, clasificar situaciones, escenarios de elección. Retroalimentación explicativa que muestra por qué la respuesta correcta es correcta. Sin presión de tiempo.
+
+**Elemento 3 — Reflexión de cierre**
+
+1–2 preguntas que conecten el tema con la vida real del estudiante. Respuesta correcta puede desbloquear un dato adicional de contexto.
+
+Una barra visible muestra `X/3 elementos completados`. Al completar los tres, el tema se marca como **"dominado"** con un ícono temático específico.
+
+---
+
+### Capa 2 — Sistema de insignias (3 niveles)
+
+#### Nivel 1 — Insignia de tema (pequeña)
+Se otorga al completar los 3 elementos de un tema. El ícono refleja el contenido específico:
+
+| Tipo de tema | Insignia |
+|-------------|---------|
+| Dignidad humana / respeto | Corazón con laureles |
+| Derechos humanos | Manos unidas o balanza |
+| Igualdad de género | Símbolo de igualdad estilizado |
+| Prevención de violencia | Escudo |
+| Participación / liderazgo | Estrella con silueta femenina |
+| Mujer indígena / afrodescendiente | Flor o tejido cultural |
+| Cultura de paz | Paloma o círculo de manos |
+| Roles de género / relaciones de poder | Balanza con figuras iguales |
+| Empoderamiento laboral (9no) | Maletín con estrella |
+
+#### Nivel 2 — Insignia de unidad (grande — diseñada por Sharis)
+Se otorga al completar todos los temas de una unidad. Son el "trofeo" principal — aparecen destacadas en el perfil del estudiante.
+
+| Unidad | Nombre de la insignia | Descripción visual sugerida |
+|--------|----------------------|---------------------------|
+| Unidad I | **"Guardiana de la Dignidad"** | Silueta de mujer con aura/resplandor, colores cálidos |
+| Unidad II | **"Conocedora de la Ley"** | Balanza sostenida por manos femeninas |
+| Unidad III | **"Defensora de la Equidad"** | Dos figuras entrelazadas (complementariedad) |
+| Unidad IV | **"Lideresa en Acción"** | Estrella con silueta de mujer alzando el brazo |
+
+#### Nivel 3 — Insignias especiales (logros transversales)
+
+| Nombre | Condición |
+|--------|-----------|
+| "Exploradora" | Primer tema dominado |
+| "Constante" | 5 días seguidos con actividad (racha) |
+| "Imparable" | 30 días de racha |
+| "Coleccionista" | 3 insignias de unidad desbloqueadas |
+| "Año Completo" | Las 4 unidades completadas |
+| "Protagonista de Nicaragua" | Completar Unidad IV de 9no (mujeres históricas) |
+| "Defensora de Derechos" | Completar Unidad II de cualquier grado |
+
+**Presentación en el perfil:** insignias de unidad (grandes) arriba, insignias de tema en cuadrícula abajo. Las no obtenidas aparecen en gris/bloqueadas — generan motivación para seguir.
+
+> ⚠️ Ilustraciones finales a cargo de Sharis. En el MVP usar placeholders SVG. **No bloquear el desarrollo por esto.**
+
+---
+
+### Capa 3 — Racha y actividad semanal
+
+Calendario de actividad que marca cada día con al menos 1 elemento completado.
+
+**Reglas:**
+- Se activa con mínimo 1 elemento completado en el día.
+- Romper la racha no penaliza — solo se celebra mantenerla.
+- Mensaje motivacional al registrar actividad del día.
+
+**Estadísticas visibles en Progreso (últimas 4 semanas):** temas visitados, actividades completadas, insignias desbloqueadas.
+
+---
+
+### Vista del docente (panel de grupo)
+
+- Resumen: % promedio del grupo, estudiantes activos esta semana, estudiantes sin actividad reciente.
+- Lista de estudiantes: barra de progreso individual, badge de racha activa, última fecha de actividad.
+- No muestra respuestas individuales a ejercicios.
+
+---
+
+## PARTE 7 — Flujo de Navegación
+
+### Estructura de navegación (5 secciones)
+
+Barra inferior en móvil; sidebar o topbar en desktop:
+
+| Sección | Contenido |
+|---------|-----------|
+| Inicio | Dashboard: racha, insignias recientes, progreso general |
+| Niveles | Lista de unidades y temas por grado |
+| Historia | Modo Historia — novela visual (Sidar) |
+| Progreso | Racha, calendario semanal, colección de insignias |
+| Extras | Acerca de, Configuración (dark/light mode, cambiar PIN), Política de privacidad |
+
+### Flujo del estudiante
+
+```
+Login (código + PIN)
+  └── Inicio (dashboard: racha, insignias recientes, progreso general)
+        ├── Niveles → Grado (7mo o 9no) → Lista de Unidades → Lista de Temas
+        │     └── Tema: [1] Lectura → [2] Minijuego → [3] Reflexión
+        │           └── Tema "dominado" ✓ + Insignia de tema
+        │                 └── (si todos los temas de la unidad) → Insignia de unidad 🏆
+        ├── Historia → Lista de Capítulos → Capítulo (novela visual)
+        ├── Progreso → Racha, calendario, colección de insignias
+        └── Extras → Config (dark/light, PIN), Acerca de
+```
+
+### Flujo del docente
+
+```
+Login (email + contraseña)
+  └── Dashboard → Resumen del grupo (% promedio, activos, sin actividad)
+        ├── Lista de estudiantes con progreso individual
+        ├── Ver/copiar código de acceso de estudiante
+        ├── Resetear PIN de estudiante
+        └── Perfil → Configuración (dark/light mode)
+```
+
+---
+
+## PARTE 8 — Tipos de Actividades Lúdicas
+
+Para el MVP implementar **máximo 2 tipos** y escalar luego.
+
+| Tipo | Descripción | Prioridad MVP |
+|------|-------------|:-------------:|
+| Sopa de letras | Términos clave del tema en cuadrícula | ✅ Alta |
+| Quiz / escenario de análisis | Preguntas con casos reales, retroalimentación explicativa | ✅ Alta |
+| Arrastrar y soltar (ordenar frases) | Ordenar o clasificar conceptos | Media |
+| Clasificación SÍ/NO | Clic para clasificar situaciones | Media |
+| Línea de tiempo interactiva | Ordenar eventos o personajes históricos | Baja (MVP+) |
+
+### Minijuegos específicos basados en documentos MINED
+
+Estos juegos están fundamentados directamente en actividades de la Cartilla de Secundaria y documentos MINED — no son inventados:
+
+**1. Sopa de letras temática (Cartilla — metodología confirmada)**
+El MINED ya usa sopas de letras en el material impreso. Palabras del MVP: `MUJER`, `EDUCACIÓN`, `DERECHOS`, `PROTAGONISMO`, `LIBERTAD`, `SEGURIDAD`, `DECISIÓN`. Se adaptan por tema: para 7mo → dignidad; para 9no → empoderamiento laboral.
+
+**2. Arrastrar para completar la frase**
+El estudiante arrastra palabras o tarjetas para completar o reordenar una frase correcta. Basado en los ejercicios de ordenamiento presentes en la Cartilla.
+
+**3. Clasificar situaciones: Equidad vs. Igualdad (9no — concepto clave)**
+La distinción entre equidad e igualdad que desarrolla la Cartilla es ideal para un minijuego de escenarios: el estudiante lee una situación real y decide si es un caso de equidad o de igualdad. Requiere análisis, no memorización — alineado con Vygotsky para secundaria.
+
+**4. Situaciones SÍ/NO — ¿Esta acción respeta los derechos?**
+El estudiante ve una situación de la vida real y decide si promueve o viola un derecho. Con retroalimentación inmediata. Adaptado de los ejercicios de reflexión de la Cartilla.
+
+**5. "¿Quién soy?" — Mujeres históricas de Nicaragua (9no, Unidad IV)**
+El estudiante lee una descripción de una mujer histórica nicaragüense y adivina quién es. Personajes confirmados en el material MINED: Concepción Palacios Herrera, Josefa Emilia Toledo, Haydée Palacios Vivas, Doris Tijerino Haslam. Implementar como quiz de selección múltiple.
+
+> ⚠️ **Nota de derechos de autor MINED:** la contraportada de la Cartilla indica "Se prohíbe la reproducción total o parcial sin autorización expresa del MINED." El contenido de DignaLearn debe ser una **adaptación y reformulación propia** del material — no copia directa de textos. Esto también es correcto pedagógicamente: el formato digital requiere adaptación.
+
+---
+
+## PARTE 9 — Autenticación y Seguridad
+
+### Sistema de acceso por rol
+
+**Estudiante — código + PIN:**
+1. Docente crea la cuenta del estudiante desde su panel (nombre + grado).
+2. El sistema genera automáticamente un código de 6 caracteres (`DL-XXXX`).
+3. El docente le da ese código al estudiante en clase.
+4. El estudiante ingresa el código y elige un PIN de 4 dígitos (primera vez).
+5. De ahí en adelante: código + PIN para entrar.
+6. El docente puede resetear el PIN desde su panel si el estudiante lo olvida.
+
+**Docente — email + contraseña:**
+Supabase Auth estándar. El admin crea la cuenta desde Supabase Studio.
+
+### Sistema de autenticación — dos flujos distintos (implementación real)
+
+**ESTUDIANTE (sin email):**
+- Login: `POST /api/auth/login-estudiante` con `codigo_acceso` + `pin`.
+- El backend verifica el PIN con `bcrypt` contra `perfiles_estudiante`.
+- Emite un JWT **propio**, firmado con PyJWT (`HS256`, 7 días de expiración) — **no es un JWT de Supabase**.
+- Payload: `{ sub: estudiante_id, grado_id, access_code, nombre }`.
+- El frontend guarda el token en `localStorage["dignalearn_token"]`.
+- Todos los endpoints de estudiante verifican el JWT con `verificar_estudiante_autenticado()` en `auth_service.py` — compara el `sub` del token contra el `estudiante_id` de la request y devuelve 401 si no coincide o falta el token.
+
+**DOCENTE (con email):**
+- Login: `supabase.auth.signInWithPassword(email, password)`.
+- Usa Supabase Auth estándar — JWT de Supabase.
+- El frontend usa `supabase.auth.getSession()` para obtener el `access_token`.
+- Los endpoints de docente verifican con `verificar_docente_autenticado()` en `auth_service.py`, usando `supabase.auth.get_user(token)`.
+
+Son **dos sistemas de auth completamente distintos que coexisten a propósito**: el estudiante no tiene email/contraseña (para no exigir datos que muchos estudiantes de secundaria en zonas rurales no tienen); el docente sí.
+
+### Roles y RLS
+
+**Row Level Security:**
+- Estudiante: accede solo a su propio progreso y al contenido de su grado (con el pendiente de aislamiento real descrito en la Parte 5 — RLS).
+- Docente: lee el progreso de los estudiantes de los grupos a los que tiene acceso (vía `docente_grupos`).
+- Contenido (unidades, temas): visible para cualquier usuario autenticado.
+
+### Privacidad de menores
+
+- Datos mínimos: display name, código de acceso, PIN hasheado, grado, progreso.
+- Sin datos personales sensibles (sin fecha de nacimiento, sin email para estudiantes).
+- Alineado con Ley N° 787 de Protección de Datos Personales de Nicaragua.
+- La plataforma necesita una política de privacidad accesible desde el footer — ver Parte 13.
+
+### Seguridad general
+- TLS: Vercel y Supabase lo proveen por defecto en producción.
+- PIN almacenado hasheado — nunca en texto plano.
+
+---
+
+## PARTE 10 — Módulo Modo Historia (Sidar Perez)
+
+### Descripción
+
+El Modo Historia es una novela visual educativa simple: personajes + texto narrativo, sin voz, que aborda los temas de la asignatura MINED de forma narrativa. Desarrollado por Sidar de forma independiente pero integrado al proyecto principal.
+
+### Arquitectura de integración
+
+**Modelo acordado:** Sidar desarrolla el Modo Historia como rutas Next.js dentro del mismo repo (`frontend/app/(student)/historia/`), trabajando en su propia rama de Git y haciendo PR al repo principal antes del 27 de agosto.
+
+**No es un repo separado** — eso complicaría el despliegue y la autenticación compartida.
+
+### Condiciones técnicas (Sidar DEBE respetar estas sin excepción)
+
+**1. Autenticación:** Sidar no implementa su propio sistema. El Modo Historia lee el token de sesión de Supabase que ya existe en la app principal. Si no hay sesión activa, redirige al login principal.
+
+**2. Base de datos:** Solo lee y escribe en `story_chapters` y `student_story_progress` (schema abajo). No crea tablas propias sin coordinar con Eddy.
+
+**3. Variables de entorno:** Usa las mismas ENV del proyecto (`SUPABASE_URL`, `SUPABASE_ANON_KEY`). No crea archivos `.env` propios.
+
+**4. Contenido — CRÍTICO:** Los capítulos DEBEN ser sobre la asignatura MINED "Derechos y Dignidad de la Mujer". No sobre otras materias (Ciencias, Matemáticas, Historia general, Química). Los títulos y tramas giran sobre dignidad, derechos, igualdad de género, liderazgo femenino — el currículo mapeado en la Parte 6.
+
+**5. Diseño:** Usa la misma paleta de colores del proyecto principal. No inventa su propio color scheme.
+
+**6. Navegación:** Al terminar o salir de un capítulo, el botón de regreso lleva a `/historia` en la app principal.
+
+**7. Entrega:** PR al repo principal antes del **27 de agosto** (3 días de buffer antes de la presentación del 30).
+
+### Schema contractual para Sidar
+
+```sql
+-- Sidar puede hacer SELECT en story_chapters
+-- Sidar puede hacer SELECT/INSERT/UPDATE en student_story_progress
+-- No puede crear, modificar ni eliminar otras tablas
+
+story_chapters (
+  id            UUID PRIMARY KEY,
+  grade         INTEGER,       -- 7 o 9 (MVP)
+  unit_id       UUID,          -- unidad MINED correspondiente
+  title         TEXT,
+  description   TEXT,
+  "order"       INTEGER,
+  is_free       BOOLEAN,       -- primer capítulo de cada unidad = true
+  total_pages   INTEGER,
+  estimated_minutes INTEGER,
+  cover_image_url TEXT,
+  is_active     BOOLEAN
+)
+
+student_story_progress (
+  id            UUID PRIMARY KEY,
+  student_id    UUID,          -- referencia a users.id
+  chapter_id    UUID,          -- referencia a story_chapters.id
+  completed     BOOLEAN,
+  pages_read    INTEGER,
+  last_read_at  TIMESTAMPTZ
+)
+```
+
+---
+
+## PARTE 11 — Branding y UI/UX
+
+### Identidad visual (preliminar — pendiente branding definitivo de Sharis)
+
+**Logo:** Silueta de mujer formada por piezas de rompecabezas, en rosa y teal sobre fondo oscuro. Wordmark: "Digna" en blanco, "Learn" en teal.
+
+**Tagline del logo:** "Educación que empodera. Dignidad que transforma." (Es el tagline poético del branding — distinto de la propuesta de valor funcional que usa "fortalecemos".)
+
+**Paleta de color definitiva (Mini Brand Identity Guide v3.5 — Sharis Peralta, 23/08/2026):**
+
+| # | Nombre | HEX | RGB | Uso |
+|---|--------|-----|-----|-----|
+| 1 | Púrpura Profundo | `#160B24` | R:22 G:11 B:36 | Fondo principal dark mode, secciones destacadas |
+| 2 | Rosa Pastel | `#F0A8B6` | R:240 G:168 B:182 | Acento principal, botones CTA, barras de progreso |
+| 3 | Celeste Pastel | `#A4CDD5` | R:164 G:205 B:213 | Acento secundario, "Learn" wordmark, elementos secundarios |
+| 4 | Blanco | `#FFFFFF` | R:255 G:255 B:255 | Fondo light mode, texto principal en dark mode |
+
+> ⚠️ **Corrección respecto a versiones anteriores:** los valores `#1A1525`, `#E86B9A` y `#7BB8C0` que aparecían en el PRD eran aproximaciones preliminares. Los valores definitivos son los de la tabla anterior, extraídos de la guía oficial de Sharis.
+
+**Dark mode:** fondo `#160B24` con acentos rosa y celeste pastel.  
+**Light mode:** fondo `#FFFFFF` con los mismos acentos. Toggle en Extras > Configuración.
+
+**Tipografía definitiva (Mini Brand Identity Guide v3.5 — Sharis Peralta):**
+
+| Tipo | Fuente | Uso |
+|------|--------|-----|
+| Principal | **Sitka Small Semibold** (serif) | Títulos, headings, logo wordmark, elementos primarios de marca |
+| Secundaria | **Nunito** (sans-serif redondeada) | Cuerpo de texto, descripciones, párrafos informativos, UI secundaria |
+
+> ⚠️ **Corrección respecto a versiones anteriores:** `Inter` era placeholder. Las fuentes definitivas son Sitka Small Semibold + Nunito.
+
+**Implementación real (verificada en código):**
+- Principal: Sitka Small Semibold — implementada como variable CSS en `frontend/app/globals.css`: `--font-heading: 'Sitka Small', 'Sitka', 'Cambria', Georgia, serif;`. Sitka **no está disponible en Google Fonts**, por eso se carga como variable CSS con fallbacks en vez de vía `next/font/google`.
+- Secundaria: Nunito — cargada vía `next/font/google` en `frontend/app/layout.tsx`.
+
+### Animaciones — regla definitiva (Sesión 6 en adelante)
+
+**Framer Motion es OBLIGATORIO para toda animación de interfaz. CSS `@keyframes` está PROHIBIDO en todo el proyecto sin excepción.** Esta regla reemplaza definitivamente la regla anterior de "solo CSS" (ver Parte 19).
+
+### Componentes de marca implementados
+
+- **`LogoDignaLearn.tsx`** (`frontend/components/ui/`) — props: `size`, `showWordmark`, `darkBackground`, `className`.
+  - `darkBackground={true}`: "Digna" en `#FFFFFF`, "Learn" en `#F0A8B6`.
+  - `darkBackground={false}`: "Digna" en `#160B24`, "Learn" en `#F0A8B6`.
+  - "Learn" es **siempre** `#F0A8B6`, sin excepción.
+- **`PaginaLegal.tsx`** (`frontend/components/ui/`) — componente reutilizable para páginas legales: fondo animado, navbar sticky y `SeccionLegal`. Usado en `/privacidad`, `/terminos` y `/contacto` (ver Parte 21).
+- **`LogroIcono.tsx`** (`frontend/components/`) — 14 casos de ícono, cada uno con SVG único y animación Framer Motion propia (ver catálogo completo en Parte 21).
+
+### Estructura de navegación
+
+| Sección | Ícono sugerido | Contenido |
+|---------|---------------|-----------|
+| Inicio | Casa | Dashboard: racha, insignias recientes, progreso |
+| Niveles | Libro | Unidades y temas por grado |
+| Historia | Cómic/mando | Modo Historia (Sidar) |
+| Progreso | Gráfico de barras | Racha, calendario semanal, colección de insignias |
+| Extras | Estrella | Acerca de, Configuración, Política de privacidad |
+
+### Mascota guía — especificación técnica
+
+- **Posición:** esquina inferior de la pantalla (~120×120 px). No bloquea el contenido principal.
+- **Animación:** sprite de 2–3 frames (boca abierta / semicerrada / cerrada). Se alterna cada ~100ms mientras el texto aparece con efecto typewriter (caracter por caracter).
+- **Sin audio.** El movimiento de boca sincronizado al texto es puramente visual.
+- **Reutilizable:** la misma mascota aparece en lectura, bienvenida al minijuego y celebración al completar un tema.
+- **Implementación:** sprite sheet simple + JavaScript puro (sin librerías pesadas). Un intervalo que sincroniza el frame con el índice del caracter que se está revelando.
+- **Diseño:** pendiente de definición por Sharis/Sidar. Usar placeholder (ícono SVG simple) hasta que el diseño esté listo. No bloquear desarrollo.
+
+---
+
+## PARTE 12 — Modelo de Negocio
+
+> ⚠️ En definición — Eddy (Marketing y Comunicaciones) confirmará el modelo final. Lo que sigue es la propuesta base para el hackathon.
+
+### Principio base
+
+El contenido curricular completo (las 4 unidades de la asignatura MINED) es **siempre gratuito**. Es material obligatorio del currículo nacional. Poner un paywall en contenido educativo obligatorio va en contra de la propuesta de valor y de la percepción de los jueces.
+
+Lo que se monetiza son **capas opcionales** sobre ese núcleo gratuito.
+
+### Flujos de ingreso
+
+**1. Plan institucional (B2B — flujo principal)**
+Centros privados pagan una licencia anual que incluye: reportes avanzados del grupo, exportación de datos, múltiples grupos por docente, branding personalizado del centro en la plataforma. Para el MINED: contrato de implementación. Este es el flujo que se presenta ante los jueces.
+
+**2. Certificados verificables (B2C suave)**
+Al completar las 4 unidades del año, el estudiante puede descargar un certificado digital con QR verificable, nombre, grado y sello de DignaLearn. El logro digital básico es gratuito; la versión premium (imprimible, con firma digital verificable) tiene un costo simbólico. En el contexto nicaragüense, los padres ya pagan por diplomas y fotos escolares — este modelo es familiar y aceptable.
+
+**3. Modo Historia — primer capítulo gratis**
+El primer capítulo de cada unidad en el Modo Historia es gratuito. El acceso completo se desbloquea con el plan institucional o con una compra individual pequeña.
+
+**4. Cosméticos de la mascota (microtransacciones suaves)**
+Skins de vestuario de la mascota — el estudiante o la institución los desbloquea con logros o de forma opcional. No afectan el aprendizaje. Son el modelo de microtransacción no invasivo porque son puramente cosméticos.
+
+---
+
+## PARTE 13 — Créditos y Sección de Autores
+
+### Footer (todas las páginas)
+
+```
+© 2026 DignaLearn — Equipo Rysteam · Hackathon Nicaragua 2026
+Contenido educativo basado en documentos oficiales del MINED Nicaragua
+[Política de privacidad] · [Términos de uso] · [Contacto]
+```
+
+### Pantalla "Acerca de" (en Extras)
+
+Debe incluir:
+- Descripción breve del proyecto y su propósito
+- Créditos del equipo con roles:
+  - Dirk Martinez — Backend
+  - Eddy Marenco — Líder, Marketing y Comunicaciones
+  - Sharis Peralta — Diseño
+  - Sidar Perez — Frontend y Modo Historia
+- "Hecho con ❤️ en Nicaragua"
+- Evento: Hackathon Nicaragua 2026
+
+### Política de privacidad (mínima — obligatoria)
+
+Dado que la plataforma tiene usuarios menores de edad, **debe existir** aunque sea una página simple. Debe indicar:
+- Qué datos se recopilan (display name, progreso, código de acceso)
+- Que no se recopilan ni comparten datos personales sensibles de menores
+- Que los datos no se venden ni comparten con terceros
+- Contacto para consultas
+
+Los jueces de la categoría educación lo van a notar si no existe.
+
+---
+
+## PARTE 14 — Despliegue (MVP)
+
+| Componente | Servicio | Plan |
+|-----------|---------|------|
+| Frontend (Next.js) | **Vercel** | Free tier |
+| Backend (FastAPI) | **Render** o **Railway** | Free tier |
+| Base de datos + Auth | **Supabase** | Free tier (500MB, 50k MAU) |
+
+**Desarrollo local:** Supabase CLI + Docker; `uvicorn` para FastAPI; `npm run dev` para Next.js.
+
+---
+
+## PARTE 15 — Documentos MINED: metodología de extracción de contenido curricular
+
+### Estrategia (PDFs pesados → Markdown reutilizable)
+
+1. **PDFs en carpeta gitignored:**
+   ```
+   DignaLearn/docs/curriculum-source/   ← agregar línea a .gitignore
+   ```
+
+2. **Antes de extraer: confirmar el grado real de cada documento**, revisando la portada y la tabla de distribución de carga horaria, antes de extraer contenido.
+
+3. **Con grado confirmado, extraer a Markdown:**
+   ```
+   docs/curriculum/secundaria/7mo.md
+   docs/curriculum/secundaria/9no.md
+   ```
+
+4. **El `.md` (no el PDF) alimenta `db/seed.sql`.**
+
+5. **Un documento a la vez** — no procesar varios juntos.
+
+### Mapeo documento → grado (pendiente de verificación)
+
+| Archivo fuente | Grado probable | Confirmado |
+|----------------|---------------|:---:|
+| `I-UNIDAD-PEDAGOGICA-2DO-SEMESTRE.pdf` | 1er-2do grado (primaria) | ✅ |
+| `II-UNIDAD-PEDAGOGICA-2do-SEMESTRE.pdf` | 3er-4to grado (primaria) | ⚠️ Verificar |
+| `III-UNIDAD-PEDAGOGICA-2DO-SEMESTRE.pdf` | 5to-6to grado (primaria) | ⚠️ Verificar |
+| `IV-UP-DERECHO-Y-DIGNIDAD-DE-MUJERES-P...pdf` | Sin confirmar | ⚠️ Verificar |
+| `Cartilla-Secundaria-4.pdf` | Posiblemente 10mo grado | ⚠️ Verificar |
+| `Malla-Curricular-III-y-IV-Unidad-Secund-Regular...pdf` | Unidades III-IV, todos los grados de secundaria | ⚠️ Verificar |
+
+---
+
+## PARTE 16 — Pendientes Antes de Codear
+
+- [ ] Recibir branding definitivo de Sharis: tipografía, paleta exacta, logo en SVG.
+- [ ] Extraer contenido de Unidades III y IV (7mo y 9no) de `Malla-Curricular-III-y-IV-Unidad-Secund-Regular....pdf`.
+- [ ] Cantidad exacta de temas dentro de cada una de las 4 unidades para 7mo y 9no.
+- [ ] Decidir cuál de los 2 minijuegos MVP va primero: sopa de letras o quiz/escenario.
+- [ ] Ilustraciones de insignias (Sharis). Usar placeholders SVG hasta que estén — no bloquear desarrollo.
+- [ ] Confirmar si el docente crea sus propios grupos o si el admin los asigna en el MVP.
+- [ ] Confirmar modelo de negocio definitivo con el mercadólogo del equipo.
+- [ ] Recibir código del Modo Historia de Sidar antes del 27 de agosto.
+- [ ] Correcciones adicionales del profesor/mentor (audio parcialmente recibido — reformular en la marcha del desarrollo).
+
+---
+
+## PARTE 17 — Lineamientos de Desarrollo del Equipo
+
+> Estos lineamientos aplican a todo el desarrollo del proyecto, de principio a fin.
+
+### Reglas generales
+
+1. El proyecto es **greenfield total** — no hay código previo que respetar.
+2. **Alcance del MVP: solo 7mo y 9no grado de secundaria.** Los demás grados se agregan después.
+3. Nunca inventar contenido de unidades o temas — usar solo lo extraído de documentos MINED oficiales.
+4. Respetar convenciones del equipo: ramas `feature/nombre-tarea`, commits `feat:` / `fix:` / `docs:`.
+5. El Modo Historia (`frontend/app/(student)/historia/`) lo desarrolla Sidar en su propia rama. No interferir. Las tablas `story_chapters` y `student_story_progress` deben existir en el schema desde el inicio.
+6. El sistema de login para estudiantes es **código de 6 chars + PIN de 4 dígitos** — no email. La columna `access_code` en `users` debe existir desde la primera migración.
+7. El sitio debe ser **responsive web** (celular y desktop). No es app móvil — las decisiones de layout deben reflejar esto.
+
+### Orden de implementación
+
+1. Estructura base del monorepo (carpetas + configs + `.gitignore` actualizado)
+2. Auth + perfiles — Supabase Auth con roles, generación de `access_code` para estudiantes
+3. Modelo de datos — `db/schema.sql` completo con todas las entidades de la Parte 5 (incluyendo tablas de Sidar)
+4. Contenido estático — poblar `units` y `topics` en `db/seed.sql` para 7mo y 9no
+5. Flujo de lectura del estudiante — páginas de unidad, tema y material informativo
+6. Primera actividad lúdica — sopa de letras
+7. Segunda actividad lúdica — quiz/escenario de análisis
+8. Sistema de progreso (Capa 1) — barra de elementos, marcar tema como dominado
+9. Sistema de insignias (Capa 2) — `backend/services/gamification.py`, evaluación de umbrales
+10. Racha y estadísticas (Capa 3)
+11. Panel del docente — progreso grupal/individual, gestión de códigos de acceso
+12. Dark/light mode — toggle en perfil del usuario
+13. Footer con créditos y link a política de privacidad
+14. Integración con Modo Historia de Sidar (cuando llegue el PR)
+15. Pulido visual — insignias definitivas de Sharis
+
+### Dónde va cada tipo de lógica
+
+- **CRUD simple:** Supabase SDK en `frontend/lib/supabase.ts`
+- **Gamificación (XP, insignias, rachas):** `backend/services/gamification.py`
+- **Reportes del docente:** `backend/services/reports.py`
+- **Seguridad de datos:** políticas RLS en Supabase Studio / `db/schema.sql`
+
+---
+
+*Documento generado y actualizado por el equipo Rysteam · Hackathon Nicaragua 2026 · Última actualización: 20/08/2026*
+
+---
+
+## PARTE 18 — Decisiones y Actualizaciones (Sesión 23/08/2026)
+
+> Decisiones tomadas durante la sesión de desarrollo con Dirk Martinez. Estas actualizan y complementan partes anteriores del PRD.
+
+### Estado de implementación al 23/08/2026
+
+| Paso PRD | Descripción | Estado |
+|----------|-------------|--------|
+| 1 | Monorepo base + Next.js 14 + Tailwind | ✅ Completo |
+| 2 | FastAPI init + entorno virtual + .env | ✅ Completo (parcial — falta main.py) |
+| 3–15 | Resto de pasos | 🔜 Pendiente |
+
+**Rama activa:** `feature/monorepo-setup`  
+**Commits realizados:**
+- `chore: monorepo base structure + Next.js 14 frontend init`
+- `chore: FastAPI backend init + requirements`
+
+---
+
+### Mascota guía — decisión definitiva para el MVP
+
+**Para el hackathon (30/08/2026):** la mascota funciona con **texto pregrabado**. Sin API de IA. Aparece en la esquina inferior, saluda al iniciar sesión, acompaña la lectura con globo de diálogo, y da pistas fijas por tema cuando el estudiante falla una actividad.
+
+**Post-hackathon (v2):** integración con API de IA (a confirmar con mentores) para respuestas dinámicas. El chatbot de la mascota tendría dos modos:
+- Modo pistas para estudiantes: respuestas limitadas al tema actual, solo pistas — nunca respuestas directas.
+- Modo consultas para docentes: el docente puede preguntar datos del grupo ("¿cuántos estudiantes completaron la Unidad I?") y el sistema responde con datos reales de la BD.
+
+---
+
+### Sistema de actividades — banco de preguntas aleatorio
+
+**Decisión:** cada actividad lúdica no es una sola versión fija — tiene un **banco de variantes** en la base de datos. El sistema selecciona aleatoriamente cuál mostrar en cada intento, con estas reglas:
+
+- Si el estudiante falla y reintenta, no le sale la misma variante.
+- Si completa y quiere repetir, puede salir una combinación de variantes anteriores.
+- El asistente/mascota es consciente de qué variante está activa para dar pistas coherentes.
+
+**Impacto en el modelo de datos:** la tabla `activities` necesita un campo `variant_group` para agrupar variantes del mismo tema, y el `config_json` almacena el contenido específico de cada variante.
+
+**Impacto en la implementación:** esto aplica a todos los tipos de actividad (sopa de letras, quiz, arrastra y suelta) en todos los grados del MVP (7mo y 9no).
+
+---
+
+### Asistente docente con IA — funcionalidad futura
+
+El docente podrá hacer consultas en lenguaje natural sobre el progreso de su grupo. Ejemplos de consultas:
+
+- "¿Cuántos estudiantes completaron la Unidad I esta semana?"
+- "¿Quién no ha tenido actividad en los últimos 7 días?"
+- "¿Cuál es el promedio del grupo en 7mo grado?"
+
+Esta funcionalidad respeta los permisos RLS del rol docente — no puede ver datos de estudiantes que no son suyos.
+
+**Estado:** documentado como funcionalidad post-hackathon. Requiere definición de API key y modelo de IA con el equipo.
+
+---
+
+### Nota sobre continuidad del contexto
+
+El PRD es la fuente de verdad del proyecto. Cualquier decisión nueva tomada en sesiones de desarrollo debe agregarse aquí antes de codear. Al iniciar una nueva sesión con el asistente de arquitectura, este documento debe estar cargado en el contexto del proyecto para mantener continuidad.
+
+
+---
+
+## PARTE 19 — Decisiones y Actualizaciones (Sesión 24/08/2026)
+
+> Estas decisiones actualizan y complementan las partes anteriores. Tienen precedencia sobre cualquier versión anterior.
+
+---
+
+### Renombrado: insignias → logros
+
+En todo el proyecto, la UI y el código, el término correcto es **"logros"** — nunca "insignias". La BD ya usa `logros` y `estudiante_logros`. El componente se llama `LogroCelebracion.tsx`.
+
+---
+
+### Regla de lenguaje neutral en género (OBLIGATORIA)
+
+Todos los textos automáticos que el sistema genera deben ser neutrales en género. Esto incluye mensajes de celebración, nombres de logros del sistema, botones y cualquier texto de UI generado por código.
+
+- ✅ "Completaste", "Desbloqueaste", "Lograste", "El Primer Paso"
+- ❌ "Exploradora", "Lideresa", "Guardiana", "eres una gran estudiante"
+
+Los nombres de unidades del MINED (ej: "Liderazgo en acción") pueden mantenerse porque son nombres curriculares, no mensajes del sistema.
+
+---
+
+### Catálogo definitivo de logros (28 logros MVP)
+
+**Nivel 2 — Unidad (4 por grado × 2 grados = 8 logros):**
+
+| Logro | Condición | Grado |
+|-------|-----------|-------|
+| Guardianes de la Dignidad | Unidad I completa | 7mo y 9no |
+| Conocedores de la Ley | Unidad II completa | 7mo y 9no |
+| Defensores de la Equidad | Unidad III completa | 7mo y 9no |
+| Líderes en Acción | Unidad IV completa | 7mo y 9no |
+
+**Nivel 3 — Especiales (8 logros transversales):**
+
+| Logro | Condición |
+|-------|-----------|
+| El Primer Paso | Primer tema dominado (los 3 elementos) |
+| Constante | 5 días consecutivos en actividad_diaria |
+| Semana Activa | 7 días consecutivos |
+| Imparable | 30 días consecutivos |
+| Coleccionista | 3 logros de unidad desbloqueados |
+| Ojo Alerta | Completar Unidad II de cualquier grado |
+| Protagonismo de Nicaragua | 9no grado completo (4 unidades) |
+| Seriamente | 4 unidades de un grado completas |
+
+> Nota: "Seriamente" reemplaza el nombre anterior "Año Completo". "El Primer Paso" reemplaza "Primera Exploradora" por razones de neutralidad de género.
+
+**Nivel 1 — Tema:** un logro por cada tema dominado (los 3 elementos completos). ~16 por grado en el MVP.
+
+---
+
+### Flujo técnico del sistema de logros
+
+```
+Estudiante completa Reflexión (Elemento 3)
+→ Reflexion.tsx llama a POST /api/gamification/evaluar/{estudiante_id}
+→ FastAPI (gamification.py) evalúa las 5 condiciones
+→ INSERT en estudiante_logros para los nuevos logros
+→ Retorna lista de logros recién desbloqueados
+→ Frontend muestra LogroCelebracion.tsx en cola secuencial
+```
+
+**Archivos implementados:**
+- `backend/app/services/gamification.py` — función `evaluar_logros()`
+- `backend/app/routers/gamification.py` — endpoint POST
+- `frontend/components/LogroCelebracion.tsx` — componente de celebración
+
+**Pendiente conectar:** llamar al endpoint desde `Reflexion.tsx` y mostrar la celebración.
+
+---
+
+### Animación de LogroCelebracion.tsx
+
+- Overlay `#160B24` con fade-in 300ms
+- Badge escala de 0.3 a 1.0 con ease-out 500ms
+- Confetti con CSS keyframes únicamente (sin JS ni librerías)
+- Auto-cierre a los 4 segundos o click para cerrar
+- Múltiples logros: cola secuencial con 500ms entre cada uno
+- Placeholder SVG hasta que Sharis entregue arte final
+
+---
+
+### Regla general de animaciones (OBLIGATORIA)
+
+**Solo CSS transitions y keyframes. Sin excepciones.**
+
+Prohibido en todo el proyecto: GSAP, Framer Motion, anime.js, Canvas API, Pixi.js, Phaser, cualquier librería de animación externa.
+
+---
+
+### Mascota guía — especificación definitiva
+
+- Sprite pixel art (Sharis/Sidar entrega el arte, placeholder SVG por ahora)
+- Posición: esquina inferior derecha, aproximadamente 44×44px
+- Aparece con burbuja de diálogo cuando el estudiante falla actividades
+- Pistas: se revelan desde la tabla `pistas_actividad` de forma progresiva (orden 1 más vaga → orden 3 más específica)
+- Nunca revela la respuesta directa — solo pistas contextuales
+- Animación: 2-3 frames (boca abierta/semicerrada/cerrada) sincronizados con efecto typewriter del texto
+- **MVP:** texto pregrabado sin IA
+- **Post-hackathon:** posible integración con API de IA (a confirmar con mentores del HK)
+
+---
+
+### Modo Historia — estado y requisitos técnicos
+
+**Estado al 24/08:** Sidar entregó una app Vite incompatible. Recibió el documento `CONTEXTO_SIDAR.md` con instrucciones completas de integración.
+
+**Deadline de entrega de Sidar: 27 de agosto** (3 días antes de la evaluación para tener buffer de integración).
+
+**Requisitos técnicos que Sidar debe cumplir:**
+- Componentes React/TypeScript en estructura Next.js (sin Vite, sin su propio package.json)
+- Rutas en `frontend/app/(student)/historia/`
+- Componentes en `frontend/components/story/`
+- JSON de capítulos en `frontend/public/story/`
+- Imágenes WebP/PNG: fondos <200KB, sprites <100KB
+- Solo Tailwind para estilos, colores de Sharis obligatorios
+- Sin su propio sistema de auth — usa el cliente Supabase del proyecto
+
+**Sidar no toca GitHub ni Supabase directamente — entrega sus archivos a Dirk quien hace la integración.**
+
+---
+
+### Corrección de seguridad aplicada (24/08)
+
+La `NEXT_PUBLIC_SUPABASE_ANON_KEY` en `frontend/.env.local` tenía la service_role key por error. Fue corregida — ahora tiene correctamente la anon key. Verificado que el JWT contiene `"role":"anon"`.
+
+**Regla:** `NEXT_PUBLIC_*` variables se exponen en el navegador. Nunca poner service_role key en variables NEXT_PUBLIC.
+
+---
+
+### Contexto de evaluación del hackathon
+
+El 30 de agosto es la evaluación de la **fase inicial** del hackathon. Si el equipo pasa, hay una fase completa posterior donde el proyecto puede expandirse. Por esto la prioridad es siempre **calidad sobre velocidad** — no se construye solo para la demo, se construye bien desde el inicio.
+
+---
+
+### Dashboard del estudiante — dirección de diseño
+
+El dashboard post-login debe sentirse narrativo y propio, no como Duolingo (feedback del equipo). Evitar el patrón de "métricas + barras de progreso + stats" típico de plataformas de aprendizaje. La dirección visual se define en el paso 15 de pulido junto con los colores definitivos de Sharis.
+
+---
+
+### Validación de progresión entre unidades
+
+Para el MVP: los temas dentro de una unidad son secuenciales (Tema 2 no se desbloquea sin dominar Tema 1). Las unidades no tienen bloqueo técnico real entre sí — se muestran visualmente con candado si las anteriores no están completas, pero no hay verificación técnica que bloquee el acceso. El bloqueo real de unidades se implementa en la fase siguiente si el equipo avanza.
+
+---
+
+### Problema conocido pendiente
+
+`/niveles/page.tsx` tiene el `grado_id` hardcodeado a 7mo grado. Hay que conectarlo al perfil del estudiante en localStorage para que muestre el grado correcto según quién esté logueado.
+
+> **Resuelto en Sesión 6:** `niveles/page.tsx` ya lee `estudiante.grado_id` desde `getEstudianteLocal()` — no queda hardcodeado. Verificado con login real de `DL-TEST` (grado 1 → "7mo grado — secundaria" correcto).
+
+---
+
+## PARTE 20 — Decisiones y Actualizaciones (Sesión 6)
+
+> Estas decisiones actualizan y complementan las partes anteriores. Tienen precedencia sobre cualquier versión anterior, incluyendo la regla de animaciones de la PARTE 19.
+
+---
+
+### Decisión de animación: Framer Motion OBLIGATORIO (reemplaza la regla de PARTE 19)
+
+**La regla de PARTE 19 ("Solo CSS transitions y keyframes... Prohibido Framer Motion") queda revertida.** A partir de Sesión 6, el estándar del proyecto es el opuesto:
+
+- **Framer Motion es obligatorio** para toda animación de interfaz nueva (entradas escalonadas, hover, wiggle de íconos, celebraciones, toggles). Nunca usar solo CSS `@keyframes`/`transition` para estas piezas.
+- Patrón establecido: un `Record` de configuración por variante de ícono (`{ animate, duration, ease }`) + un componente/`motion.div` que consume esa config — así se hizo primero en `extras/page.tsx` (`ANIMACION_POR_ICONO`, íconos del equipo Rysteam) y se replicó exactamente igual en `dashboard/page.tsx` (`ANIMACION_POR_ACCESO`) y `niveles/page.tsx` (`ANIMACION_ICONO_UNIDAD`).
+- `whileHover`/`whileTap` con `scale` + `boxShadow` tintado con el color de marca del elemento (`${color}55` / `${color}40`) es el patrón estándar de hover en cards.
+- Entradas de listas (unidades, temas, miembros del equipo): `initial={{opacity:0, y:20}}` → `animate={{opacity:1, y:0}}`, spring (`stiffness: 300, damping: 20-24`), con `delay: idx * 0.08` a `idx * 0.1` para el efecto escalonado.
+- Loops infinitos de íconos: `duration` entre 2s y 4s, `ease: "easeInOut"`, nunca más rápido ni más lento sin pedido explícito — los ajustes de "más suave" en esta sesión (racha, trofeo) confirmaron que la preferencia del equipo es sutil, no llamativo.
+- `AnimatePresence` + `createPortal(..., document.body)` es el patrón obligatorio para overlays de viewport completo (`LogroCelebracion.tsx`) — cualquier ancestro con `transform` (incluso uno dejado por una animación `forwards`) rompe `position: fixed` si no se usa portal.
+
+---
+
+### Arquitectura de progreso: migrado al backend FastAPI
+
+El progreso ya no se evalúa solo desde el cliente. `POST /api/progress/completar-elemento` (`backend/app/routers/progress.py`) es ahora el único punto de escritura de `progreso_estudiante`, y en la misma request evalúa logros (`evaluar_logros()`) si el tema queda completo — sin importar el orden en que el estudiante complete lectura/actividad/reflexión. Esto resolvió el bug histórico de `LogroCelebracion` no disparando según el orden de finalización.
+
+`frontend/lib/progress.ts` centraliza el llamado (`marcarElementoCompletado`) y el mapeo de la respuesta (`mapLogrosDesbloqueados`) para que los 4 componentes que pueden completar el último elemento de un tema (`Reflexion`, `ProgresoLectura`, `WordSearch`, `Quiz`) compartan la misma lógica de mostrar `LogroCelebracion` en cola.
+
+El endpoint `POST /api/gamification/evaluar/{estudiante_id}` sigue existiendo mas ya no tiene ningún llamador desde el frontend (quedó vestigial tras la migración) — se mantiene por si se necesita re-evaluar logros manualmente, pero ahora también exige JWT válido (ver sección de seguridad más abajo).
+
+---
+
+### Sistema de login con JWT propio (no Supabase Auth)
+
+El estudiante **no usa Supabase Auth**. El login (`POST /api/auth/login-estudiante`) verifica `codigo_acceso` + `pin` (bcrypt) contra `perfiles_estudiante` y emite un JWT propio firmado con PyJWT (`crear_token_estudiante`, `HS256`, 7 días de expiración, secreto en `JWT_SECRET_KEY`). El payload lleva `sub` (estudiante_id), `grado_id`, `access_code`, `nombre`.
+
+- El frontend guarda el token en `localStorage["dignalearn_token"]` y lo decodifica sin verificar firma en `getEstudianteLocal()` (`frontend/lib/auth.ts`) solo para reconstruir el perfil localmente — la verificación real de firma ocurre en el backend.
+- `frontend/lib/api.ts` (`apiFetch`) adjunta el token como `Authorization: Bearer <token>` en cada llamada al backend.
+- El docente sí usa Supabase Auth normal (`supabase.auth.signInWithPassword`) — son dos sistemas de auth distintos y coexisten a propósito: el estudiante no tiene email/password, el docente sí.
+
+**Hallazgo de seguridad crítico corregido en Sesión 6:** hasta esta sesión, ningún endpoint de estudiante (`progress.py`, `gamification.py`) verificaba ese JWT — `verificar_token()` existía en `auth_service.py` pero nunca se llamaba. Cualquiera podía mandar un `estudiante_id` ajeno y modificar el progreso de otro estudiante. Se agregó `verificar_estudiante_autenticado()` (auth_service.py) que valida el header, decodifica el token, y compara `sub` contra el `estudiante_id` recibido — 401 si no coincide o falta el token. Ambos endpoints ahora usan el `estudiante_id` **del token verificado**, nunca el del body/URL directamente.
+
+**Pendiente relacionado, aún NO corregido:** las políticas RLS de `progreso_estudiante`, `actividad_diaria` y `estudiante_logros` siguen con `qual: true` para el rol `anon` en SELECT (y UPDATE en los dos primeros) — es decir, **cualquiera con la anon key pública puede leer/escribir el progreso de cualquier estudiante directamente contra la REST API de Supabase**, sin pasar por el backend recién asegurado. El fix de esta sesión protege las escrituras que pasan por FastAPI, pero las lecturas que el frontend hace directo a Supabase (dashboard, progreso, niveles) siguen expuestas a nivel de base de datos. Ver PENDIENTE 1 más abajo.
+
+---
+
+### Estado real de implementación al cierre de Sesión 6
+
+**Funcionando y verificado en esta sesión (Playwright + login real `DL-TEST`/`1234`):**
+- Fondo animado en todas las páginas del estudiante: dos capas coexistiendo en `layout.tsx` — el sistema de círculos original (`FIGURAS_FONDO`, `.fondo-flotante`, `z-index: 0`) y `FondoAnimado.tsx` (8 figuras SVG temáticas: venus, libro, estrella, balanza, lápiz, `z-index: 0`, colores adaptativos claro/oscuro).
+- Dashboard: tarjeta "Continuar" con gradiente rosa→celeste en modo claro y `#160B24` en modo oscuro; tarjetas "Último logro"/"Unidades" con contraste correcto en ambos modos; accesos rápidos con ícono animado por rol (páginas, wiggle de trofeo, scale+rotate de historia) y hover con sombra de marca.
+- Niveles: cards de unidades y de temas con entrada escalonada Framer Motion, hover con sombra por color de unidad, ícono animado distinto por unidad (flor/balanza/apretón de manos/estrella); candados y shake en unidades/temas bloqueados (ya existía de antes, verificado que sigue intacto).
+- Seguridad: JWT verificado en `progress.py`/`gamification.py`, `.single()` reemplazado por `.maybeSingle()` en los 2 lugares del flujo docente, `console.error` agregado en 3 catches que antes silenciaban el error real, CORS restringido a orígenes explícitos.
+- Todo verificado con `npx tsc --noEmit` (0 errores) en cada paso, y pruebas reales en navegador (no solo compilación).
+
+**Commits de esta sesión (rama `feature/monorepo-setup`):**
+```
+be71b17 fix: seguridad - JWT en endpoints estudiante, maybeSingle docente, CORS restrictivo
+3191e63 feat: animaciones Framer Motion en iconos dashboard y niveles
+ff2be60 feat: fondo animado unificado, dashboard adaptado a ambos modos, fix dark mode tarjetas
+```
+
+---
+
+### Pendientes actuales — EN ORDEN DE PRIORIDAD
+
+**PENDIENTE 1 — RLS real por estudiante (seguridad, prioridad máxima).**
+Las políticas de `progreso_estudiante`/`actividad_diaria`/`estudiante_logros` permiten a `anon` leer y escribir filas de cualquier estudiante. Mientras el login siga siendo un JWT propio (no Supabase Auth), Postgres no tiene forma nativa de saber "quién es" el estudiante que llama — hay que decidir un mecanismo (ej: función Postgres que valide el JWT propio vía `pgjwt`/`current_setting`, o mover TODAS las lecturas de progreso a través del backend en vez de Supabase directo desde el navegador) antes de considerar esto cerrado.
+
+**PENDIENTE 2 — Auditoría completa de contraste en dark mode.**
+Esta sesión corrigió puntualmente dashboard (tarjeta continuar, último logro, unidades). No se hizo una pasada completa de TODAS las páginas del estudiante y del docente en ambos modos.
+
+**PENDIENTE 3 — Rotación de variantes de actividades.**
+Cuando el estudiante repite un tema completado, mostrar una variante distinta de sopa de letras/quiz (`grupo_variante` 1/2/3 en rotación). No tocado desde Sesión 5.
+
+**PENDIENTE 4 — Probar panel del docente end-to-end.**
+Login docente → crear estudiante → ver progreso → resetear PIN. La auditoría de esta sesión confirmó que la lógica de autenticación (`_verificar_docente_autenticado`) es correcta por lectura de código, pero no se ejecutó el flujo completo en navegador.
+
+**PENDIENTE 5 — Mascota guía.**
+No iniciado. Sigue en la especificación de PARTE 19 (sprite pixel art, pistas progresivas desde `pistas_actividad`).
+
+**PENDIENTE 6 — Integración Modo Historia (Sidar).**
+Estado no verificado en esta sesión — última información conocida es la de PARTE 19 (deadline 27/08, Sidar entrega archivos a Dirk).
+
+**PENDIENTE 7 — README + ejecución local.**
+No iniciado.
+
+---
+
+## PARTE 21 — Decisiones y Actualizaciones (Sesiones 7-8)
+
+### Landing page rediseñado (Sesión 7)
+
+El landing page (`frontend/app/page.tsx`) fue reescrito completamente:
+- Navbar sticky con `motion.nav` — blur en scroll, opaco al subir.
+- Hero con badge, headline, 2 CTAs.
+- 3 tarjetas dopamínicas con `whileInView` + `whileHover` glow por color.
+- Sección "Cómo funciona" — 4 pasos con números grandes.
+- Sección "Los valores de DignaLearn" — 5 cards animadas.
+- Sección "Quiénes somos" — 4 miembros en orden alfabético.
+- CTA final + Footer con links a páginas legales.
+- IDs de secciones: `como-funciona`, `valores`, `nosotros`.
+
+### Páginas legales animadas (Sesión 7)
+
+Implementadas con `PaginaLegal.tsx` como componente reutilizable:
+- `frontend/app/privacidad/page.tsx` — 6 secciones, Ley N° 787 Nicaragua.
+- `frontend/app/terminos/page.tsx` — 6 secciones, roles y responsabilidades.
+- `frontend/app/contacto/page.tsx` — 2 columnas, formulario mailto funcional.
+
+Links en footer del landing apuntan a `/privacidad`, `/terminos`, `/contacto`. Email oficial: `dignalearnRS@gmail.com`.
+
+### Login con fondo animado (Sesión 7)
+
+`frontend/app/(auth)/login/page.tsx` tiene fondo animado con 8 elementos flotantes Framer Motion (♀ ★ ⚖ 📖 ♥ ♀ ✏ + círculo decorativo), todos con opacidad 0.07-0.12 y animaciones loop `easeInOut`.
+
+### Ilustraciones SVG de logros (Sesión 8)
+
+`frontend/components/LogroIcono.tsx` reescrito con 14 casos, seleccionados por `tipo_condicion`/`nivel` y desambiguados por `nombre_logro` (string) o `condicion_valor` (number):
+
+- nivel "tema": estrella rosa con rotate loop.
+- `primer_tema`: huella con flecha, avanza hacia adelante.
+- `unidad_completada` / Dignidad: corazón con laureles, latido.
+- `unidad_completada` / Ley: balanza, balanceo.
+- `unidad_completada` / Equidad: dos figuras tomadas de manos, flotan.
+- `unidad_completada` / Líderes: estrella de 6 puntas con silueta, rota.
+- `racha_dias` ≤5: llama naranja con chispas.
+- `racha_dias` ≤7: 7 círculos con wave escalonado.
+- `racha_dias` >7: cohete flotando.
+- `logros_unidad` (Coleccionista): 3 medallas en perspectiva.
+- `ojo_alerta`: ojo estilizado con iris animado.
+- `grado_completo`: diploma con estrella.
+- `protagonismo_nicaragua`: mapa estilizado de Nicaragua.
+- fallback: estrella rosa genérica.
+
+### Modelo multi-institución (Sesión 8)
+
+El sistema fue extendido para soportar múltiples instituciones educativas:
+
+```
+Institución → Admin de Institución
+           → Docente (uno o varios grupos)
+           → Grupo/Sección ("7mo A", "9no A")
+           → Estudiante (pertenece a un grupo)
+```
+
+Tablas nuevas: `instituciones`, `grupos`, `docente_grupos`, `perfiles_admin_institucion`.  
+Columnas nuevas: `perfiles_docente.institucion_id`, `perfiles_estudiante.grupo_id`.  
+RLS habilitado en las 4 tablas nuevas ✅ (verificado: la anon key pública ya no lee ninguna fila de estas tablas).
+
+**Datos de prueba:**
+- Institución: "Instituto Nacional de Prueba" (`INP-2026`, Managua).
+- Grupos: "7mo A" (grado 7), "9no A" (grado 9).
+- Docente: `docente@dignalearn.com` asignado a ambos grupos.
+- Estudiantes: `DL-TEST` y `DL-E492` en 7mo A, `DL-A0NS` en 9no A.
+
+### Panel del docente rediseñado (Sesión 8)
+
+`frontend/app/docente/page.tsx` reescrito completamente con:
+- Header sticky con logo + nombre de institución + botón Salir.
+- Tabs de grupos con pill animado (Framer Motion `layoutId`).
+- 4 stats por grupo (total, promedio, activos, sin actividad).
+- Lista de estudiantes con barras de progreso animadas.
+- Detalle expandible con `AnimatePresence`.
+- Botón Resetear PIN con formulario inline.
+- Modal "Agregar estudiante" con vista de éxito mostrando código + PIN.
+- Fondo `#160B24`, todo Framer Motion.
+
+Backend: 3 endpoints nuevos en `backend/app/routers/grupos.py`:
+- `GET /api/grupos/mis-grupos`
+- `GET /api/grupos/{grupo_id}/estudiantes` (batch queries, no N+1)
+- `GET /api/grupos/{grupo_id}/stats`
+
+### Bugs críticos corregidos (Sesión 8)
+
+1. `crear_estudiante` en `docente.py` no asignaba `grupo_id` → corregido.
+2. `grupos.py` no existía → creado con 3 endpoints.
+3. RLS ausente en tablas nuevas → aplicado desde Supabase SQL Editor.
+4. Logro "Coleccionista" faltaba en la tabla `logros` → insertado.
+
+### Estado de Modo Historia
+
+Sidar Perez no entregó archivos compatibles con el stack del proyecto. La página `/historia` muestra un placeholder "Próximamente" funcional. Sin acción hasta que Sidar entregue archivos a Dirk para evaluación de compatibilidad antes de integrar.
+
+### Equipo actualizado (4 miembros)
+
+Eddy Marenco absorbe el rol de comunicaciones. Equipo actual:
+- Dirk Martinez — Backend
+- Eddy Marenco — Líder, Marketing y Comunicaciones
+- Sharis Peralta — Diseño
+- Sidar Perez — Frontend y Modo Historia
+
+## PARTE 22 — Decisiones y Actualizaciones (Sesión 9)
+
+### Fix de concurrencia: cliente Supabase thread-local
+
+`backend/app/supabase_client.py` reemplazó el singleton `@lru_cache` por un cliente por hilo (`threading.local()`). Bajo carga concurrente real, un único cliente `httpx` compartido entre los hilos del threadpool de FastAPI producía `RemoteProtocolError` intermitentes. Cada hilo del pool ahora crea y reutiliza su propia instancia de `Client`.
+
+### PENDIENTE 1 cerrado — RLS real por estudiante
+
+Las lecturas de progreso del estudiante (`progreso_estudiante`, `actividad_diaria`, `estudiante_logros`) que antes iban directo del navegador a Supabase con la anon key ahora pasan exclusivamente por el backend, protegidas por `verificar_estudiante_autenticado()`. Endpoints nuevos en `backend/app/routers/progress.py`:
+
+- `GET /api/progress/racha/{estudiante_id}`
+- `GET /api/progress/logros/{estudiante_id}`
+- `GET /api/progress/estudiante/{estudiante_id}?tema_id=`
+- `POST /api/progress/registrar-actividad/{estudiante_id}`
+
+`frontend/lib/progress.ts` centraliza estas llamadas (`obtenerRacha`, `obtenerLogrosEstudiante`, `obtenerProgresoEstudiante`, `registrarActividadDiaria`). Esto cierra el vector de fuga a nivel de aplicación para estas 3 tablas — las políticas RLS de base subyacentes no se tocaron en esta sesión (ver PENDIENTE 1 renovado, más abajo, sobre `instituciones`/`grupos`).
+
+### Bug de contaminación de sesión entre docente y estudiante
+
+**Causa raíz confirmada con headers HTTP reales:** `frontend/lib/supabase.ts` exportaba un único cliente `@supabase/supabase-js` compartido. Ese cliente persiste la sesión de Supabase Auth en `localStorage` y la reutiliza automáticamente en *cualquier* request futuro — incluidas las páginas de estudiante, que nunca deberían llevar una sesión de Supabase Auth (el estudiante usa JWT propio). Si un docente iniciaba sesión y luego, en el mismo navegador, se entraba a una ruta de estudiante, PostgREST evaluaba esas queries bajo la identidad del docente.
+
+**Solución (Opción B):** `frontend/lib/supabase.ts` ahora exporta dos clientes separados:
+```ts
+export const supabaseDocente = createClient(url, anonKey);
+export const supabaseEstudiante = createClient(url, anonKey, {
+  auth: { persistSession: false, autoRefreshToken: false, storageKey: "sb-estudiante-sin-uso" },
+});
+```
+Todas las páginas de estudiante migraron a `supabaseEstudiante`; `docente/page.tsx` y `lib/auth.ts` usan `supabaseDocente`. Verificado con reproducción real (ambos clientes coexistiendo en el mismo proceso, con una sesión de docente activa) que ya no hay fuga cruzada.
+
+### 34 logros de tema únicos (antes 1 genérico)
+
+El logro genérico "¡Tema completado!" (`tipo_condicion: tema_completado`, sin distinguir tema) fue reemplazado por 34 logros específicos, uno por cada tema real de 7mo y 9no, cada uno con título y descripción propios ligados al contenido real del tema. Requirió:
+
+- `ALTER TABLE logros ADD COLUMN tema_id UUID REFERENCES temas(id)` (DDL corrida por Dirk en Supabase SQL Editor).
+- `backend/app/services/gamification.py` → `_intentar_desbloquear()` ahora busca por `tema_id` cuando está presente, con fallback seguro (loguea y no rompe el progreso si un tema aún no tiene logro configurado).
+- Backfill de progreso histórico: estudiantes que ya habían completado temas antes de esta migración recibieron su logro específico con `desbloqueado_en` igual a la fecha real de finalización (no la fecha del backfill).
+- `frontend/components/LogroIcono.tsx`: mapa `CATEGORIA_POR_LOGRO_ID` (34 UUIDs → 8 categorías visuales), 4 íconos SVG nuevos (`IconoEscudo`, `IconoSimboloIgualdad`, `IconoFlorTejido`, `IconoMaletinEstrella`) y reutilización de 4 íconos de unidad ya existentes. El logro genérico viejo se mantiene intacto (`tema_id = NULL`) como fallback histórico.
+
+### 34 reflexiones de contenido (scenario) — antes solo 1 de 34 temas la tenía
+
+Auditoría de cobertura de variantes reveló que 33 de los 34 temas del currículo tenían **cero** actividades de tipo `scenario` (la fuente de datos del componente `Reflexion.tsx`) — un hueco de contenido preexistente, no relacionado con la rotación de variantes que se estaba auditando. Se confirmó (trazando `Reflexion.tsx` y comparando con pruebas anteriores que habían llamado directo a `POST /completar-elemento`, el cual no valida existencia de contenido) que la Reflexión de esos 33 temas nunca había renderizado nada real en el navegador.
+
+Se redactaron y aprobaron 33 entradas nuevas de `scenario` (16 para 7mo, 17 para 9no), cada una con pregunta situacional (no abstracta), 3 opciones (1 correcta + 2 plausibles) y un `dato_extra` verificable sobre Nicaragua, con adaptación propia del contenido MINED (no copia literal, por PRD Parte 8). Los 34 temas tienen ahora Reflexión funcional end-to-end.
+
+### PENDIENTE 3 cerrado — Rotación de variantes con memoria
+
+`frontend/app/(student)/niveles/[unitId]/[topicId]/page.tsx` ahora usa `elegirActividad()`: si el estudiante nunca completó la actividad del tema, siempre se muestra `grupo_variante = 1`; si ya la completó y vuelve a entrar, se elige al azar entre las variantes 2 y 3 (nunca la 1 de nuevo), con fallback a la 1 si el tema no tiene variantes 2/3 cargadas. Aplica a sopa de letras, quiz y scenario.
+
+### Equipo actualizado — Jonathan Alvarado incorporado
+
+Se agregó Jonathan Alvarado (Comunicador) al equipo en `frontend/app/page.tsx` y `frontend/app/(student)/extras/page.tsx`. El rol de Eddy Marenco, que en PARTE 21 decía "Líder, Marketing y Comunicaciones", se corrigió a "Líder y Marketing" ahora que Jonathan asume comunicaciones por separado.
+
+### Badge del hero del landing
+
+El badge "✨ Plataforma educativa del MINED Nicaragua" del hero (`frontend/app/page.tsx`) se reemplazó por "🏆 Tu esfuerzo de hoy es tu victoria de mañana", con el trofeo animado en loop de escala (Framer Motion).
+
+### Dropdown de configuración + dark/light mode real en panel docente
+
+`frontend/app/docente/page.tsx` tenía el fondo, cards y textos **hardcodeados a oscuro** — nunca reaccionaba al mismo mecanismo de modo oscuro/claro que ya usaban las 8 páginas del estudiante (`localStorage["dignalearn_tema"]` + clase `dark` en `<html>`, leído con un `useState` + `MutationObserver` en cada página). Se agregó:
+
+1. Un dropdown en el header (clic sobre el nombre del docente, Framer Motion `AnimatePresence`) con el mismo toggle sol/luna de `extras/page.tsx` y el botón "Salir" movido adentro.
+2. Soporte real de ambos modos en toda la página: fondo, header, tabs de grupos, cards de stats, lista de estudiantes (colapsada y expandida), inputs y modal de agregar estudiante — todos migrados de clases Tailwind fijas (`text-white`, `bg-white/X`, `#160B24` literal) a tokens de color condicionados por `modoOscuro`. Los acentos de marca (rosa/celeste) se mantienen iguales en ambos modos por diseño.
+
+Las páginas públicas pre-login (landing, login, legal, contacto) quedan **dark-only a propósito** — no se tocaron, es una decisión de diseño de marca, no un pendiente.
+
+### RLS real por institución — `instituciones` y `grupos`
+
+Auditoría encontró que, de las 4 tablas del modelo multi-institución (`instituciones`, `grupos`, `docente_grupos`, `perfiles_admin_institucion`), documentadas en PARTE 21 como con RLS habilitado, **2 de las 4 tenían política `USING (true)` para cualquier autenticado** (`instituciones`, `grupos`) — es decir, cualquier docente autenticado podía leer instituciones y grupos ajenos si llamaba directo a la REST API de Supabase, sin pasar por el backend. `docente_grupos` y `perfiles_admin_institucion` ya estaban correctamente acotadas por `auth.uid()` desde la migración 004 (`db/migrations/004_rls_instituciones_grupos.sql`).
+
+Nueva migración `db/migrations/005_rls_docente_scoped.sql` (aplicada por Dirk en Supabase SQL Editor):
+- `instituciones`: un docente solo lee su propia institución, vía `perfiles_docente.institucion_id`.
+- `grupos`: un docente solo lee los grupos donde tiene una fila en `docente_grupos`.
+
+Verificado con login real de `docente@dignalearn.com` + SELECT directo a la REST API (sin backend): sigue viendo exactamente sus 2 grupos y su 1 institución, sin regresión. El flujo del panel docente en el navegador no cambia visualmente porque `grupos.py` usa el cliente service-role internamente (bypasea RLS por diseño) — el fix cierra únicamente la vía de acceso directo por REST, que era la expuesta.
+
+**Hallazgo relacionado, documentado para cuando se construya el panel de Admin de Institución:** no existe hoy ningún endpoint ni proceso automatizado para dar de alta a un docente o asignarlo a un grupo — `perfiles_docente` y `docente_grupos` se pueblan 100% manualmente desde Supabase Studio. Esto es la decisión de scope explícita del MVP (PRD Parte 4: "Admin se gestiona desde Supabase Studio... No requiere panel frontend para el MVP"), no un bug. Confirmado que el frontend (`docente/page.tsx`) ya maneja sin errores el caso de un docente con 0 grupos asignados.
+
+### Pendientes actuales — EN ORDEN DE PRIORIDAD
+
+**PENDIENTE 1 (RLS real por estudiante) — CERRADO** en esta sesión (ver arriba).
+
+**PENDIENTE 2 (auditoría dark mode) — CERRADO** en esta sesión: las 8 páginas de estudiante ya estaban correctas; se corrigió el panel docente (único hueco real de uso diario); las páginas públicas quedan dark-only a propósito.
+
+**PENDIENTE 3 (rotación de variantes) — CERRADO** en esta sesión (ver arriba), y además se cerró un hueco de contenido no detectado antes (34 reflexiones faltantes).
+
+**PENDIENTE 4 (probar panel docente end-to-end) — CERRADO**: verificado con login real y flujo completo (mis-grupos → estudiantes → stats) en esta y sesiones anteriores.
+
+**PENDIENTE — RLS instituciones/grupos (nuevo, cerrado en esta sesión).** Ver migración 005 arriba.
+
+**Próximo foco: nuevos tipos de actividad.** Rompecabezas, Conectores y ArrastrarOrdenar (PARTE 8) siguen sin implementar — hoy solo existen sopa de letras, quiz y scenario (reflexión) como tipos funcionales; `drag_drop` está declarado en `tipos_actividad` pero con 0 filas en `actividades`.
+
+**Pendientes sin cambios desde sesiones anteriores:**
+- Mascota guía (no iniciada).
+- Integración Modo Historia — en espera de que Sidar entregue archivos compatibles a Dirk.
+- README + ejecución local.
+- `seed.sql` sincronizado con el estado real de la BD.
+- CORS de producción (URL de Vercel al desplegar).
+- Revisión mobile completa.
+- Panel de Admin de Institución (requiere primero decidir cómo se automatiza el alta de docente/grupo, ver hallazgo arriba).
+

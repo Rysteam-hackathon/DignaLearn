@@ -1,0 +1,2185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DignaLearn — Modo Historia y Clases</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/fontsource-nunito@4.5.12/index.min.css" rel="stylesheet">
+<style>
+@font-face {
+  font-family: 'Sitka Small Semibold';
+  src: local('Sitka Small Semibold'), local('Sitka-Small-Semibold');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+:root {
+  --color-void: #160B24;
+  --color-rosa: #F0A8B6;
+  --color-celeste: #A4CDD5;
+  --color-accent-purple: #B28DFF;
+  --color-accent-green: #84D270;
+  --color-white: #FFFFFF;
+  --dialog-space: 236px;
+}
+html, body, #root { min-height: 100%; background: #160B24; color: #FFFFFF; }
+body { font-family: 'Nunito', 'Sitka Small Semibold', sans-serif; }
+.font-sitka { font-family: 'Sitka Small Semibold', 'Nunito', sans-serif; font-weight: 600; }
+.font-nunito { font-family: 'Nunito', sans-serif; }
+::selection { background: #F0A8B6; color: #160B24; }
+.dialog-box {
+  background: rgba(22, 11, 36, 0.95);
+  border: 3px solid #F0A8B6;
+  box-shadow: 0 0 0 2px #160B24, 0 0 20px rgba(240, 168, 182, 0.3);
+}
+.option-btn {
+  background: linear-gradient(135deg, #B28DFF 0%, #84D270 100%);
+  transition: all 0.2s ease;
+  border: 2px solid #FFFFFF;
+}
+.option-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(178, 141, 255, 0.5);
+}
+.chapter-card {
+  background: linear-gradient(135deg, rgba(178, 141, 255, 0.15) 0%, rgba(164, 205, 213, 0.15) 100%);
+  border: 2px solid #A4CDD5;
+  transition: all 0.3s ease;
+}
+.chapter-card:hover {
+  border-color: #F0A8B6;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(240, 168, 182, 0.3);
+}
+.chapter-card.locked { opacity: 0.5; filter: grayscale(0.7); }
+
+/* ===== ESCENARIO DE HISTORIA: personajes SIEMPRE dentro del área visible ===== */
+.story-stage {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 56px;
+  bottom: var(--dialog-space);
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 10;
+}
+@media (max-width: 768px) {
+  :root { --dialog-space: 280px; }
+  .story-stage { top: 52px; }
+}
+.character-slot {
+  position: absolute;
+  bottom: 0;
+  height: 100%;
+  max-height: 100%;
+  display: flex;
+  align-items: flex-end;
+  pointer-events: none;
+  background: transparent !important;
+}
+.character-slot.character-left {
+  left: 0.5%;
+  width: 34%;
+  justify-content: flex-start;
+}
+.character-slot.character-right {
+  right: 0.5%;
+  width: 34%;
+  justify-content: flex-end;
+}
+.character-slot.character-center {
+  left: 50%;
+  width: 38%;
+  transform: translateX(-50%);
+  justify-content: center;
+}
+@media (max-width: 768px) {
+  .character-slot.character-left,
+  .character-slot.character-right,
+  .character-slot.character-center { width: 48%; }
+}
+
+/* Sprites recortados: sin fondo blanco, anclados al suelo del escenario */
+.character-sprite {
+  max-height: 100%;
+  max-width: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  object-position: bottom center;
+  background: transparent !important;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+  image-rendering: auto;
+  filter: drop-shadow(0 10px 18px rgba(0,0,0,0.45));
+}
+.character-sprite.needs-chroma {
+  filter: url(#removeWhiteBg) drop-shadow(0 10px 18px rgba(0,0,0,0.45));
+}
+.character-container {
+  background: transparent !important;
+  position: relative;
+  pointer-events: none;
+}
+.gallery-sprite-box {
+  background: transparent !important;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in { animation: fadeIn 0.4s ease-out; }
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+.animate-blink { animation: blink 1s infinite; }
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.animate-float { animation: float 3s ease-in-out infinite; }
+.class-card {
+  background: linear-gradient(135deg, rgba(132, 210, 112, 0.15) 0%, rgba(178, 141, 255, 0.15) 100%);
+  border: 2px solid #84D270;
+  transition: all 0.3s ease;
+}
+.class-card:hover {
+  border-color: #B28DFF;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(132, 210, 112, 0.3);
+}
+.quiz-option {
+  background: rgba(164, 205, 213, 0.2);
+  border: 2px solid #A4CDD5;
+  transition: all 0.2s ease;
+}
+.quiz-option:hover:not(:disabled) {
+  background: rgba(164, 205, 213, 0.3);
+  transform: translateX(4px);
+}
+.quiz-option.correct { background: rgba(132, 210, 112, 0.3); border-color: #84D270; }
+.quiz-option.incorrect { background: rgba(240, 168, 182, 0.3); border-color: #F0A8B6; }
+.word-cell {
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid #A4CDD5;
+  background: rgba(164, 205, 213, 0.1);
+  font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 18px;
+  cursor: pointer; transition: all 0.2s; user-select: none;
+}
+.word-cell:hover { background: rgba(164, 205, 213, 0.3); }
+.word-cell.selected { background: rgba(178, 141, 255, 0.5); border-color: #B28DFF; }
+.word-cell.found { background: rgba(132, 210, 112, 0.4); border-color: #84D270; color: #84D270; }
+.sudoku-cell {
+  width: 50px; height: 50px;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid #A4CDD5;
+  background: rgba(164, 205, 213, 0.1);
+  font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 22px;
+  cursor: pointer; transition: all 0.2s;
+}
+.sudoku-cell:hover:not(.fixed) { background: rgba(164, 205, 213, 0.3); }
+.sudoku-cell.selected { background: rgba(178, 141, 255, 0.5); border-color: #B28DFF; }
+.sudoku-cell.fixed { background: rgba(240, 168, 182, 0.2); border-color: #F0A8B6; cursor: default; }
+.sudoku-cell.error { background: rgba(240, 100, 100, 0.3); border-color: #ff6666; }
+.sudoku-cell.correct-fill { background: rgba(132, 210, 112, 0.3); border-color: #84D270; }
+.memory-card { width: 80px; height: 80px; perspective: 1000px; cursor: pointer; }
+.memory-card-inner {
+  position: relative; width: 100%; height: 100%;
+  transition: transform 0.6s; transform-style: preserve-3d;
+}
+.memory-card.flipped .memory-card-inner,
+.memory-card.matched .memory-card-inner { transform: rotateY(180deg); }
+.memory-card-face {
+  position: absolute; width: 100%; height: 100%;
+  backface-visibility: hidden;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 8px; border: 2px solid #A4CDD5; font-size: 32px;
+}
+.memory-card-front {
+  background: linear-gradient(135deg, #B28DFF, #84D270);
+  color: white; font-size: 24px;
+}
+.memory-card-back { background: rgba(22, 11, 36, 0.95); transform: rotateY(180deg); }
+.memory-card.matched .memory-card-back { background: rgba(132, 210, 112, 0.3); border-color: #84D270; }
+.drag-item {
+  background: rgba(178, 141, 255, 0.2);
+  border: 2px solid #B28DFF;
+  padding: 8px 16px; border-radius: 8px;
+  cursor: pointer; transition: all 0.2s; user-select: none;
+}
+.drag-item:hover { background: rgba(178, 141, 255, 0.3); }
+.drag-item.selected-drag { background: rgba(178, 141, 255, 0.5); border-color: #FFFFFF; transform: scale(1.05); }
+.drop-zone {
+  min-height: 50px;
+  border: 2px dashed #A4CDD5;
+  border-radius: 8px; padding: 8px; margin: 4px 0;
+  transition: all 0.2s;
+  background: rgba(164, 205, 213, 0.05);
+  cursor: pointer;
+}
+.drop-zone:hover { background: rgba(178, 141, 255, 0.1); }
+.drop-zone.drag-over { background: rgba(178, 141, 255, 0.2); border-color: #B28DFF; }
+.fill-input {
+  background: rgba(164, 205, 213, 0.1);
+  border: 2px solid #A4CDD5;
+  border-radius: 6px; padding: 4px 8px;
+  color: white; font-family: 'Nunito', sans-serif; font-weight: 600; font-size: 16px;
+  width: 140px; text-align: center; transition: all 0.2s;
+}
+.fill-input:focus { outline: none; border-color: #B28DFF; background: rgba(178, 141, 255, 0.2); }
+.fill-input.correct { border-color: #84D270; background: rgba(132, 210, 112, 0.2); }
+.fill-input.incorrect { border-color: #F0A8B6; background: rgba(240, 168, 182, 0.2); }
+.match-item {
+  background: rgba(164, 205, 213, 0.15);
+  border: 2px solid #A4CDD5;
+  padding: 10px 14px; border-radius: 8px;
+  cursor: pointer; transition: all 0.2s; user-select: none;
+}
+.match-item:hover { background: rgba(164, 205, 213, 0.25); }
+.match-item.selected-match { background: rgba(178, 141, 255, 0.4); border-color: #B28DFF; }
+.match-item.matched-correct { background: rgba(132, 210, 112, 0.3); border-color: #84D270; opacity: 0.6; cursor: default; }
+.match-item.matched-wrong { background: rgba(240, 168, 182, 0.3); border-color: #F0A8B6; animation: shake 0.4s; }
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+.tf-btn {
+  padding: 12px 24px; border-radius: 10px;
+  font-weight: 700; font-size: 18px;
+  transition: all 0.2s; border: 3px solid;
+}
+.tf-btn:hover:not(:disabled) { transform: scale(1.05); }
+.tf-true { background: rgba(132, 210, 112, 0.2); border-color: #84D270; color: #84D270; }
+.tf-false { background: rgba(240, 168, 182, 0.2); border-color: #F0A8B6; color: #F0A8B6; }
+.timer-bar {
+  height: 8px;
+  background: linear-gradient(90deg, #84D270, #B28DFF);
+  border-radius: 4px;
+  transition: width 1s linear;
+}
+.level-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: 50%;
+  font-weight: 700; font-size: 14px;
+}
+.diff-btn {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 8px;
+  border-radius: 10px;
+  border: 2px solid;
+  font-weight: 700;
+  font-size: 12px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.diff-btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
+.diff-btn.done { opacity: 0.75; }
+.level-row {
+  background: linear-gradient(135deg, rgba(178, 141, 255, 0.12) 0%, rgba(164, 205, 213, 0.1) 100%);
+  border: 2px solid #A4CDD5;
+  border-radius: 16px;
+  transition: border-color 0.2s;
+}
+.level-row:hover { border-color: #B28DFF; }
+.scrollbar-thin::-webkit-scrollbar { width: 6px; }
+.scrollbar-thin::-webkit-scrollbar-track { background: rgba(22, 11, 36, 0.5); }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: #B28DFF; border-radius: 3px; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute;overflow:hidden" aria-hidden="true">
+  <filter id="removeWhiteBg" color-interpolation-filters="sRGB">
+    <feColorMatrix type="matrix" values="
+      1 0 0 0 0
+      0 1 0 0 0
+      0 0 1 0 0
+     -1.15 -1.15 -1.15 3.7 -0.12"/>
+  </filter>
+</svg>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+const LOGO_URL = "https://image.qwenlm.ai/public_source/7acf56d9-8adc-48a9-9c90-c28375b51826/15520c8cb-2e4d-4d8f-9147-7406eb9f144a.png";
+
+const SPRITES = {
+  "sofia-feliz": "https://image.qwenlm.ai/public_source/d8ae93ae-3561-47e2-bb29-839431579b34/1fdddc9f3-1cfa-497c-9a59-70fba35ec0e7.png",
+  "sofia-triste": "https://image.qwenlm.ai/public_source/d8ae93ae-3561-47e2-bb29-839431579b34/19003bcc7-69e9-4618-821a-93f030317614.png",
+  "profesora-normal": "https://image.qwenlm.ai/public_source/d8ae93ae-3561-47e2-bb29-839431579b34/167ff2341-5c65-4e87-90f7-38dfbc04ca96.png",
+  "carlos-normal": "https://image.qwenlm.ai/public_source/d8ae93ae-3561-47e2-bb29-839431579b34/1894a5837-f58c-4f1c-8206-7f6c7a8f5936.png",
+  "abuela-normal": "https://image.qwenlm.ai/public_source/d8ae93ae-3561-47e2-bb29-839431579b34/1e7519c7a-0d08-4855-84de-7992aeeb82db.png",
+  "ana-feliz": "https://image.qwenlm.ai/public_source/d8ae93ae-3561-47e2-bb29-839431579b34/1307c3a47-7548-480c-86b7-530e22539704.png",
+  "don-jose": "https://image.qwenlm.ai/public_source/d8ae93ae-3561-47e2-bb29-839431579b34/1418ee6a0-02f8-4cd8-abfe-9af45476a248.png",
+  "abogada-carmen": "https://image.qwenlm.ai/public_source/d8ae93ae-3561-47e2-bb29-839431579b34/1be0ddbd4-ca41-433c-9e1e-251363edf3c0.png"
+};
+
+const FONDOS = {
+  escuela: "https://image.qwenlm.ai/public_source/8acec839-a3e6-4ae6-ab41-49a25eeb0911/1f256a0b4-25f8-4e46-9b72-550432b1f0e7.png",
+  casa: "https://image.qwenlm.ai/public_source/8acec839-a3e6-4ae6-ab41-49a25eeb0911/19ef3b777-bfc7-40b0-8097-9b548793dd0f.png",
+  comunidad: "https://image.qwenlm.ai/public_source/8acec839-a3e6-4ae6-ab41-49a25eeb0911/1cef47045-ab93-4750-a226-c29ff5baf2dc.png",
+  biblioteca: "https://image.qwenlm.ai/public_source/8acec839-a3e6-4ae6-ab41-49a25eeb0911/1dfa8d23b-a05c-4243-871f-73924a3a038e.png",
+  laboratorio: "https://image.qwenlm.ai/public_source/8acec839-a3e6-4ae6-ab41-49a25eeb0911/1c31b2edd-f95d-419c-b317-019f9f95c902.png",
+  museo: "https://image.qwenlm.ai/public_source/8acec839-a3e6-4ae6-ab41-49a25eeb0911/164b9feb7-5ffd-429f-93e4-12fc9821bcd2.png",
+  parque: "https://image.qwenlm.ai/public_source/8acec839-a3e6-4ae6-ab41-49a25eeb0911/12a80f8e5-522c-4c22-a504-75d63b30e954.png",
+  plaza: "https://image.qwenlm.ai/public_source/8acec839-a3e6-4ae6-ab41-49a25eeb0911/1d694daa8-ff27-4f88-9687-4606de3c8ad4.png"
+};
+
+const shuffleArray = (arr) => {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
+
+/* ===== PROCESADO DE SPRITES: recorte de fondo blanco por inundación desde los bordes ===== */
+const spriteCache = {};
+const spriteProcessed = {};
+
+function processSprite(img) {
+  const maxDim = 900;
+  let w = img.naturalWidth || img.width;
+  let h = img.naturalHeight || img.height;
+  if (!w || !h) throw new Error('invalid image');
+  const scale = Math.min(1, maxDim / Math.max(w, h));
+  w = Math.max(1, Math.round(w * scale));
+  h = Math.max(1, Math.round(h * scale));
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  ctx.drawImage(img, 0, 0, w, h);
+  const imageData = ctx.getImageData(0, 0, w, h);
+  const data = imageData.data;
+  const THRESH = 242;
+  const isBg = (i) => data[i] >= THRESH && data[i + 1] >= THRESH && data[i + 2] >= THRESH && data[i + 3] > 0;
+  const visited = new Uint8Array(w * h);
+  const qx = [];
+  const qy = [];
+  const tryPush = (x, y) => {
+    if (x < 0 || y < 0 || x >= w || y >= h) return;
+    const p = y * w + x;
+    if (visited[p]) return;
+    visited[p] = 1;
+    if (isBg(p * 4)) { qx.push(x); qy.push(y); }
+  };
+  for (let x = 0; x < w; x++) { tryPush(x, 0); tryPush(x, h - 1); }
+  for (let y = 0; y < h; y++) { tryPush(0, y); tryPush(w - 1, y); }
+  const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]];
+  let qi = 0;
+  while (qi < qx.length) {
+    const x = qx[qi], y = qy[qi++];
+    data[(y * w + x) * 4 + 3] = 0;
+    for (let d = 0; d < dirs.length; d++) tryPush(x + dirs[d][0], y + dirs[d][1]);
+  }
+  const copy = new Uint8ClampedArray(data);
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      const i = (y * w + x) * 4;
+      if (copy[i + 3] === 0) continue;
+      let nearT = false;
+      for (let dy = -1; dy <= 1 && !nearT; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          if (copy[((y + dy) * w + (x + dx)) * 4 + 3] === 0) { nearT = true; break; }
+        }
+      }
+      if (nearT) {
+        const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+        if (avg > 205) {
+          const t = Math.max(0, Math.min(1, (255 - avg) / 50));
+          data[i + 3] = Math.round(data[i + 3] * t);
+        }
+      }
+    }
+  }
+  ctx.putImageData(imageData, 0, 0);
+  let minX = w, minY = h, maxX = 0, maxY = 0;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (data[(y * w + x) * 4 + 3] > 12) {
+        if (x < minX) minX = x;
+        if (y < minY) minY = y;
+        if (x > maxX) maxX = x;
+        if (y > maxY) maxY = y;
+      }
+    }
+  }
+  if (maxX <= minX || maxY <= minY) return canvas.toDataURL('image/png');
+  const pad = 6;
+  minX = Math.max(0, minX - pad);
+  minY = Math.max(0, minY - pad);
+  maxX = Math.min(w - 1, maxX + pad);
+  maxY = Math.min(h - 1, maxY + pad);
+  const cw = maxX - minX + 1;
+  const ch = maxY - minY + 1;
+  const cropped = document.createElement('canvas');
+  cropped.width = cw;
+  cropped.height = ch;
+  cropped.getContext('2d').drawImage(canvas, minX, minY, cw, ch, 0, 0, cw, ch);
+  return cropped.toDataURL('image/png');
+}
+
+function preloadSprites() {
+  Object.values(SPRITES).forEach((src) => {
+    if (spriteCache[src]) return;
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        spriteCache[src] = processSprite(img);
+        spriteProcessed[src] = true;
+      } catch (e) {
+        spriteCache[src] = src;
+        spriteProcessed[src] = false;
+      }
+    };
+    img.onerror = () => { spriteCache[src] = src; spriteProcessed[src] = false; };
+    img.src = src;
+  });
+}
+
+function useProcessedSprite(src) {
+  const [url, setUrl] = useState(spriteCache[src] || src);
+  const [usedChroma, setUsedChroma] = useState(!spriteProcessed[src]);
+  useEffect(() => {
+    if (!src) return;
+    if (spriteCache[src]) {
+      setUrl(spriteCache[src]);
+      setUsedChroma(!spriteProcessed[src]);
+      return;
+    }
+    let cancelled = false;
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      if (cancelled) return;
+      try {
+        const processed = processSprite(img);
+        spriteCache[src] = processed;
+        spriteProcessed[src] = true;
+        setUrl(processed);
+        setUsedChroma(false);
+      } catch (e) {
+        spriteCache[src] = src;
+        spriteProcessed[src] = false;
+        setUrl(src);
+        setUsedChroma(true);
+      }
+    };
+    img.onerror = () => {
+      if (cancelled) return;
+      setUrl(src);
+      setUsedChroma(true);
+    };
+    img.src = src;
+    return () => { cancelled = true; };
+  }, [src]);
+  return [url, usedChroma];
+}
+
+function CharacterSprite({ src, alt, className, style }) {
+  const [url, usedChroma] = useProcessedSprite(src);
+  return (
+    <img
+      src={url}
+      alt={alt || ''}
+      draggable="false"
+      className={'character-sprite ' + (usedChroma ? 'needs-chroma ' : '') + (className || '')}
+      style={style}
+    />
+  );
+}
+
+const capitulos = [
+{
+  id: "capitulo-1", grado: 7, titulo: "Un nuevo día en la escuela",
+  descripcion: "Sofía descubre el significado de la dignidad humana",
+  esGratis: true, tema: "Dignidad Humana", portada: FONDOS.escuela,
+  escenas: [
+    { fondo: "escuela", personaje: "sofia-feliz", posicion: "izquierda", nombre: "Sofía", dialogo: "¡Hoy es mi primer día en el nuevo colegio! Estoy muy emocionada por conocer gente nueva y aprender cosas importantes." },
+    { fondo: "escuela", personaje: "profesora-normal", posicion: "derecha", nombre: "Profesora María", dialogo: "¡Buenos días, clase! Soy la Profesora María. Hoy vamos a hablar sobre algo muy importante: la dignidad humana." },
+    { fondo: "escuela", personaje: "profesora-normal", posicion: "derecha", nombre: "Profesora María", dialogo: "¿Alguien sabe qué significa la dignidad? Es el valor inherente que tiene cada persona por el simple hecho de ser humana." },
+    { fondo: "escuela", personaje: "sofia-feliz", posicion: "izquierda", nombre: "Sofía", dialogo: "¿Entonces todas las personas merecemos respeto, sin importar quiénes somos o de dónde venimos?" },
+    { fondo: "escuela", personaje: "profesora-normal", posicion: "derecha", nombre: "Profesora María", dialogo: "¡Exactamente, Sofía! La dignidad es un derecho fundamental. Nadie puede quitártela, ni siquiera en los momentos más difíciles." },
+    { fondo: "escuela", personaje: "sofia-triste", posicion: "izquierda", nombre: "Sofía", dialogo: "En el recreo vi que algunos compañeros se burlaban de una niña por su acento. Me sentí muy mal al verla triste. ¿Qué debería hacer?",
+      opciones: [
+        { texto: "Unirme a las burlas para encajar con el grupo", resultado: "malo", dialogo: "Sofía se unió a las burlas. La niña se sintió humillada y Sofía perdió su propia dignidad al no defender lo correcto. Nadie ganó ese día." },
+        { texto: "Ignorar la situación y seguir jugando", resultado: "neutral", dialogo: "Sofía ignoró lo que pasaba. Aunque no participó, su silencio permitió que la injusticia continuara. La niña siguió sintiéndose sola." },
+        { texto: "Defender a la niña con palabras respetuosas", resultado: "bueno", dialogo: "Sofía se acercó y dijo: 'Todas merecemos respeto'. La niña sonrió y varios compañeros se unieron para defenderla también." },
+        { texto: "Reportar a la profesora y acompañar a la niña", resultado: "excelente", dialogo: "Sofía habló con la Profesora María, quien abordó el tema en clase. Toda la escuela aprendió sobre respeto, dignidad y empatía." }
+      ]
+    },
+    { fondo: "escuela", personaje: "sofia-feliz", posicion: "izquierda", nombre: "Sofía", dialogo: "Hoy aprendí que la dignidad no se negocia. Todas las personas, especialmente las mujeres, merecemos ser tratadas con respeto y amor." },
+    { fondo: "escuela", personaje: "profesora-normal", posicion: "derecha", nombre: "Profesora María", dialogo: "Excelente reflexión, Sofía. Recuerda: la dignidad es la base de todos los derechos humanos. ¡Nunca la olvides!" }
+  ]
+},
+{
+  id: "capitulo-2", grado: 7, titulo: "El derecho a ser escuchada",
+  descripcion: "Sofía aprende sobre las leyes que protegen a las mujeres en Nicaragua",
+  esGratis: true, tema: "Leyes de Protección", portada: FONDOS.comunidad,
+  escenas: [
+    { fondo: "casa", personaje: "abuela-normal", posicion: "derecha", nombre: "Abuela Carmen", dialogo: "Sofía, mi niña, hoy en la comunidad hay una charla sobre los derechos de las mujeres. ¿Quieres venir conmigo?" },
+    { fondo: "casa", personaje: "sofia-feliz", posicion: "izquierda", nombre: "Sofía", dialogo: "¡Claro, abuelita! Quiero aprender más sobre mis derechos. Tú siempre me dices que una mujer informada es una mujer libre." },
+    { fondo: "comunidad", personaje: "abogada-carmen", posicion: "derecha", nombre: "Abogada Carmen", dialogo: "Bienvenidas. En Nicaragua existe la Ley 779, la Ley Integral contra la Violencia hacia las Mujeres. Esta ley nos protege a todas." },
+    { fondo: "comunidad", personaje: "sofia-feliz", posicion: "izquierda", nombre: "Sofía", dialogo: "¿Qué tipo de violencia protege esta ley? ¿Solo la física?" },
+    { fondo: "comunidad", personaje: "abogada-carmen", posicion: "derecha", nombre: "Abogada Carmen", dialogo: "No, Sofía. Protege contra violencia física, psicológica, sexual, económica y patrimonial. Todas son formas de violar la dignidad de una mujer." },
+    { fondo: "comunidad", personaje: "sofia-triste", posicion: "izquierda", nombre: "Sofía", dialogo: "Mi vecina Luisa parece triste últimamente. Su esposo le grita mucho y la controla. Me da miedo por ella. ¿Qué puedo hacer?",
+      opciones: [
+        { texto: "No es mi problema, mejor no me meto", resultado: "malo", dialogo: "Sofía decidió no intervenir. Luisa continuó sufriendo en silencio, sin saber que tenía derechos que la protegían. El miedo ganó ese día." },
+        { texto: "Hablar con Luisa en privado con delicadeza", resultado: "bueno", dialogo: "Sofía habló con Luisa con mucho cariño y le compartió información sobre la Ley 779. Luisa comenzó a buscar ayuda y esperanza." },
+        { texto: "Contarle a mi abuela para que me ayude", resultado: "bueno", dialogo: "Sofía le contó a su abuela Carmen, quien junto con otras vecinas apoyó a Luisa para que denunciara la violencia con valentía." },
+        { texto: "Llamar a la línea gratuita 133 de ayuda", resultado: "excelente", dialogo: "Sofía llamó a la línea 133. Las autoridades contactaron a Luisa y recibió protección legal inmediata. Una niña salvó una vida." }
+      ]
+    },
+    { fondo: "comunidad", personaje: "sofia-feliz", posicion: "izquierda", nombre: "Sofía", dialogo: "Ahora sé que en Nicaragua tenemos leyes que nos protegen. La Ley 779 es nuestra aliada contra la violencia. ¡Nunca estamos solas!" },
+    { fondo: "comunidad", personaje: "abogada-carmen", posicion: "derecha", nombre: "Abogada Carmen", dialogo: "Recuerden: conocer nuestros derechos es el primer paso para ejercerlos. ¡Denunciar es un acto de valentía y dignidad!" }
+  ]
+},
+{
+  id: "capitulo-3", grado: 8, titulo: "Lideresas de Nicaragua",
+  descripcion: "Sofía descubre a las mujeres que cambiaron la historia",
+  esGratis: true, tema: "Mujeres Históricas", portada: FONDOS.biblioteca,
+  escenas: [
+    { fondo: "biblioteca", personaje: "sofia-feliz", posicion: "izquierda", nombre: "Sofía", dialogo: "La profesora nos pidió investigar sobre mujeres importantes en la historia de Nicaragua. ¡Me encanta la historia!" },
+    { fondo: "biblioteca", personaje: "sofia-triste", posicion: "izquierda", nombre: "Sofía", dialogo: "Pero... ¿por qué en los libros de historia siempre aparecen hombres? ¿Dónde están las mujeres? ¿Acaso no hicieron nada importante?" },
+    { fondo: "biblioteca", personaje: "profesora-normal", posicion: "derecha", nombre: "Profesora María", dialogo: "Excelente pregunta, Sofía. Las mujeres siempre han estado ahí, luchando y construyendo, pero muchas veces las olvidamos o las invisibilizamos." },
+    { fondo: "biblioteca", personaje: "profesora-normal", posicion: "derecha", nombre: "Profesora María", dialogo: "Conoces a Rafaela Herrera, quien defendió el Castillo de la Inmaculada en 1762 contra los ingleses. O a Josefa Toledo de Aguerri, luchadora por la educación de las mujeres nicaragüenses." },
+    { fondo: "biblioteca", personaje: "carlos-normal", posicion: "derecha", nombre: "Carlos", dialogo: "Oye Sofía, ¿y qué tiene eso de especial? Los hombres también hicieron cosas importantes en la historia." },
+    { fondo: "biblioteca", personaje: "sofia-feliz", posicion: "izquierda", nombre: "Sofía", dialogo: "¡Claro, Carlos! Pero también debemos reconocer a las mujeres. ¿Qué puedo hacer para que más personas conozcan sus historias?",
+      opciones: [
+        { texto: "Hacer un trabajo escrito solo para sacar buena nota", resultado: "neutral", dialogo: "Sofía hizo su trabajo y obtuvo buena nota, pero pocas personas conocieron estas historias. El conocimiento se quedó solo en el papel." },
+        { texto: "Crear un mural en la escuela con las heroínas", resultado: "bueno", dialogo: "Sofía pintó un hermoso mural con las heroínas nicaragüenses. Toda la escuela aprendió sobre ellas cada día al pasar por el pasillo." },
+        { texto: "Organizar un club de historia con compañeras", resultado: "bueno", dialogo: "Sofía organizó un club de historia feminista. Muchas estudiantes se inspiraron con estas mujeres y comenzaron a investigar más." },
+        { texto: "Crear videos para redes sociales sobre ellas", resultado: "excelente", dialogo: "Sofía creó videos virales sobre las lideresas nicaragüenses. Miles de jóvenes de todo el país conocieron estas historias olvidadas." }
+      ]
+    },
+    { fondo: "biblioteca", personaje: "sofia-feliz", posicion: "izquierda", nombre: "Sofía", dialogo: "Las mujeres de Nicaragua han sido valientes, inteligentes y luchadoras. ¡Yo también puedo ser una lideresa que cambie el mundo!" },
+    { fondo: "biblioteca", personaje: "profesora-normal", posicion: "derecha", nombre: "Profesora María", dialogo: "El liderazgo femenino transforma comunidades. Nunca subestimes el poder de una mujer educada y consciente de sus derechos." }
+  ]
+},
+{
+  id: "capitulo-4", grado: 8, titulo: "La amistad verdadera",
+  descripcion: "Sofía y Ana aprenden sobre la empatía y el apoyo mutuo",
+  esGratis: true, tema: "Empatía y Amistad", portada: FONDOS.parque,
+  escenas: [
+    { fondo: "parque", personaje: "ana-feliz", posicion: "derecha", nombre: "Ana", dialogo: "¡Sofía! ¡Qué bueno verte! ¿Quieres jugar conmigo en el parque después de clases?" },
+    { fondo: "parque", personaje: "sofia-feliz", posicion: "izquierda", nombre: "Sofía", dialogo: "¡Claro, Ana! Me encanta pasar tiempo contigo. Eres mi mejor amiga." },
+    { fondo: "parque", personaje: "ana-feliz", posicion: "derecha", nombre: "Ana", dialogo: "Oye, he notado que últimamente Luisa está muy callada en clase. ¿Tú sabes qué le pasa?" },
+    { fondo: "parque", personaje: "sofia-triste", posicion: "izquierda", nombre: "Sofía", dialogo: "Sí... creo que está pasando por una situación difícil en casa. No sé si debería contártelo, es algo muy personal." },
+    { fondo: "parque", personaje: "ana-feliz", posicion: "derecha", nombre: "Ana", dialogo: "Entiendo. Pero si está sufriendo, quizás entre las dos podamos ayudarla. ¿Qué crees que deberíamos hacer?",
+      opciones: [
+        { texto: "No decir nada, es asunto de ella", resultado: "neutral", dialogo: "Sofía y Ana decidieron no intervenir. Luisa siguió cargando su dolor en silencio, sin saber que tenía amigas que la querían ayudar." },
+        { texto: "Invitar a Luisa a jugar con nosotras", resultado: "bueno", dialogo: "Sofía y Ana invitaron a Luisa al parque. Aunque al principio estaba tímida, poco a poco comenzó a sonreír y sentirse acompañada." },
+        { texto: "Hablar con la profesora sobre la situación", resultado: "bueno", dialogo: "Sofía y Ana hablaron con la Profesora María, quien pudo brindar apoyo profesional a Luisa y a su familia." },
+        { texto: "Organizar un grupo de apoyo entre amigas", resultado: "excelente", dialogo: "Sofía y Ana crearon un círculo de amigas donde todas se apoyan mutuamente. Luisa encontró un espacio seguro para expresar sus sentimientos." }
+      ]
+    },
+    { fondo: "parque", personaje: "sofia-feliz", posicion: "izquierda", nombre: "Sofía", dialogo: "La verdadera amistad no es solo divertirse juntas, sino también apoyarse en los momentos difíciles. ¡Juntas somos más fuertes!" },
+    { fondo: "parque", personaje: "ana-feliz", posicion: "derecha", nombre: "Ana", dialogo: "¡Exacto! Y recuerda: ser empática significa ponerse en el lugar del otro. Eso es lo que nos hace humanas y solidarias." }
+  ]
+},
+{
+  id: "capitulo-5", grado: 9, titulo: "El poder de la educación",
+  descripcion: "Sofía descubre cómo la educación transforma vidas",
+  esGratis: true, tema: "Educación y Futuro", portada: FONDOS.laboratorio,
+  escenas: [
+    { fondo: "casa", personaje: "don-jose", posicion: "derecha", nombre: "Don José", dialogo: "Sofía, mi nieta, hoy quiero contarte algo importante. Cuando yo era joven, no todos podían ir a la escuela." },
+    { fondo: "casa", personaje: "sofia-feliz", posicion: "izquierda", nombre: "Sofía", dialogo: "¿En serio, abuelito? ¿Cómo era eso? Yo no puedo imaginar no poder estudiar." },
+    { fondo: "casa", personaje: "don-jose", posicion: "derecha", nombre: "Don José", dialogo: "Muchas niñas, especialmente en el campo, tenían que quedarse en casa. Pero tu abuela Carmen luchó para que todas sus hijas estudiaran." },
+    { fondo: "casa", personaje: "abuela-normal", posicion: "derecha", nombre: "Abuela Carmen", dialogo: "Así es. La educación es la herramienta más poderosa para cambiar el mundo. Una mujer educada puede romper ciclos de pobreza y violencia." },
+    { fondo: "casa", personaje: "sofia-feliz", posicion: "izquierda", nombre: "Sofía", dialogo: "¡Wow! Entonces estudiar no es solo para sacar buenas notas, es para tener un futuro mejor. ¿Qué puedo hacer para ayudar a otras niñas?",
+      opciones: [
+        { texto: "Solo enfocarme en mis propios estudios", resultado: "neutral", dialogo: "Sofía se enfocó solo en sus estudios. Sacó buenas notas, pero no compartió su conocimiento con otras niñas que lo necesitaban." },
+        { texto: "Tutorar a niñas más pequeñas en mi comunidad", resultado: "bueno", dialogo: "Sofía comenzó a dar clases gratuitas a niñas de su comunidad. Muchas mejoraron sus notas y se sintieron más confiadas." },
+        { texto: "Crear una biblioteca comunitaria", resultado: "bueno", dialogo: "Sofía organizó una pequeña biblioteca con libros donados. Las niñas de la comunidad tenían acceso a conocimiento y aventuras." },
+        { texto: "Fundar un programa de becas para niñas", resultado: "excelente", dialogo: "Sofía, con ayuda de su familia, creó un fondo de becas. Varias niñas de escasos recursos pudieron continuar sus estudios secundarios." }
+      ]
+    },
+    { fondo: "casa", personaje: "sofia-feliz", posicion: "izquierda", nombre: "Sofía", dialogo: "La educación es mi superpoder. Con cada libro que leo, con cada clase que tomo, me acerco más a mis sueños. ¡Y quiero que otras niñas también los alcancen!" },
+    { fondo: "casa", personaje: "don-jose", posicion: "derecha", nombre: "Don José", dialogo: "Estoy muy orgulloso de ti, Sofía. Tu generación tiene el poder de cambiar Nicaragua. ¡Nunca dejes de aprender!" }
+  ]
+},
+{
+  id: "capitulo-6", grado: 9, titulo: "Voces que transforman",
+  descripcion: "Sofía aprende a usar su voz para defender sus derechos",
+  esGratis: true, tema: "Participación Ciudadana", portada: FONDOS.plaza,
+  escenas: [
+    { fondo: "plaza", personaje: "sofia-feliz", posicion: "izquierda", nombre: "Sofía", dialogo: "Hoy hay una reunión en la plaza del pueblo. Dicen que van a hablar sobre los derechos de los jóvenes. ¡Quiero ir!" },
+    { fondo: "plaza", personaje: "ana-feliz", posicion: "derecha", nombre: "Ana", dialogo: "¡Yo también voy! Pero Sofía, ¿y si no nos hacen caso? Somos solo niñas..." },
+    { fondo: "plaza", personaje: "sofia-feliz", posicion: "izquierda", nombre: "Sofía", dialogo: "Nuestra edad no determina el valor de nuestras ideas, Ana. La Convención sobre los Derechos del Niño dice que tenemos derecho a ser escuchadas." },
+    { fondo: "plaza", personaje: "profesora-normal", posicion: "derecha", nombre: "Profesora María", dialogo: "¡Qué bueno verlas aquí! Hoy vamos a hablar sobre participación ciudadana. ¿Saben qué significa?" },
+    { fondo: "plaza", personaje: "sofia-feliz", posicion: "izquierda", nombre: "Sofía", dialogo: "¿Es cuando los ciudadanos participan en las decisiones de su comunidad?" },
+    { fondo: "plaza", personaje: "profesora-normal", posicion: "derecha", nombre: "Profesora María", dialogo: "¡Exacto! Y ustedes, como jóvenes, tienen mucho que aportar. ¿Qué problema de su comunidad les gustaría resolver?",
+      opciones: [
+        { texto: "Nada, los adultos saben más que nosotras", resultado: "malo", dialogo: "Sofía y Ana se quedaron calladas. Los adultos tomaron decisiones sin considerar la perspectiva de los jóvenes. El parque seguía en mal estado." },
+        { texto: "Proponer mejoras para el parque del barrio", resultado: "bueno", dialogo: "Sofía y Ana propusieron reparar el parque. El consejo municipal escuchó sus ideas y comenzó las mejoras. ¡El parque quedó hermoso!" },
+        { texto: "Crear un consejo juvenil en la escuela", resultado: "bueno", dialogo: "Sofía y Ana fundaron un consejo juvenil. Los estudiantes ahora tienen voz en las decisiones escolares. ¡La democracia comienza en la escuela!" },
+        { texto: "Organizar una campaña de limpieza comunitaria", resultado: "excelente", dialogo: "Sofía y Ana organizaron una campaña que unió a toda la comunidad. Limpiaron el parque, pintaron murales y crearon un espacio seguro para todos." }
+      ]
+    },
+    { fondo: "plaza", personaje: "sofia-feliz", posicion: "izquierda", nombre: "Sofía", dialogo: "Mi voz importa. Mis ideas importan. Soy una ciudadana activa y puedo contribuir a construir una Nicaragua mejor. ¡El cambio comienza conmigo!" },
+    { fondo: "plaza", personaje: "ana-feliz", posicion: "derecha", nombre: "Ana", dialogo: "¡Y yo también! Juntas, como jóvenes informadas y valientes, podemos transformar nuestra comunidad. ¡El futuro es nuestro!" }
+  ]
+}
+];
+
+const classContentPools = {
+"matematicas-7": {
+  materia: "Matemáticas", grado: 7, titulo: "Álgebra Básica",
+  descripcion: "Aprende sobre variables, ecuaciones y expresiones algebraicas",
+  esGratis: true,
+  temas: [
+    { titulo: "¿Qué es una variable?", contenido: "Una variable es un símbolo (generalmente una letra) que representa un número desconocido. Por ejemplo, en la ecuación x + 5 = 10, la 'x' es la variable.", ejemplo: "Si x + 5 = 10, entonces x = 5" },
+    { titulo: "Resolviendo ecuaciones simples", contenido: "Para resolver una ecuación, debes encontrar el valor de la variable que hace verdadera la igualdad. Puedes sumar, restar, multiplicar o dividir ambos lados.", ejemplo: "2x = 12 → x = 6" }
+  ],
+  quizPool: [
+    { pregunta: "¿Cuál es el valor de x en: x + 3 = 8?", opciones: ["3", "5", "8", "11"], correcta: 1 },
+    { pregunta: "Si 2y = 14, ¿cuánto vale y?", opciones: ["6", "7", "8", "12"], correcta: 1 },
+    { pregunta: "¿Qué es una variable en matemáticas?", opciones: ["Un número fijo", "Un símbolo que representa un número desconocido", "Una operación", "Una fórmula"], correcta: 1 },
+    { pregunta: "Resuelve: x - 4 = 6", opciones: ["2", "10", "6", "4"], correcta: 1 },
+    { pregunta: "Si 3x = 18, ¿cuánto vale x?", opciones: ["3", "6", "9", "18"], correcta: 1 },
+    { pregunta: "¿Cuál ecuación tiene solución x = 4?", opciones: ["x + 2 = 5", "2x = 8", "x - 1 = 2", "3x = 9"], correcta: 1 },
+    { pregunta: "Resuelve: x/2 = 5", opciones: ["2.5", "5", "10", "25"], correcta: 2 },
+    { pregunta: "Si x + 7 = 15, entonces x =", opciones: ["7", "8", "15", "22"], correcta: 1 }
+  ],
+  trueFalsePool: [
+    { afirmacion: "Una variable puede representar cualquier número", respuesta: true, explicacion: "Las variables pueden tomar diferentes valores numéricos" },
+    { afirmacion: "En la ecuación x + 5 = 10, x vale 15", respuesta: false, explicacion: "x vale 5, porque 5 + 5 = 10" },
+    { afirmacion: "Podemos sumar o restar el mismo número en ambos lados de una ecuación", respuesta: true, explicacion: "Es una propiedad fundamental de las ecuaciones" },
+    { afirmacion: "La variable siempre debe ser la letra x", respuesta: false, explicacion: "Puede ser cualquier letra: x, y, z, a, b, etc." },
+    { afirmacion: "2x = 10 significa que x = 5", respuesta: true, explicacion: "Dividimos ambos lados entre 2: x = 10/2 = 5" },
+    { afirmacion: "Una ecuación siempre tiene solo una solución", respuesta: false, explicacion: "Algunas ecuaciones tienen múltiples soluciones o ninguna" }
+  ],
+  fillPool: [
+    { texto: "En la ecuación x + ___ = 10, si x = 5, el valor faltante es:", respuesta: "5" },
+    { texto: "Si 3x = 15, entonces x = ___", respuesta: "5" },
+    { texto: "Una ___ es un símbolo que representa un número desconocido.", respuesta: "variable" },
+    { texto: "Si x - 3 = 7, entonces x = ___", respuesta: "10" },
+    { texto: "En 2x = 12, el valor de x es ___", respuesta: "6" },
+    { texto: "Para resolver x + 8 = 15, restamos ___ en ambos lados", respuesta: "8" }
+  ],
+  matchPool: [
+    { left: "x + 3 = 7", right: "x = 4" },
+    { left: "2x = 10", right: "x = 5" },
+    { left: "x - 2 = 6", right: "x = 8" },
+    { left: "3x = 9", right: "x = 3" },
+    { left: "x/2 = 4", right: "x = 8" },
+    { left: "x + 5 = 12", right: "x = 7" }
+  ],
+  sudoku: {
+    size: 4,
+    initial: [[1, 0, 0, 4], [0, 0, 1, 0], [0, 1, 0, 0], [4, 0, 0, 1]],
+    solution: [[1, 2, 3, 4], [3, 4, 1, 2], [2, 1, 4, 3], [4, 3, 2, 1]]
+  }
+},
+"ciencias-8": {
+  materia: "Ciencias Naturales", grado: 8, titulo: "El Cuerpo Humano",
+  descripcion: "Descubre los sistemas del cuerpo humano y cómo funcionan",
+  esGratis: true,
+  temas: [
+    { titulo: "El sistema digestivo", contenido: "El sistema digestivo transforma los alimentos en nutrientes que el cuerpo puede usar. Incluye la boca, esófago, estómago, intestinos y otros órganos.", ejemplo: "La digestión comienza en la boca con la masticación" },
+    { titulo: "El sistema circulatorio", contenido: "El sistema circulatorio transporta sangre, nutrientes y oxígeno por todo el cuerpo. El corazón es el órgano principal.", ejemplo: "El corazón late aproximadamente 100,000 veces al día" }
+  ],
+  quizPool: [
+    { pregunta: "¿Dónde comienza la digestión?", opciones: ["Estómago", "Intestinos", "Boca", "Esófago"], correcta: 2 },
+    { pregunta: "¿Cuál es el órgano principal del sistema circulatorio?", opciones: ["Pulmones", "Cerebro", "Corazón", "Hígado"], correcta: 2 },
+    { pregunta: "¿Qué transporta la sangre por el cuerpo?", opciones: ["Solo agua", "Nutrientes y oxígeno", "Solo desechos", "Aire"], correcta: 1 },
+    { pregunta: "¿Cuántos huesos tiene el cuerpo humano adulto?", opciones: ["106", "206", "306", "406"], correcta: 1 },
+    { pregunta: "¿Qué órgano produce la bilis?", opciones: ["Estómago", "Páncreas", "Hígado", "Riñón"], correcta: 2 },
+    { pregunta: "¿Cuál es la célula más pequeña del cuerpo?", opciones: ["Neurona", "Glóbulo rojo", "Óvulo", "Célula muscular"], correcta: 1 },
+    { pregunta: "¿Qué sistema controla las respuestas del cuerpo?", opciones: ["Digestivo", "Nervioso", "Circulatorio", "Óseo"], correcta: 1 }
+  ],
+  trueFalsePool: [
+    { afirmacion: "El corazón bombea sangre a todo el cuerpo", respuesta: true, explicacion: "El corazón es el órgano principal del sistema circulatorio" },
+    { afirmacion: "La digestión comienza en el estómago", respuesta: false, explicacion: "Comienza en la boca con la masticación" },
+    { afirmacion: "Los pulmones son parte del sistema respiratorio", respuesta: true, explicacion: "Los pulmones permiten el intercambio de oxígeno y dióxido de carbono" },
+    { afirmacion: "El cerebro controla todos los órganos del cuerpo", respuesta: true, explicacion: "El cerebro es el centro de control del sistema nervioso" },
+    { afirmacion: "Los huesos no crecen después de la infancia", respuesta: false, explicacion: "Los huesos crecen y se fortalecen hasta la adultez" },
+    { afirmacion: "La sangre transporta oxígeno a las células", respuesta: true, explicacion: "Los glóbulos rojos transportan oxígeno por todo el cuerpo" }
+  ],
+  fillPool: [
+    { texto: "El órgano que bombea sangre es el ___", respuesta: "corazón" },
+    { texto: "La digestión comienza en la ___", respuesta: "boca" },
+    { texto: "Los ___ transportan oxígeno en la sangre", respuesta: "glóbulos rojos" },
+    { texto: "El sistema ___ controla las respuestas del cuerpo", respuesta: "nervioso" },
+    { texto: "El ___ es el órgano más grande del cuerpo", respuesta: "piel" }
+  ],
+  matchPool: [
+    { left: "Corazón", right: "Bombea sangre" },
+    { left: "Pulmones", right: "Intercambio de gases" },
+    { left: "Estómago", right: "Digestión de alimentos" },
+    { left: "Cerebro", right: "Control del cuerpo" },
+    { left: "Riñones", right: "Filtran la sangre" },
+    { left: "Huesos", right: "Soporte del cuerpo" }
+  ],
+  memory: [
+    { id: 1, content: "❤️", pair: "corazon" },
+    { id: 2, content: "Corazón", pair: "corazon" },
+    { id: 3, content: "🫁", pair: "pulmon" },
+    { id: 4, content: "Pulmones", pair: "pulmon" },
+    { id: 5, content: "🧠", pair: "cerebro" },
+    { id: 6, content: "Cerebro", pair: "cerebro" },
+    { id: 7, content: "🦴", pair: "huesos" },
+    { id: 8, content: "Huesos", pair: "huesos" }
+  ]
+},
+"historia-9": {
+  materia: "Estudios Sociales", grado: 9, titulo: "Historia de Nicaragua",
+  descripcion: "Conoce los eventos históricos que formaron nuestra nación",
+  esGratis: true,
+  temas: [
+    { titulo: "La independencia de Centroamérica", contenido: "Centroamérica se independizó de España el 15 de septiembre de 1821. Nicaragua fue parte de este movimiento libertador.", ejemplo: "Cada 15 de septiembre celebramos nuestra independencia" },
+    { titulo: "La Revolución Sandinista", contenido: "En 1979, el Frente Sandinista de Liberación Nacional derrocó la dictadura de Somoza, marcando un nuevo capítulo en la historia nicaragüense.", ejemplo: "El 19 de julio de 1979 se celebra el triunfo de la revolución" }
+  ],
+  quizPool: [
+    { pregunta: "¿Cuándo se independizó Centroamérica de España?", opciones: ["1810", "1821", "1850", "1900"], correcta: 1 },
+    { pregunta: "¿En qué año ocurrió la Revolución Sandinista?", opciones: ["1965", "1975", "1979", "1985"], correcta: 2 },
+    { pregunta: "¿Qué se celebra el 15 de septiembre en Nicaragua?", opciones: ["Navidad", "Independencia", "Revolución", "Día de la Madre"], correcta: 1 },
+    { pregunta: "¿Quién fue el héroe nacional contra los filibusteros?", opciones: ["Sandino", "José Dolores Estrada", "Darío", "Somoza"], correcta: 1 },
+    { pregunta: "¿En qué año llegó Colón a Nicaragua?", opciones: ["1492", "1502", "1522", "1600"], correcta: 1 },
+    { pregunta: "¿Qué país colonizó Nicaragua?", opciones: ["Inglaterra", "Francia", "España", "Portugal"], correcta: 2 }
+  ],
+  trueFalsePool: [
+    { afirmacion: "Nicaragua se independizó en 1821", respuesta: true, explicacion: "El 15 de septiembre de 1821 Centroamérica se independizó de España" },
+    { afirmacion: "La Revolución Sandinista fue en 1979", respuesta: true, explicacion: "El 19 de julio de 1979 triunfó la revolución" },
+    { afirmacion: "Rubén Darío fue un presidente de Nicaragua", respuesta: false, explicacion: "Rubén Darío fue un poeta, no presidente" },
+    { afirmacion: "William Walker fue un filibustero estadounidense", respuesta: true, explicacion: "Invadió Nicaragua en 1856" },
+    { afirmacion: "Nicaragua fue colonia de Inglaterra", respuesta: false, explicacion: "Fue colonia de España" },
+    { afirmacion: "El 19 de julio es feriado nacional en Nicaragua", respuesta: true, explicacion: "Se celebra el triunfo de la Revolución Sandinista" }
+  ],
+  fillPool: [
+    { texto: "Nicaragua se independizó de España el 15 de septiembre de ___", respuesta: "1821" },
+    { texto: "La Revolución Sandinista ocurrió en el año ___", respuesta: "1979" },
+    { texto: "El héroe nacional que derrotó a William Walker fue ___", respuesta: "José Dolores Estrada" },
+    { texto: "Rubén Darío es conocido como el Padre del ___", respuesta: "Modernismo" },
+    { texto: "El lago más grande de Nicaragua es el ___", respuesta: "Cocibolca" }
+  ],
+  orderPool: [
+    { id: 1, text: "Llegada de los españoles (1522)", order: 1 },
+    { id: 2, text: "Independencia de España (1821)", order: 2 },
+    { id: 3, text: "Guerra Nacional contra Filibusteros (1856)", order: 3 },
+    { id: 4, text: "Revolución Sandinista (1979)", order: 4 },
+    { id: 5, text: "Elecciones democráticas (1990)", order: 5 }
+  ]
+},
+"ingles-7": {
+  materia: "Inglés", grado: 7, titulo: "Greetings and Introductions",
+  descripcion: "Learn basic English greetings and how to introduce yourself",
+  esGratis: true,
+  temas: [
+    { titulo: "Basic Greetings", contenido: "Common English greetings include: Hello, Hi, Good morning, Good afternoon, Good evening. These are used to start conversations politely.", ejemplo: "Hello! My name is Sofía. Nice to meet you!" },
+    { titulo: "Introducing Yourself", contenido: "To introduce yourself in English, you can say: 'My name is...', 'I am from...', 'I am ... years old'. Practice these phrases!", ejemplo: "My name is Carlos. I am from Nicaragua. I am 13 years old." }
+  ],
+  quizPool: [
+    { pregunta: "How do you say 'Buenos días' in English?", opciones: ["Good night", "Good morning", "Goodbye", "Hello"], correcta: 1 },
+    { pregunta: "What do you say to introduce yourself?", opciones: ["How are you?", "My name is...", "See you later", "Thank you"], correcta: 1 },
+    { pregunta: "Which is a formal greeting?", opciones: ["Hi", "Hey", "Good evening", "What's up"], correcta: 2 },
+    { pregunta: "How do you say 'Adiós' in English?", opciones: ["Hello", "Please", "Goodbye", "Sorry"], correcta: 2 },
+    { pregunta: "What does 'Nice to meet you' mean?", opciones: ["¿Cómo estás?", "Mucho gusto", "¿De dónde eres?", "¿Cuántos años tienes?"], correcta: 1 },
+    { pregunta: "How do you ask someone's name?", opciones: ["How old are you?", "Where are you from?", "What's your name?", "How are you?"], correcta: 2 }
+  ],
+  trueFalsePool: [
+    { afirmacion: "'Good morning' means 'Buenas noches'", respuesta: false, explicacion: "'Good morning' means 'Buenos días'" },
+    { afirmacion: "'My name is...' is used to introduce yourself", respuesta: true, explicacion: "It's the standard way to tell someone your name" },
+    { afirmacion: "'Hi' is more formal than 'Good evening'", respuesta: false, explicacion: "'Hi' is informal, 'Good evening' is formal" },
+    { afirmacion: "'Nice to meet you' is said when meeting someone new", respuesta: true, explicacion: "It's a polite greeting for first meetings" },
+    { afirmacion: "'How are you?' asks about someone's age", respuesta: false, explicacion: "It asks about someone's well-being" },
+    { afirmacion: "'Thank you' means 'Gracias'", respuesta: true, explicacion: "It's the English equivalent of 'Gracias'" }
+  ],
+  fillPool: [
+    { texto: "'Buenos días' in English is: Good ___", respuesta: "morning" },
+    { texto: "To say 'Mi nombre es' you say: My ___ is", respuesta: "name" },
+    { texto: "'Gracias' in English is: Thank ___", respuesta: "you" },
+    { texto: "'Adiós' in English is: Good___", respuesta: "bye" },
+    { texto: "To ask '¿Cómo estás?' you say: How ___ you?", respuesta: "are" }
+  ],
+  matchPool: [
+    { left: "Hello", right: "Hola" },
+    { left: "Goodbye", right: "Adiós" },
+    { left: "Thank you", right: "Gracias" },
+    { left: "Please", right: "Por favor" },
+    { left: "Good morning", right: "Buenos días" },
+    { left: "Nice to meet you", right: "Mucho gusto" }
+  ],
+  memory: [
+    { id: 1, content: "Hello", pair: "hola" },
+    { id: 2, content: "Hola", pair: "hola" },
+    { id: 3, content: "Goodbye", pair: "adios" },
+    { id: 4, content: "Adiós", pair: "adios" },
+    { id: 5, content: "Thank you", pair: "gracias" },
+    { id: 6, content: "Gracias", pair: "gracias" },
+    { id: 7, content: "Please", pair: "porfavor" },
+    { id: 8, content: "Por favor", pair: "porfavor" }
+  ]
+},
+"lengua-8": {
+  materia: "Lengua y Literatura", grado: 8, titulo: "Comprensión Lectora",
+  descripcion: "Mejora tu capacidad de leer y entender textos",
+  esGratis: true,
+  temas: [
+    { titulo: "Identificando la idea principal", contenido: "La idea principal es el mensaje más importante del texto. Generalmente se encuentra en el primer o último párrafo.", ejemplo: "En un texto sobre el agua, la idea principal podría ser: 'El agua es esencial para la vida'" },
+    { titulo: "Inferencias y conclusiones", contenido: "Las inferencias son conclusiones que sacamos basándonos en la información del texto y nuestro conocimiento previo.", ejemplo: "Si el texto dice 'María llevaba paraguas', podemos inferir que iba a llover" }
+  ],
+  quizPool: [
+    { pregunta: "¿Qué es la idea principal de un texto?", opciones: ["El título", "El mensaje más importante", "La primera oración", "El último párrafo"], correcta: 1 },
+    { pregunta: "¿Qué es una inferencia?", opciones: ["Una cita textual", "Una conclusión basada en evidencia", "Un resumen", "Una opinión"], correcta: 1 },
+    { pregunta: "¿Dónde suele encontrarse la idea principal?", opciones: ["Solo al inicio", "Solo al final", "En el primer o último párrafo", "En el medio"], correcta: 2 },
+    { pregunta: "¿Qué es un hecho en un texto?", opciones: ["Una opinión personal", "Algo que se puede comprobar", "Una suposición", "Un sentimiento"], correcta: 1 },
+    { pregunta: "¿Qué es una opinión?", opciones: ["Un dato verificable", "Un punto de vista personal", "Una cita textual", "Un hecho histórico"], correcta: 1 },
+    { pregunta: "¿Qué significa 'inferir'?", opciones: ["Copiar textualmente", "Sacar conclusiones", "Resumir", "Parafrasear"], correcta: 1 }
+  ],
+  trueFalsePool: [
+    { afirmacion: "La idea principal es el mensaje más importante del texto", respuesta: true, explicacion: "Es el concepto central que el autor quiere comunicar" },
+    { afirmacion: "Una inferencia es lo mismo que una opinión", respuesta: false, explicacion: "La inferencia se basa en evidencia, la opinión es subjetiva" },
+    { afirmacion: "Todo texto tiene una idea principal", respuesta: true, explicacion: "Todo texto bien estructurado tiene un mensaje central" },
+    { afirmacion: "Las inferencias no necesitan evidencia del texto", respuesta: false, explicacion: "Las inferencias deben basarse en pistas del texto" },
+    { afirmacion: "Un hecho puede comprobarse con evidencia", respuesta: true, explicacion: "Los hechos son verificables objetivamente" },
+    { afirmacion: "El título siempre es la idea principal", respuesta: false, explicacion: "El título puede ser solo un tema, no necesariamente la idea principal" }
+  ],
+  fillPool: [
+    { texto: "La idea ___ es el mensaje más importante del texto", respuesta: "principal" },
+    { texto: "Una ___ es una conclusión basada en evidencia del texto", respuesta: "inferencia" },
+    { texto: "Un ___ es algo que se puede comprobar objetivamente", respuesta: "hecho" },
+    { texto: "Una ___ es un punto de vista personal", respuesta: "opinión" },
+    { texto: "El ___ es la persona que escribe un texto", respuesta: "autor" }
+  ],
+  orderPool: [
+    { id: 1, text: "Leer el texto completo", order: 1 },
+    { id: 2, text: "Identificar la idea principal", order: 2 },
+    { id: 3, text: "Buscar evidencias en el texto", order: 3 },
+    { id: 4, text: "Hacer inferencias", order: 4 },
+    { id: 5, text: "Sacar conclusiones", order: 5 }
+  ],
+  wordSearch: {
+    size: 8,
+    words: ["TEXTO", "LECTURA", "IDEA", "AUTOR", "PARRAFO"],
+    grid: [
+      ["T","E","X","T","O","A","B","C"],
+      ["L","E","C","T","U","R","A","D"],
+      ["I","D","E","A","F","G","H","I"],
+      ["A","U","T","O","R","J","K","L"],
+      ["P","A","R","R","A","F","O","M"],
+      ["N","O","P","Q","R","S","T","U"],
+      ["V","W","X","Y","Z","A","B","C"],
+      ["D","E","F","G","H","I","J","K"]
+    ]
+  }
+},
+"geografia-7": {
+  materia: "Geografía", grado: 7, titulo: "Nicaragua: Mi País",
+  descripcion: "Conoce la geografía, regiones y recursos de Nicaragua",
+  esGratis: true,
+  temas: [
+    { titulo: "Regiones de Nicaragua", contenido: "Nicaragua se divide en tres regiones principales: la Región del Pacífico, la Región Central y la Región del Caribe (Atlántico). Cada una tiene características únicas.", ejemplo: "El Pacífico tiene volcanes, el Centro tiene montañas y el Caribe tiene selvas" },
+    { titulo: "Recursos naturales", contenido: "Nicaragua es rica en recursos naturales: agua dulce (lagos y ríos), bosques, minerales y biodiversidad. Es importante proteger estos recursos.", ejemplo: "El Lago Cocibolca es el lago más grande de Centroamérica" }
+  ],
+  quizPool: [
+    { pregunta: "¿Cuántas regiones tiene Nicaragua?", opciones: ["2", "3", "4", "5"], correcta: 1 },
+    { pregunta: "¿Cuál es el lago más grande de Centroamérica?", opciones: ["Lago de Atitlán", "Lago Cocibolca", "Lago Apanás", "Lago Xolotlán"], correcta: 1 },
+    { pregunta: "¿En qué región están los volcanes?", opciones: ["Caribe", "Central", "Pacífico", "Norte"], correcta: 2 },
+    { pregunta: "¿Cuál es la capital de Nicaragua?", opciones: ["León", "Granada", "Managua", "Masaya"], correcta: 2 },
+    { pregunta: "¿Qué océano limita con Nicaragua al este?", opciones: ["Pacífico", "Atlántico", "Índico", "Ártico"], correcta: 1 },
+    { pregunta: "¿Cuál es el río más largo de Nicaragua?", opciones: ["Río San Juan", "Río Escondido", "Río Grande", "Río Coco"], correcta: 3 }
+  ],
+  trueFalsePool: [
+    { afirmacion: "Nicaragua tiene tres regiones geográficas", respuesta: true, explicacion: "Pacífico, Central y Caribe" },
+    { afirmacion: "El Lago Cocibolca está en la región del Caribe", respuesta: false, explicacion: "Está en la región del Pacífico" },
+    { afirmacion: "Nicaragua es el país más grande de Centroamérica", respuesta: true, explicacion: "Tiene la mayor extensión territorial de Centroamérica" },
+    { afirmacion: "El Volcán Masaya está activo", respuesta: true, explicacion: "Es uno de los volcanes más activos de Nicaragua" },
+    { afirmacion: "La región del Caribe es la más poblada", respuesta: false, explicacion: "La región del Pacífico es la más poblada" },
+    { afirmacion: "Nicaragua tiene acceso a dos océanos", respuesta: true, explicacion: "Pacífico al oeste y Atlántico al este" }
+  ],
+  fillPool: [
+    { texto: "La capital de Nicaragua es ___", respuesta: "Managua" },
+    { texto: "El lago más grande de Centroamérica es el ___", respuesta: "Cocibolca" },
+    { texto: "Nicaragua tiene ___ regiones geográficas", respuesta: "tres" },
+    { texto: "El océano al este de Nicaragua es el ___", respuesta: "Atlántico" },
+    { texto: "El volcán más famoso de Nicaragua es el ___", respuesta: "Masaya" }
+  ],
+  matchPool: [
+    { left: "Región del Pacífico", right: "Volcanes y lagos" },
+    { left: "Región Central", right: "Montañas y clima fresco" },
+    { left: "Región del Caribe", right: "Selvas y biodiversidad" },
+    { left: "Lago Cocibolca", right: "Lago más grande" },
+    { left: "Volcán Masaya", right: "Volcán activo" },
+    { left: "Río San Juan", right: "Frontera con Costa Rica" }
+  ],
+  memory: [
+    { id: 1, content: "🌋", pair: "volcan" },
+    { id: 2, content: "Volcán", pair: "volcan" },
+    { id: 3, content: "🏔️", pair: "montana" },
+    { id: 4, content: "Montaña", pair: "montana" },
+    { id: 5, content: "🌊", pair: "lago" },
+    { id: 6, content: "Lago", pair: "lago" },
+    { id: 7, content: "🌴", pair: "selva" },
+    { id: 8, content: "Selva", pair: "selva" }
+  ]
+},
+"etica-8": {
+  materia: "Ética y Valores", grado: 8, titulo: "Valores Ciudadanos",
+  descripcion: "Aprende sobre los valores que construyen una sociedad justa",
+  esGratis: true,
+  temas: [
+    { titulo: "Respeto y Tolerancia", contenido: "El respeto es reconocer la dignidad de cada persona. La tolerancia es aceptar las diferencias sin discriminar. Son valores fundamentales para la convivencia.", ejemplo: "Respetar las opiniones diferentes, incluso cuando no estamos de acuerdo" },
+    { titulo: "Responsabilidad social", contenido: "La responsabilidad social es cumplir con nuestros deberes hacia la comunidad y el medio ambiente. Incluye acciones como reciclar, ayudar a otros y participar.", ejemplo: "Reciclar basura, cuidar el agua y ayudar a vecinos en necesidad" }
+  ],
+  quizPool: [
+    { pregunta: "¿Qué es el respeto?", opciones: ["Imponer tu opinión", "Reconocer la dignidad de cada persona", "Ignorar a los demás", "Hacer lo que quieras"], correcta: 1 },
+    { pregunta: "¿Qué es la tolerancia?", opciones: ["Aceptar todo sin cuestionar", "Aceptar las diferencias sin discriminar", "Estar de acuerdo con todos", "No tener opinión propia"], correcta: 1 },
+    { pregunta: "¿Cuál es un ejemplo de responsabilidad social?", opciones: ["Tirar basura en la calle", "Reciclar y cuidar el agua", "Ignorar a los vecinos", "No participar en nada"], correcta: 1 },
+    { pregunta: "¿Qué valor nos ayuda a vivir en paz?", opciones: ["Egoísmo", "Respeto", "Indiferencia", "Envidia"], correcta: 1 },
+    { pregunta: "¿Qué es la empatía?", opciones: ["Ignorar los sentimientos ajenos", "Ponerse en el lugar del otro", "Criticar a los demás", "Ser indiferente"], correcta: 1 },
+    { pregunta: "¿Cuál NO es un valor ciudadano?", opciones: ["Honestidad", "Solidaridad", "Deshonestidad", "Responsabilidad"], correcta: 2 }
+  ],
+  trueFalsePool: [
+    { afirmacion: "El respeto es la base de la convivencia", respuesta: true, explicacion: "Sin respeto no puede haber una sociedad armoniosa" },
+    { afirmacion: "Ser tolerante significa estar de acuerdo con todo", respuesta: false, explicacion: "Tolerar es aceptar diferencias, no necesariamente estar de acuerdo" },
+    { afirmacion: "La responsabilidad social incluye cuidar el medio ambiente", respuesta: true, explicacion: "Es parte de nuestros deberes como ciudadanos" },
+    { afirmacion: "La empatía es ponerse en el lugar del otro", respuesta: true, explicacion: "Es comprender los sentimientos y perspectivas ajenas" },
+    { afirmacion: "Los valores solo importan en la escuela", respuesta: false, explicacion: "Los valores son importantes en todos los ámbitos de la vida" },
+    { afirmacion: "La honestidad es decir siempre la verdad", respuesta: true, explicacion: "Es actuar con integridad y transparencia" }
+  ],
+  fillPool: [
+    { texto: "El ___ es reconocer la dignidad de cada persona", respuesta: "respeto" },
+    { texto: "La ___ es aceptar las diferencias sin discriminar", respuesta: "tolerancia" },
+    { texto: "Reciclar basura es un ejemplo de responsabilidad ___", respuesta: "social" },
+    { texto: "La ___ es ponerse en el lugar del otro", respuesta: "empatía" },
+    { texto: "La ___ es actuar con integridad y verdad", respuesta: "honestidad" }
+  ],
+  orderPool: [
+    { id: 1, text: "Reconocer el problema", order: 1 },
+    { id: 2, text: "Reflexionar sobre las causas", order: 2 },
+    { id: 3, text: "Planificar una solución", order: 3 },
+    { id: 4, text: "Actuar responsablemente", order: 4 },
+    { id: 5, text: "Evaluar los resultados", order: 5 }
+  ],
+  matchPool: [
+    { left: "Respeto", right: "Reconocer la dignidad" },
+    { left: "Tolerancia", right: "Aceptar diferencias" },
+    { left: "Empatía", right: "Ponerse en el lugar del otro" },
+    { left: "Honestidad", right: "Decir la verdad" },
+    { left: "Responsabilidad", right: "Cumplir deberes" },
+    { left: "Solidaridad", right: "Ayudar a los demás" }
+  ]
+},
+"arte-9": {
+  materia: "Educación Artística", grado: 9, titulo: "Expresión Creativa",
+  descripcion: "Descubre el poder del arte para expresar emociones e ideas",
+  esGratis: true,
+  temas: [
+    { titulo: "El arte como expresión", contenido: "El arte es una forma de expresar emociones, ideas y experiencias. Incluye pintura, música, danza, teatro, literatura y más. Cada forma artística tiene su propio lenguaje.", ejemplo: "Una pintura puede expresar alegría, tristeza o protesta social" },
+    { titulo: "Arte nicaragüense", contenido: "Nicaragua tiene una rica tradición artística: la poesía de Rubén Darío, la pintura de Rodrigo Peñalba, la música tradicional y las danzas folklóricas.", ejemplo: "Rubén Darío es conocido como el 'Padre del Modernismo' en la literatura" }
+  ],
+  quizPool: [
+    { pregunta: "¿Quién es conocido como el 'Padre del Modernismo'?", opciones: ["Pablo Neruda", "Rubén Darío", "Gabriel García Márquez", "Octavio Paz"], correcta: 1 },
+    { pregunta: "¿Cuál NO es una forma de arte?", opciones: ["Pintura", "Matemáticas", "Danza", "Teatro"], correcta: 1 },
+    { pregunta: "¿Qué puede expresar el arte?", opciones: ["Solo belleza", "Solo tristeza", "Emociones e ideas", "Solo alegría"], correcta: 2 },
+    { pregunta: "¿Qué es el modernismo?", opciones: ["Un estilo de baile", "Un movimiento literario", "Un tipo de pintura", "Un género musical"], correcta: 1 },
+    { pregunta: "¿De qué país era Rubén Darío?", opciones: ["México", "Colombia", "Nicaragua", "Argentina"], correcta: 2 },
+    { pregunta: "¿Qué arte usa el cuerpo para expresarse?", opciones: ["Pintura", "Escultura", "Danza", "Literatura"], correcta: 2 }
+  ],
+  trueFalsePool: [
+    { afirmacion: "El arte puede expresar emociones", respuesta: true, explicacion: "El arte es una forma de expresión emocional" },
+    { afirmacion: "Rubén Darío fue un pintor famoso", respuesta: false, explicacion: "Fue un poeta, el Padre del Modernismo" },
+    { afirmacion: "La danza es una forma de arte", respuesta: true, explicacion: "Usa el movimiento corporal para expresarse" },
+    { afirmacion: "Solo los profesionales pueden hacer arte", respuesta: false, explicacion: "Cualquier persona puede expresarse artísticamente" },
+    { afirmacion: "Nicaragua tiene una rica tradición artística", respuesta: true, explicacion: "Desde la poesía hasta las danzas folklóricas" },
+    { afirmacion: "El teatro es una forma de arte escénico", respuesta: true, explicacion: "Combina actuación, texto y expresión corporal" }
+  ],
+  fillPool: [
+    { texto: "Rubén Darío es el Padre del ___", respuesta: "Modernismo" },
+    { texto: "El ___ es una forma de arte que usa el cuerpo", respuesta: "danza" },
+    { texto: "La ___ es una forma de arte escénica", respuesta: "teatro" },
+    { texto: "Nicaragua es un país de rica tradición ___", respuesta: "artística" },
+    { texto: "El arte expresa ___ e ideas", respuesta: "emociones" }
+  ],
+  matchPool: [
+    { left: "Pintura", right: "Arte visual con colores" },
+    { left: "Danza", right: "Arte con movimiento corporal" },
+    { left: "Teatro", right: "Arte escénico con actuación" },
+    { left: "Música", right: "Arte con sonidos y ritmo" },
+    { left: "Literatura", right: "Arte con palabras escritas" },
+    { left: "Escultura", right: "Arte con formas tridimensionales" }
+  ],
+  memory: [
+    { id: 1, content: "🎨", pair: "pintura" },
+    { id: 2, content: "Pintura", pair: "pintura" },
+    { id: 3, content: "🎭", pair: "teatro" },
+    { id: 4, content: "Teatro", pair: "teatro" },
+    { id: 5, content: "🎵", pair: "musica" },
+    { id: 6, content: "Música", pair: "musica" },
+    { id: 7, content: "💃", pair: "danza" },
+    { id: 8, content: "Danza", pair: "danza" }
+  ],
+  wordSearch: {
+    size: 8,
+    words: ["ARTE", "POESIA", "DANZA", "MUSICA", "PINTURA"],
+    grid: [
+      ["A","R","T","E","X","Y","Z","A"],
+      ["P","O","E","S","I","A","B","C"],
+      ["D","A","N","Z","A","D","E","F"],
+      ["M","U","S","I","C","A","G","H"],
+      ["P","I","N","T","U","R","A","I"],
+      ["J","K","L","M","N","O","P","Q"],
+      ["R","S","T","U","V","W","X","Y"],
+      ["Z","A","B","C","D","E","F","G"]
+    ]
+  }
+}
+};
+
+const DIFFICULTIES = {
+  facil: { id: 'facil', label: 'Fácil', stars: '★', color: '#84D270', questions: 3, matchPairs: 3, timer: null, desc: 'Pocas preguntas · Sin tiempo' },
+  medio: { id: 'medio', label: 'Medio', stars: '★★', color: '#B28DFF', questions: 5, matchPairs: 4, timer: 90, desc: 'Reto equilibrado · 90s' },
+  dificil: { id: 'dificil', label: 'Difícil', stars: '★★★', color: '#F0A8B6', questions: 8, matchPairs: 6, timer: 50, desc: 'Más ítems · 50s' }
+};
+
+const GAME_META = {
+  quiz: { icon: '📝', name: 'Quiz', title: 'Quiz de conocimientos' },
+  truefalse: { icon: '✓✗', name: 'Verdadero/Falso', title: 'Verdadero o Falso' },
+  fill: { icon: '✏️', name: 'Completar', title: 'Completa los espacios' },
+  match: { icon: '🔗', name: 'Asociar', title: 'Asocia conceptos' },
+  memory: { icon: '🎴', name: 'Memoria', title: 'Juego de memoria' },
+  wordsearch: { icon: '🔎', name: 'Sopa de Letras', title: 'Sopa de letras' },
+  order: { icon: '📋', name: 'Ordenar', title: 'Ordena la secuencia' },
+  sudoku: { icon: '🎯', name: 'Sudoku', title: 'Sudoku lógico' }
+};
+
+function buildCurriculum(claseData) {
+  const levels = [];
+  const push = (type, poolKey) => {
+    levels.push({
+      number: levels.length + 1,
+      type,
+      poolKey,
+      title: GAME_META[type].title,
+      icon: GAME_META[type].icon
+    });
+  };
+  if (claseData.quizPool) push('quiz', 'quizPool');
+  if (claseData.trueFalsePool) push('truefalse', 'trueFalsePool');
+  if (claseData.fillPool) push('fill', 'fillPool');
+  if (claseData.matchPool) push('match', 'matchPool');
+  if (claseData.memory) push('memory', 'memory');
+  if (claseData.wordSearch) push('wordsearch', 'wordSearch');
+  if (claseData.orderPool) push('order', 'orderPool');
+  if (claseData.sudoku) push('sudoku', 'sudoku');
+  return levels;
+}
+
+function scaleSudoku(sudoku, difficulty) {
+  const initial = sudoku.initial.map(r => [...r]);
+  const size = sudoku.size;
+  if (difficulty === 'facil') return { ...sudoku, initial };
+  if (difficulty === 'medio') {
+    let removed = 0;
+    for (let r = 0; r < size && removed < 2; r++) {
+      for (let c = 0; c < size && removed < 2; c++) {
+        if (initial[r][c] !== 0) { initial[r][c] = 0; removed++; }
+      }
+    }
+  }
+  if (difficulty === 'dificil') {
+    let kept = 0;
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        if (initial[r][c] !== 0) {
+          if (kept >= 3) initial[r][c] = 0;
+          else kept++;
+        }
+      }
+    }
+  }
+  return { ...sudoku, initial };
+}
+
+function getLevelData(claseData, levelDef, difficulty) {
+  const cfg = DIFFICULTIES[difficulty];
+  const type = levelDef.type;
+  if (type === 'quiz') return shuffleArray(claseData.quizPool).slice(0, Math.min(cfg.questions, claseData.quizPool.length));
+  if (type === 'truefalse') return shuffleArray(claseData.trueFalsePool).slice(0, Math.min(cfg.questions, claseData.trueFalsePool.length));
+  if (type === 'fill') return shuffleArray(claseData.fillPool).slice(0, Math.min(cfg.questions, claseData.fillPool.length));
+  if (type === 'match') return shuffleArray(claseData.matchPool).slice(0, Math.min(cfg.matchPairs, claseData.matchPool.length));
+  if (type === 'memory') return claseData.memory;
+  if (type === 'wordsearch') return claseData.wordSearch;
+  if (type === 'order') return shuffleArray(claseData.orderPool).slice(0, claseData.orderPool.length);
+  if (type === 'sudoku') return scaleSudoku(claseData.sudoku, difficulty);
+  return null;
+}
+
+function DialogBox({ nombre, dialogo, onNext, onChoice, opciones, showArrow }) {
+  return (
+    <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 animate-fade-in" style={{ zIndex: 30 }}>
+      <div className="dialog-box rounded-lg p-4 md:p-6 max-w-4xl mx-auto">
+        {nombre && (
+          <div className="font-sitka text-sm md:text-base mb-2" style={{ color: '#A4CDD5' }}>{nombre}</div>
+        )}
+        <div className="font-nunito text-lg md:text-xl text-white leading-relaxed mb-4">"{dialogo}"</div>
+        {opciones && opciones.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3 mt-4">
+            {opciones.map((opcion, idx) => (
+              <button key={idx} onClick={() => onChoice(opcion)} className="option-btn rounded-lg p-3 md:p-4 text-left font-nunito text-sm md:text-base font-semibold text-white hover:scale-105 transition-transform">
+                <span className="font-sitka text-xs mr-2" style={{ color: '#FFFFFF' }}>{idx + 1}.</span>
+                {opcion.texto}
+              </button>
+            ))}
+          </div>
+        ) : showArrow && (
+          <div className="flex justify-end">
+            <button onClick={onNext} className="font-sitka text-2xl animate-blink" style={{ color: '#F0A8B6' }}>→</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function StoryReader({ capitulo, onExit }) {
+  const [escenaIdx, setEscenaIdx] = useState(0);
+  const [resultado, setResultado] = useState(null);
+  const [showResult, setShowResult] = useState(false);
+  const [chapterComplete, setChapterComplete] = useState(false);
+  const escena = capitulo.escenas[escenaIdx];
+  const posClass = { izquierda: 'character-left', derecha: 'character-right', centro: 'character-center' };
+
+  const handleChoice = (opcion) => { setResultado(opcion); setShowResult(true); };
+
+  const handleNext = useCallback(() => {
+    if (showResult) {
+      setShowResult(false);
+      setResultado(null);
+      if (escenaIdx < capitulo.escenas.length - 1) setEscenaIdx(prev => prev + 1);
+      else setChapterComplete(true);
+    } else if (escena.opciones && escena.opciones.length > 0) {
+      return;
+    } else {
+      if (escenaIdx < capitulo.escenas.length - 1) setEscenaIdx(prev => prev + 1);
+      else setChapterComplete(true);
+    }
+  }, [showResult, escenaIdx, capitulo.escenas.length, escena]);
+
+  const handleRestart = () => {
+    setEscenaIdx(0); setResultado(null); setShowResult(false); setChapterComplete(false);
+  };
+
+  const resultColor = { malo: '#F0A8B6', neutral: '#A4CDD5', bueno: '#84D270', excelente: '#B28DFF' };
+  const resultEmoji = { malo: '💔', neutral: '😐', bueno: '💚', excelente: '⭐' };
+
+  if (chapterComplete) {
+    return (
+      <div className="fixed inset-0 overflow-hidden flex items-center justify-center" style={{ background: '#160B24' }}>
+        <div className="text-center p-8 animate-fade-in max-w-2xl">
+          <div className="text-8xl mb-6">🎉</div>
+          <h2 className="font-sitka text-3xl mb-4" style={{ color: '#84D270' }}>¡Capítulo Completado!</h2>
+          <p className="font-nunito text-xl text-white mb-2">Has terminado: "{capitulo.titulo}"</p>
+          <p className="font-nunito text-lg text-gray-300 mb-8">{capitulo.descripcion}</p>
+          <div className="flex gap-4 justify-center flex-wrap">
+            <button onClick={handleRestart} className="font-sitka text-sm px-6 py-3 rounded-lg transition-all hover:scale-105" style={{ background: '#B28DFF', color: '#160B24' }}>🔄 Releer capítulo</button>
+            <button onClick={onExit} className="font-sitka text-sm px-6 py-3 rounded-lg transition-all hover:scale-105" style={{ background: '#84D270', color: '#160B24' }}>← Volver al menú</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 overflow-hidden" style={{ background: '#160B24' }}>
+      <button onClick={onExit} className="absolute top-4 left-4 z-50 font-sitka text-xs md:text-sm px-4 py-2 rounded-lg border-2 transition-all hover:scale-105" style={{ background: '#160B24', borderColor: '#F0A8B6', color: '#F0A8B6' }}>← Salir</button>
+      <div className="absolute top-4 right-4 z-50 font-sitka text-xs" style={{ color: '#A4CDD5' }}>Escena {escenaIdx + 1} / {capitulo.escenas.length}</div>
+
+      <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${FONDOS[escena.fondo]})` }} />
+      <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 40%, rgba(22,11,36,0.95) 100%)' }} />
+
+      <div className="story-stage">
+        {escena.personaje && SPRITES[escena.personaje] && (
+          <div key={escena.personaje + escenaIdx} className={`character-slot ${posClass[escena.posicion] || 'character-center'} animate-fade-in`}>
+            <CharacterSprite src={SPRITES[escena.personaje]} alt={escena.nombre} />
+          </div>
+        )}
+      </div>
+
+      {showResult && resultado && (
+        <div className="absolute top-16 md:top-24 left-1/2 -translate-x-1/2 z-40 max-w-2xl w-full px-4 animate-fade-in">
+          <div className="rounded-lg p-4 md:p-6 border-2" style={{ background: 'rgba(22,11,36,0.97)', borderColor: resultColor[resultado.resultado] || '#FFFFFF' }}>
+            <div className="font-sitka text-xs mb-2 flex items-center gap-2" style={{ color: resultColor[resultado.resultado] }}>
+              <span className="text-2xl">{resultEmoji[resultado.resultado]}</span>
+              RESULTADO: {resultado.resultado.toUpperCase()}
+            </div>
+            <div className="font-nunito text-base md:text-lg text-white leading-relaxed">{resultado.dialogo}</div>
+            <button onClick={handleNext} className="mt-4 font-sitka text-xs px-4 py-2 rounded-lg transition-all hover:scale-105" style={{ background: '#B28DFF', color: '#160B24' }}>Continuar →</button>
+          </div>
+        </div>
+      )}
+
+      {!showResult && (
+        <DialogBox nombre={escena.nombre} dialogo={escena.dialogo} onNext={handleNext} onChoice={handleChoice} opciones={escena.opciones} showArrow={!escena.opciones} />
+      )}
+    </div>
+  );
+}
+
+function QuizGame({ data, onComplete }) {
+  const [quizIdx, setQuizIdx] = useState(0);
+  const [selectedAnswer, setSelectedAnswer] = useState(null);
+  const [score, setScore] = useState(0);
+  const [quizComplete, setQuizComplete] = useState(false);
+  const quiz = data[quizIdx];
+  const handleAnswer = (idx) => {
+    if (selectedAnswer !== null) return;
+    setSelectedAnswer(idx);
+    if (idx === quiz.correcta) setScore(score + 1);
+  };
+  const handleNext = () => {
+    setSelectedAnswer(null);
+    if (quizIdx < data.length - 1) setQuizIdx(quizIdx + 1);
+    else setQuizComplete(true);
+  };
+  if (quizComplete) {
+    return (
+      <div className="animate-fade-in text-center">
+        <div className="text-6xl mb-4">🎉</div>
+        <h2 className="font-sitka text-2xl mb-4" style={{ color: '#84D270' }}>¡Quiz Completado!</h2>
+        <div className="rounded-lg p-6 mb-6" style={{ background: 'rgba(132,210,112,0.2)', border: '2px solid #84D270' }}>
+          <p className="font-nunito text-xl text-white mb-2">Tu puntuación:</p>
+          <p className="font-sitka text-4xl" style={{ color: '#B28DFF' }}>{score} / {data.length}</p>
+          <p className="font-nunito text-lg text-white mt-4">{score === data.length ? '¡Perfecto!' : score >= data.length / 2 ? '¡Bien hecho! 👍' : 'Sigue practicando 💪'}</p>
+        </div>
+        <button onClick={onComplete} className="font-sitka text-xs px-6 py-3 rounded-lg transition-all hover:scale-105" style={{ background: '#84D270', color: '#160B24' }}>✓ Completar nivel</button>
+      </div>
+    );
+  }
+  return (
+    <div className="animate-fade-in">
+      <div className="mb-4 font-sitka text-xs" style={{ color: '#A4CDD5' }}>Pregunta {quizIdx + 1} de {data.length}</div>
+      <h2 className="font-sitka text-lg mb-6" style={{ color: '#B28DFF' }}>{quiz.pregunta}</h2>
+      <div className="space-y-3">
+        {quiz.opciones.map((opcion, idx) => (
+          <button key={idx} onClick={() => handleAnswer(idx)} className={`quiz-option w-full text-left p-4 rounded-lg font-nunito text-lg ${selectedAnswer === idx ? (idx === quiz.correcta ? 'correct' : 'incorrect') : ''}`} disabled={selectedAnswer !== null}>
+            <span className="font-sitka text-xs mr-3" style={{ color: '#A4CDD5' }}>{String.fromCharCode(65 + idx)}.</span>{opcion}
+          </button>
+        ))}
+      </div>
+      {selectedAnswer !== null && (
+        <div className="mt-6 animate-fade-in">
+          <div className={`rounded-lg p-4 mb-4 ${selectedAnswer === quiz.correcta ? 'bg-green-900/30 border-2 border-green-500' : 'bg-red-900/30 border-2 border-red-500'}`}>
+            <p className="font-nunito text-lg text-white">{selectedAnswer === quiz.correcta ? '✅ ¡Correcto! Muy bien.' : `Incorrecto. La respuesta correcta es: ${quiz.opciones[quiz.correcta]}`}</p>
+          </div>
+          <button onClick={handleNext} className="font-sitka text-xs px-6 py-3 rounded-lg transition-all hover:scale-105" style={{ background: '#B28DFF', color: '#160B24' }}>{quizIdx < data.length - 1 ? 'Siguiente →' : 'Ver Resultado →'}</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TrueFalseGame({ data, onComplete }) {
+  const [idx, setIdx] = useState(0);
+  const [selected, setSelected] = useState(null);
+  const [score, setScore] = useState(0);
+  const [complete, setComplete] = useState(false);
+  const item = data[idx];
+  const handleAnswer = (answer) => {
+    if (selected !== null) return;
+    setSelected(answer);
+    if (answer === item.respuesta) setScore(score + 1);
+  };
+  const handleNext = () => {
+    setSelected(null);
+    if (idx < data.length - 1) setIdx(idx + 1);
+    else setComplete(true);
+  };
+  if (complete) {
+    return (
+      <div className="animate-fade-in text-center">
+        <div className="text-6xl mb-4">✅</div>
+        <h2 className="font-sitka text-2xl mb-4" style={{ color: '#84D270' }}>¡Completado!</h2>
+        <div className="rounded-lg p-6 mb-6" style={{ background: 'rgba(132,210,112,0.2)', border: '2px solid #84D270' }}>
+          <p className="font-nunito text-xl text-white mb-2">Aciertos:</p>
+          <p className="font-sitka text-4xl" style={{ color: '#B28DFF' }}>{score} / {data.length}</p>
+        </div>
+        <button onClick={onComplete} className="font-sitka text-xs px-6 py-3 rounded-lg transition-all hover:scale-105" style={{ background: '#84D270', color: '#160B24' }}>✓ Completar nivel</button>
+      </div>
+    );
+  }
+  return (
+    <div className="animate-fade-in">
+      <div className="mb-4 font-sitka text-xs" style={{ color: '#A4CDD5' }}>Pregunta {idx + 1} de {data.length}</div>
+      <div className="rounded-lg p-6 mb-6" style={{ background: 'rgba(164,205,213,0.1)', border: '2px solid #A4CDD5' }}>
+        <p className="font-nunito text-xl text-white text-center">"{item.afirmacion}"</p>
+      </div>
+      <div className="flex gap-4 justify-center mb-6">
+        <button onClick={() => handleAnswer(true)} disabled={selected !== null} className="tf-btn tf-true" style={selected === true && item.respuesta ? { background: 'rgba(132,210,112,0.4)' } : selected === true && !item.respuesta ? { background: 'rgba(240,168,182,0.4)' } : {}}>✓ VERDADERO</button>
+        <button onClick={() => handleAnswer(false)} disabled={selected !== null} className="tf-btn tf-false" style={selected === false && !item.respuesta ? { background: 'rgba(132,210,112,0.4)', color: '#84D270', borderColor: '#84D270' } : selected === false && item.respuesta ? { background: 'rgba(240,168,182,0.4)' } : {}}>✗ FALSO</button>
+      </div>
+      {selected !== null && (
+        <div className="animate-fade-in">
+          <div className={`rounded-lg p-4 mb-4 ${selected === item.respuesta ? 'bg-green-900/30 border-2 border-green-500' : 'bg-red-900/30 border-2 border-red-500'}`}>
+            <p className="font-nunito text-lg text-white mb-1">{selected === item.respuesta ? '✅ ¡Correcto!' : `❌ Incorrecto. La respuesta es: ${item.respuesta ? 'VERDADERO' : 'FALSO'}`}</p>
+            <p className="font-nunito text-sm text-gray-300">{item.explicacion}</p>
+          </div>
+          <button onClick={handleNext} className="font-sitka text-xs px-6 py-3 rounded-lg transition-all hover:scale-105" style={{ background: '#B28DFF', color: '#160B24' }}>{idx < data.length - 1 ? 'Siguiente →' : 'Ver Resultado →'}</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FillBlanksGame({ data, onComplete }) {
+  const [answers, setAnswers] = useState(data.map(() => ''));
+  const [checked, setChecked] = useState(false);
+  const [score, setScore] = useState(0);
+  const handleChange = (idx, value) => { const n = [...answers]; n[idx] = value; setAnswers(n); };
+  const handleCheck = () => {
+    let correct = 0;
+    answers.forEach((ans, idx) => { if (ans.toLowerCase().trim() === data[idx].respuesta.toLowerCase()) correct++; });
+    setScore(correct); setChecked(true);
+  };
+  const handleReset = () => { setAnswers(data.map(() => '')); setChecked(false); setScore(0); };
+  if (checked) {
+    return (
+      <div className="animate-fade-in">
+        <div className="text-center mb-6">
+          <div className="text-5xl mb-3">📝</div>
+          <h2 className="font-sitka text-xl mb-2" style={{ color: '#84D270' }}>¡Completado!</h2>
+          <p className="font-nunito text-lg text-white">Aciertos: <span className="font-sitka" style={{ color: '#B28DFF' }}>{score} / {data.length}</span></p>
+        </div>
+        <div className="space-y-3 mb-6">
+          {data.map((item, idx) => {
+            const isCorrect = answers[idx].toLowerCase().trim() === item.respuesta.toLowerCase();
+            return (
+              <div key={idx} className={`rounded-lg p-3 border-2 ${isCorrect ? 'border-green-500 bg-green-900/20' : 'border-red-500 bg-red-900/20'}`}>
+                <p className="font-nunito text-white mb-1">{item.texto}</p>
+                <p className="font-sitka text-sm" style={{ color: isCorrect ? '#84D270' : '#F0A8B6' }}>{isCorrect ? '✅ Correcto' : `❌ Respuesta: ${item.respuesta}`}</p>
+              </div>
+            );
+          })}
+        </div>
+        <div className="flex gap-3 justify-center">
+          <button onClick={handleReset} className="font-sitka text-xs px-6 py-3 rounded-lg transition-all hover:scale-105" style={{ background: '#A4CDD5', color: '#160B24' }}>🔄 Intentar de nuevo</button>
+          <button onClick={onComplete} className="font-sitka text-xs px-6 py-3 rounded-lg transition-all hover:scale-105" style={{ background: '#84D270', color: '#160B24' }}>✓ Completar nivel</button>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="animate-fade-in">
+      <div className="text-center mb-6">
+        <div className="text-5xl mb-3">✏️</div>
+        <h2 className="font-sitka text-xl mb-2" style={{ color: '#B28DFF' }}>Completa los espacios</h2>
+        <p className="font-nunito text-sm text-gray-300">Escribe la palabra que falta en cada oración</p>
+      </div>
+      <div className="space-y-4">
+        {data.map((item, idx) => (
+          <div key={idx} className="rounded-lg p-4" style={{ background: 'rgba(164,205,213,0.1)', border: '2px solid #A4CDD5' }}>
+            <p className="font-nunito text-white mb-2">{item.texto}</p>
+            <input type="text" value={answers[idx]} onChange={(e) => handleChange(idx, e.target.value)} className="fill-input" placeholder="Tu respuesta..." />
+          </div>
+        ))}
+      </div>
+      <button onClick={handleCheck} className="mt-6 font-sitka text-xs px-6 py-3 rounded-lg transition-all hover:scale-105" style={{ background: '#B28DFF', color: '#160B24' }}>✓ Verificar respuestas</button>
+    </div>
+  );
+}
+
+function MatchGame({ data, onComplete }) {
+  const [leftItems, setLeftItems] = useState([]);
+  const [rightItems, setRightItems] = useState([]);
+  const [selectedLeft, setSelectedLeft] = useState(null);
+  const [selectedRight, setSelectedRight] = useState(null);
+  const [matched, setMatched] = useState([]);
+  const [wrongPair, setWrongPair] = useState(null);
+  const [complete, setComplete] = useState(false);
+  useEffect(() => {
+    setLeftItems(shuffleArray(data.map((d, i) => ({ ...d, origIdx: i }))));
+    setRightItems(shuffleArray(data.map((d, i) => ({ ...d, origIdx: i }))));
+  }, [data]);
+  const handleLeftClick = (item) => {
+    if (matched.includes(item.origIdx)) return;
+    setSelectedLeft(item);
+    if (selectedRight) checkMatch(item, selectedRight);
+  };
+  const handleRightClick = (item) => {
+    if (matched.includes(item.origIdx)) return;
+    setSelectedRight(item);
+    if (selectedLeft) checkMatch(selectedLeft, item);
+  };
+  const checkMatch = (left, right) => {
+    if (left.origIdx === right.origIdx) {
+      setMatched([...matched, left.origIdx]);
+      setSelectedLeft(null); setSelectedRight(null);
+      if (matched.length + 1 === data.length) setTimeout(() => setComplete(true), 500);
+    } else {
+      setWrongPair({ left: left.origIdx, right: right.origIdx });
+      setTimeout(() => { setWrongPair(null); setSelectedLeft(null); setSelectedRight(null); }, 800);
+    }
+  };
+  if (complete) {
+    return (
+      <div className="animate-fade-in text-center">
+        <div className="text-6xl mb-4">🔗</div>
+        <h2 className="font-sitka text-2xl mb-4" style={{ color: '#84D270' }}>¡Todas las parejas encontradas!</h2>
+        <button onClick={onComplete} className="font-sitka text-xs px-6 py-3 rounded-lg transition-all hover:scale-105" style={{ background: '#84D270', color: '#160B24' }}>✓ Completar nivel</button>
+      </div>
+    );
+  }
+  return (
+    <div className="animate-fade-in">
+      <div className="text-center mb-6">
+        <div className="text-5xl mb-3">🔗</div>
+        <h2 className="font-sitka text-xl mb-2" style={{ color: '#B28DFF' }}>Asocia las parejas</h2>
+        <p className="font-nunito text-sm text-gray-300">Selecciona un elemento de cada columna que correspondan</p>
+        <p className="font-sitka text-sm mt-2" style={{ color: '#A4CDD5' }}>Parejas: {matched.length} / {data.length}</p>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <h3 className="font-sitka text-sm mb-3 text-center" style={{ color: '#A4CDD5' }}>Concepto</h3>
+          <div className="space-y-2">
+            {leftItems.map((item, idx) => {
+              const isMatched = matched.includes(item.origIdx);
+              const isSelected = selectedLeft && selectedLeft.origIdx === item.origIdx;
+              const isWrong = wrongPair && wrongPair.left === item.origIdx;
+              return (
+                <div key={idx} onClick={() => handleLeftClick(item)} className={`match-item ${isMatched ? 'matched-correct' : ''} ${isSelected ? 'selected-match' : ''} ${isWrong ? 'matched-wrong' : ''}`}>
+                  <span className="font-nunito text-sm text-white">{item.left}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        <div>
+          <h3 className="font-sitka text-sm mb-3 text-center" style={{ color: '#A4CDD5' }}>Definición</h3>
+          <div className="space-y-2">
+            {rightItems.map((item, idx) => {
+              const isMatched = matched.includes(item.origIdx);
+              const isSelected = selectedRight && selectedRight.origIdx === item.origIdx;
+              const isWrong = wrongPair && wrongPair.right === item.origIdx;
+              return (
+                <div key={idx} onClick={() => handleRightClick(item)} className={`match-item ${isMatched ? 'matched-correct' : ''} ${isSelected ? 'selected-match' : ''} ${isWrong ? 'matched-wrong' : ''}`}>
+                  <span className="font-nunito text-sm text-white">{item.right}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MemoryGame({ data, onComplete }) {
+  const [cards, setCards] = useState([]);
+  const [flipped, setFlipped] = useState([]);
+  const [matched, setMatched] = useState([]);
+  const [moves, setMoves] = useState(0);
+  const [complete, setComplete] = useState(false);
+  const [initialized, setInitialized] = useState(false);
+  useEffect(() => {
+    if (!initialized) {
+      setCards([...data].sort(() => Math.random() - 0.5));
+      setInitialized(true);
+    }
+  }, [data, initialized]);
+  const handleCardClick = (idx) => {
+    if (flipped.length === 2) return;
+    if (flipped.includes(idx)) return;
+    if (matched.includes(cards[idx].pair)) return;
+    const newFlipped = [...flipped, idx];
+    setFlipped(newFlipped);
+    if (newFlipped.length === 2) {
+      setMoves(moves + 1);
+      const [first, second] = newFlipped;
+      if (cards[first].pair === cards[second].pair) {
+        setMatched([...matched, cards[first].pair]);
+        setFlipped([]);
+        if (matched.length + 1 === data.length / 2) setTimeout(() => setComplete(true), 500);
+      } else {
+        setTimeout(() => setFlipped([]), 1000);
+      }
+    }
+  };
+  const handleReset = () => {
+    setCards([...data].sort(() => Math.random() - 0.5));
+    setFlipped([]); setMatched([]); setMoves(0); setComplete(false);
+  };
+  if (complete) {
+    return (
+      <div className="animate-fade-in text-center">
+        <div className="text-6xl mb-4">🎴</div>
+        <h2 className="font-sitka text-2xl mb-4" style={{ color: '#84D270' }}>¡Memoria Completada!</h2>
+        <p className="font-nunito text-lg text-white mb-2">Completaste el juego en:</p>
+        <p className="font-sitka text-3xl mb-6" style={{ color: '#B28DFF' }}>{moves} movimientos</p>
+        <button onClick={onComplete} className="font-sitka text-xs px-6 py-3 rounded-lg transition-all hover:scale-105" style={{ background: '#84D270', color: '#160B24' }}>✓ Completar nivel</button>
+      </div>
+    );
+  }
+  return (
+    <div className="animate-fade-in">
+      <div className="text-center mb-6">
+        <div className="text-5xl mb-3">🎴</div>
+        <h2 className="font-sitka text-xl mb-2" style={{ color: '#B28DFF' }}>Juego de Memoria</h2>
+        <p className="font-nunito text-sm text-gray-300 mb-2">Encuentra todas las parejas</p>
+        <p className="font-sitka text-sm" style={{ color: '#A4CDD5' }}>Movimientos: {moves}</p>
+      </div>
+      <div className="grid grid-cols-4 gap-3 max-w-md mx-auto mb-6">
+        {cards.map((card, idx) => {
+          const isFlipped = flipped.includes(idx);
+          const isMatched = matched.includes(card.pair);
+          return (
+            <div key={idx} onClick={() => handleCardClick(idx)} className={`memory-card ${isFlipped || isMatched ? 'flipped' : ''} ${isMatched ? 'matched' : ''}`}>
+              <div className="memory-card-inner">
+                <div className="memory-card-face memory-card-front">?</div>
+                <div className="memory-card-face memory-card-back"><span className="text-2xl">{card.content}</span></div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex justify-center">
+        <button onClick={handleReset} className="font-sitka text-xs px-6 py-3 rounded-lg transition-all hover:scale-105" style={{ background: '#A4CDD5', color: '#160B24' }}>Reiniciar</button>
+      </div>
+    </div>
+  );
+}
+
+function WordSearchGame({ data, onComplete }) {
+  const { words, grid } = data;
+  const [selected, setSelected] = useState([]);
+  const [found, setFound] = useState([]);
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [complete, setComplete] = useState(false);
+  const handleCellClick = (row, col) => {
+    const cellKey = `${row}-${col}`;
+    if (found.some(f => f.includes(cellKey))) return;
+    if (!isSelecting) { setSelected([cellKey]); setIsSelecting(true); }
+    else {
+      const newSelected = [...selected, cellKey];
+      setSelected(newSelected);
+      const selectedWord = newSelected.map(k => { const [r, c] = k.split('-').map(Number); return grid[r][c]; }).join('');
+      const foundWord = words.find(w => w === selectedWord || w === selectedWord.split('').reverse().join(''));
+      if (foundWord) {
+        const newFound = [...found, newSelected];
+        setFound(newFound);
+        setSelected([]);
+        setIsSelecting(false);
+        if (newFound.length === words.length) setTimeout(() => setComplete(true), 500);
+      }
+    }
+  };
+  const handleClear = () => { setSelected([]); setIsSelecting(false); };
+  const handleReset = () => { setSelected([]); setFound([]); setIsSelecting(false); setComplete(false); };
+  const isSelected = (row, col) => selected.includes(`${row}-${col}`);
+  const isFound = (row, col) => found.some(f => f.includes(`${row}-${col}`));
+  if (complete) {
+    return (
+      <div className="animate-fade-in text-center">
+        <div className="text-6xl mb-4">🔍</div>
+        <h2 className="font-sitka text-2xl mb-4" style={{ color: '#84D270' }}>¡Sopa de Letras Completada!</h2>
+        <p className="font-nunito text-lg text-white mb-6">Encontraste todas las palabras</p>
+        <button onClick={onComplete} className="font-sitka text-xs px-6 py-3 rounded-lg transition-all hover:scale-105" style={{ background: '#84D270', color: '#160B24' }}>✓ Completar nivel</button>
+      </div>
+    );
+  }
+  return (
+    <div className="animate-fade-in">
+      <div className="text-center mb-6">
+        <div className="text-5xl mb-3">🔎</div>
+        <h2 className="font-sitka text-xl mb-2" style={{ color: '#B28DFF' }}>Sopa de Letras</h2>
+        <p className="font-nunito text-sm text-gray-300 mb-3">Haz clic en las letras en orden para formar palabras</p>
+      </div>
+      <div className="flex flex-wrap justify-center gap-2 mb-4">
+        {words.map((word, idx) => {
+          const isFoundWord = found.some(f => { const w = f.map(k => { const [r,c] = k.split('-').map(Number); return grid[r][c]; }).join(''); return w === word || w === word.split('').reverse().join(''); });
+          return (
+            <span key={idx} className={`font-sitka text-xs px-3 py-1 rounded ${isFoundWord ? 'line-through opacity-50' : ''}`} style={{ background: isFoundWord ? 'rgba(132,210,112,0.3)' : 'rgba(164,205,213,0.2)', border: `2px solid ${isFoundWord ? '#84D270' : '#A4CDD5'}`, color: '#FFFFFF' }}>{word}</span>
+          );
+        })}
+      </div>
+      <div className="flex flex-col items-center gap-1 mb-4">
+        {grid.map((row, rowIdx) => (
+          <div key={rowIdx} className="flex">
+            {row.map((cell, colIdx) => (
+              <div key={colIdx} onClick={() => handleCellClick(rowIdx, colIdx)} className={`word-cell ${isSelected(rowIdx, colIdx) ? 'selected' : ''} ${isFound(rowIdx, colIdx) ? 'found' : ''}`}>{cell}</div>
+            ))}
+          </div>
+        ))}
+      </div>
+      <div className="flex justify-center gap-3">
+        <button onClick={handleClear} className="font-sitka text-xs px-4 py-2 rounded-lg transition-all hover:scale-105" style={{ background: '#A4CDD5', color: '#160B24' }}>Limpiar</button>
+        <button onClick={handleReset} className="font-sitka text-xs px-4 py-2 rounded-lg transition-all hover:scale-105" style={{ background: '#F0A8B6', color: '#160B24' }}>🔄 Reiniciar</button>
+      </div>
+    </div>
+  );
+}
+
+function OrderGame({ data, onComplete }) {
+  const [items, setItems] = useState([]);
+  const [ordered, setOrdered] = useState([]);
+  const [draggedItem, setDraggedItem] = useState(null);
+  const [complete, setComplete] = useState(false);
+  const [initialized, setInitialized] = useState(false);
+  useEffect(() => {
+    if (!initialized && data) {
+      setItems([...data].sort(() => Math.random() - 0.5));
+      setOrdered(new Array(data.length).fill(null));
+      setInitialized(true);
+    }
+  }, [data, initialized]);
+  const handleItemClick = (item) => {
+    if (draggedItem && draggedItem.id === item.id) setDraggedItem(null);
+    else setDraggedItem(item);
+  };
+  const handleDrop = (idx) => {
+    if (!draggedItem || ordered[idx] !== null) return;
+    const newOrdered = [...ordered];
+    newOrdered[idx] = draggedItem;
+    setOrdered(newOrdered);
+    setItems(items.filter(i => i.id !== draggedItem.id));
+    setDraggedItem(null);
+    if (newOrdered.every(item => item !== null)) {
+      setComplete(newOrdered.every((item, i) => item.order === i + 1));
+    }
+  };
+  const handleRemoveFromOrder = (idx) => {
+    const item = ordered[idx];
+    if (!item) return;
+    const newOrdered = [...ordered];
+    newOrdered[idx] = null;
+    setOrdered(newOrdered);
+    setItems([...items, item]);
+    setComplete(false);
+  };
+  const handleReset = () => {
+    setItems([...data].sort(() => Math.random() - 0.5));
+    setOrdered(new Array(data.length).fill(null));
+    setComplete(false); setDraggedItem(null);
+  };
+  if (complete) {
+    return (
+      <div className="animate-fade-in text-center">
+        <div className="text-6xl mb-4">📋</div>
+        <h2 className="font-sitka text-2xl mb-4" style={{ color: '#84D270' }}>¡Orden Correcto!</h2>
+        <p className="font-nunito text-lg text-white mb-6">Has ordenado todos los elementos correctamente.</p>
+        <button onClick={onComplete} className="font-sitka text-xs px-6 py-3 rounded-lg transition-all hover:scale-105" style={{ background: '#84D270', color: '#160B24' }}>✓ Completar nivel</button>
+      </div>
+    );
+  }
+  return (
+    <div className="animate-fade-in">
+      <div className="text-center mb-6">
+        <div className="text-5xl mb-3">📋</div>
+        <h2 className="font-sitka text-xl mb-2" style={{ color: '#B28DFF' }}>Ordena los elementos</h2>
+        <p className="font-nunito text-sm text-gray-300">Haz clic en un elemento y luego en la posición donde debe ir</p>
+      </div>
+      <div className="mb-6">
+        <h3 className="font-sitka text-sm mb-3" style={{ color: '#A4CDD5' }}>Elementos disponibles:</h3>
+        <div className="flex flex-wrap gap-2">
+          {items.map(item => (
+            <div key={item.id} onClick={() => handleItemClick(item)} className={`drag-item ${draggedItem && draggedItem.id === item.id ? 'selected-drag' : ''}`}>
+              <span className="font-nunito text-sm text-white">{item.text}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="mb-6">
+        <h3 className="font-sitka text-sm mb-3" style={{ color: '#A4CDD5' }}>Posiciones (haz clic para colocar):</h3>
+        {ordered.map((item, idx) => (
+          <div key={idx} onClick={() => !item && draggedItem && handleDrop(idx)} className={`drop-zone ${draggedItem && !item ? 'drag-over' : ''}`}>
+            {item ? (
+              <div className="flex items-center justify-between">
+                <span className="font-nunito text-sm text-white"><span className="font-sitka mr-2" style={{ color: '#B28DFF' }}>{idx + 1}.</span>{item.text}</span>
+                <button onClick={(e) => { e.stopPropagation(); handleRemoveFromOrder(idx); }} className="font-sitka text-xs px-2 py-1 rounded" style={{ background: '#F0A8B6', color: '#160B24' }}>✕</button>
+              </div>
+            ) : (
+              <span className="font-nunito text-sm text-gray-500"><span className="font-sitka mr-2">{idx + 1}.</span>Haz clic aquí para colocar un elemento</span>
+            )}
+          </div>
+        ))}
+      </div>
+      <div className="flex justify-center">
+        <button onClick={handleReset} className="font-sitka text-xs px-6 py-3 rounded-lg transition-all hover:scale-105" style={{ background: '#A4CDD5', color: '#160B24' }}>🔄 Reiniciar</button>
+      </div>
+    </div>
+  );
+}
+
+function SudokuGame({ data, onComplete }) {
+  const { size, initial, solution } = data;
+  const [grid, setGrid] = useState(initial.map(row => [...row]));
+  const [selected, setSelected] = useState(null);
+  const [errors, setErrors] = useState([]);
+  const [complete, setComplete] = useState(false);
+  const handleCellClick = (row, col) => { if (initial[row][col] !== 0) return; setSelected({ row, col }); };
+  const handleNumberClick = (num) => {
+    if (!selected) return;
+    const { row, col } = selected;
+    const newGrid = grid.map(r => [...r]);
+    newGrid[row][col] = num;
+    setGrid(newGrid);
+    const newErrors = [];
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        if (newGrid[r][c] !== 0 && newGrid[r][c] !== solution[r][c]) newErrors.push(`${r}-${c}`);
+      }
+    }
+    setErrors(newErrors);
+    let isComplete = true;
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        if (newGrid[r][c] !== solution[r][c]) { isComplete = false; break; }
+      }
+    }
+    if (isComplete) setComplete(true);
+  };
+  const handleReset = () => { setGrid(initial.map(row => [...row])); setSelected(null); setErrors([]); setComplete(false); };
+  if (complete) {
+    return (
+      <div className="animate-fade-in text-center">
+        <div className="text-6xl mb-4">🎯</div>
+        <h2 className="font-sitka text-2xl mb-4" style={{ color: '#84D270' }}>¡Sudoku Completado!</h2>
+        <button onClick={onComplete} className="font-sitka text-xs px-6 py-3 rounded-lg transition-all hover:scale-105" style={{ background: '#84D270', color: '#160B24' }}>✓ Completar nivel</button>
+      </div>
+    );
+  }
+  return (
+    <div className="animate-fade-in">
+      <div className="text-center mb-6">
+        <div className="text-5xl mb-3">🎯</div>
+        <h2 className="font-sitka text-xl mb-2" style={{ color: '#B28DFF' }}>Sudoku {size}x{size}</h2>
+        <p className="font-nunito text-sm text-gray-300">Completa el grid: cada fila, columna y cuadrante debe tener los números 1-{size}</p>
+      </div>
+      <div className="flex flex-col items-center gap-2 mb-6">
+        {grid.map((row, rowIdx) => (
+          <div key={rowIdx} className="flex">
+            {row.map((cell, colIdx) => {
+              const isFixed = initial[rowIdx][colIdx] !== 0;
+              const isSelected = selected && selected.row === rowIdx && selected.col === colIdx;
+              const hasError = errors.includes(`${rowIdx}-${colIdx}`);
+              const isCorrectFill = !isFixed && cell !== 0 && !hasError;
+              return (
+                <div key={colIdx} onClick={() => handleCellClick(rowIdx, colIdx)} className={`sudoku-cell ${isFixed ? 'fixed' : ''} ${isSelected ? 'selected' : ''} ${hasError ? 'error' : ''} ${isCorrectFill ? 'correct-fill' : ''}`} style={{ borderRight: colIdx === 1 ? '3px solid #F0A8B6' : undefined, borderBottom: rowIdx === 1 ? '3px solid #F0A8B6' : undefined }}>
+                  {cell !== 0 ? cell : ''}
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+      <div className="flex justify-center gap-2 mb-4">
+        {[1, 2, 3, 4].map(num => (
+          <button key={num} onClick={() => handleNumberClick(num)} className="w-12 h-12 rounded-lg font-sitka text-xl transition-all hover:scale-110" style={{ background: 'rgba(178,141,255,0.3)', border: '2px solid #B28DFF', color: '#FFFFFF' }}>{num}</button>
+        ))}
+        <button onClick={() => { if (selected) { const newGrid = grid.map(r => [...r]); newGrid[selected.row][selected.col] = 0; setGrid(newGrid); setErrors(errors.filter(e => e !== `${selected.row}-${selected.col}`)); } }} className="w-12 h-12 rounded-lg font-sitka text-xl transition-all hover:scale-110" style={{ background: 'rgba(240,168,182,0.3)', border: '2px solid #F0A8B6', color: '#FFFFFF' }}>✕</button>
+      </div>
+      <div className="flex justify-center">
+        <button onClick={handleReset} className="font-sitka text-xs px-6 py-3 rounded-lg transition-all hover:scale-105" style={{ background: '#A4CDD5', color: '#160B24' }}>🔄 Reiniciar</button>
+      </div>
+    </div>
+  );
+}
+
+function TimedShell({ seconds, onTimeout, children }) {
+  const [left, setLeft] = useState(seconds);
+  const [timedOut, setTimedOut] = useState(false);
+  useEffect(() => {
+    if (!seconds) return;
+    const t = setInterval(() => {
+      setLeft(l => {
+        if (l <= 1) {
+          clearInterval(t);
+          setTimedOut(true);
+          return 0;
+        }
+        return l - 1;
+      });
+    }, 1000);
+    return () => clearInterval(t);
+  }, [seconds]);
+  if (!seconds) return children;
+  if (timedOut) {
+    return (
+      <div className="animate-fade-in text-center">
+        <div className="text-6xl mb-4">⏰</div>
+        <h2 className="font-sitka text-2xl mb-4" style={{ color: '#F0A8B6' }}>Se acabó el tiempo</h2>
+        <p className="font-nunito text-white mb-6">Intenta de nuevo o elige otra dificultad.</p>
+        <button onClick={onTimeout} className="font-sitka text-xs px-6 py-3 rounded-lg" style={{ background: '#B28DFF', color: '#160B24' }}>← Volver a niveles</button>
+      </div>
+    );
+  }
+  const pct = (left / seconds) * 100;
+  return (
+    <div>
+      <div className="mb-5">
+        <div className="flex justify-between font-sitka text-xs mb-1" style={{ color: left < 10 ? '#F0A8B6' : '#A4CDD5' }}>
+          <span>Tiempo restante</span>
+          <span>{left}s</span>
+        </div>
+        <div className="w-full h-2 rounded bg-white/10 overflow-hidden">
+          <div className="timer-bar h-full" style={{ width: pct + '%', background: left < 10 ? '#F0A8B6' : undefined }} />
+        </div>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function ClassReader({ claseId, onExit }) {
+  const claseData = classContentPools[claseId];
+  const curriculum = claseData ? buildCurriculum(claseData) : [];
+  const [completed, setCompleted] = useState({});
+  const [active, setActive] = useState(null);
+  const [playData, setPlayData] = useState(null);
+
+  if (!claseData) return <div className="p-8 text-center font-nunito">Clase no encontrada</div>;
+
+  const totalSlots = curriculum.length * 3;
+  const doneCount = Object.keys(completed).length;
+  const allCompleted = totalSlots > 0 && doneCount >= totalSlots;
+
+  const startLevel = (levelDef, difficulty) => {
+    setPlayData(getLevelData(claseData, levelDef, difficulty));
+    setActive({ level: levelDef, difficulty });
+  };
+
+  const handleLevelComplete = () => {
+    if (!active) return;
+    const key = `${active.level.number}-${active.difficulty}`;
+    setCompleted(prev => ({ ...prev, [key]: true }));
+    setActive(null);
+    setPlayData(null);
+  };
+
+  const backToLevels = () => { setActive(null); setPlayData(null); };
+
+  const handleResetProgress = () => {
+    setCompleted({});
+    setActive(null);
+    setPlayData(null);
+  };
+
+  const renderLevel = () => {
+    if (!active || !playData) return null;
+    const type = active.level.type;
+    if (type === 'quiz') return <QuizGame data={playData} onComplete={handleLevelComplete} />;
+    if (type === 'truefalse') return <TrueFalseGame data={playData} onComplete={handleLevelComplete} />;
+    if (type === 'fill') return <FillBlanksGame data={playData} onComplete={handleLevelComplete} />;
+    if (type === 'match') return <MatchGame data={playData} onComplete={handleLevelComplete} />;
+    if (type === 'memory') return <MemoryGame data={playData} onComplete={handleLevelComplete} />;
+    if (type === 'wordsearch') return <WordSearchGame data={playData} onComplete={handleLevelComplete} />;
+    if (type === 'order') return <OrderGame data={playData} onComplete={handleLevelComplete} />;
+    if (type === 'sudoku') return <SudokuGame data={playData} onComplete={handleLevelComplete} />;
+    return null;
+  };
+
+  const diffCfg = active ? DIFFICULTIES[active.difficulty] : null;
+
+  return (
+    <div className="min-h-screen" style={{ background: '#160B24' }}>
+      <header className="border-b-2 p-4" style={{ borderColor: '#84D270' }}>
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <button onClick={onExit} className="font-sitka text-xs px-4 py-2 rounded-lg border-2 transition-all hover:scale-105" style={{ background: '#160B24', borderColor: '#84D270', color: '#84D270' }}>← Salir</button>
+          <div className="text-center">
+            <div className="font-sitka text-sm" style={{ color: '#A4CDD5' }}>{claseData.materia} - Grado {claseData.grado}</div>
+            <div className="font-nunito text-xs" style={{ color: '#F0A8B6' }}>{claseData.titulo}</div>
+          </div>
+          <button onClick={handleResetProgress} className="font-sitka text-xs px-4 py-2 rounded-lg border-2 transition-all hover:scale-105" style={{ background: '#160B24', borderColor: '#B28DFF', color: '#B28DFF' }}>Reiniciar</button>
+        </div>
+      </header>
+      <main className="max-w-4xl mx-auto px-4 py-8">
+        {allCompleted && !active ? (
+          <div className="animate-fade-in text-center">
+            <div className="text-8xl mb-6">🏆</div>
+            <h2 className="font-sitka text-3xl mb-4" style={{ color: '#84D270' }}>¡Clase Completada!</h2>
+            <p className="font-nunito text-xl text-white mb-2">Has superado todos los niveles y dificultades de</p>
+            <p className="font-sitka text-2xl mb-6" style={{ color: '#B28DFF' }}>{claseData.titulo}</p>
+            <p className="font-nunito text-lg text-gray-300 mb-8">{curriculum.length} niveles × 3 dificultades</p>
+            <div className="flex gap-4 justify-center flex-wrap">
+              <button onClick={handleResetProgress} className="font-sitka text-sm px-6 py-3 rounded-lg transition-all hover:scale-105" style={{ background: '#B28DFF', color: '#160B24' }}>🔄 Jugar de nuevo</button>
+              <button onClick={onExit} className="font-sitka text-sm px-6 py-3 rounded-lg transition-all hover:scale-105" style={{ background: '#84D270', color: '#160B24' }}>← Volver al menú</button>
+            </div>
+          </div>
+        ) : !active ? (
+          <div className="animate-fade-in">
+            <div className="text-center mb-8">
+              <div className="text-6xl mb-4">🎮</div>
+              <h2 className="font-sitka text-2xl mb-2" style={{ color: '#B28DFF' }}>Elige un nivel y su dificultad</h2>
+              <p className="font-nunito text-gray-300">Cada nivel se juega por separado. Selecciona Fácil, Medio o Difícil.</p>
+              <p className="font-sitka text-sm mt-2" style={{ color: '#A4CDD5' }}>Completados: {doneCount} / {totalSlots}</p>
+              <div className="mt-3 max-w-md mx-auto h-2 rounded bg-white/10 overflow-hidden">
+                <div className="h-full rounded" style={{ width: `${totalSlots ? (doneCount / totalSlots) * 100 : 0}%`, background: 'linear-gradient(90deg,#84D270,#B28DFF)' }} />
+              </div>
+            </div>
+            <div className="space-y-4">
+              {curriculum.map((level) => {
+                const doneDiffs = ['facil', 'medio', 'dificil'].filter(d => completed[`${level.number}-${d}`]);
+                return (
+                  <div key={level.number} className="level-row p-4 md:p-5">
+                    <div className="flex items-start gap-4 mb-4">
+                      <div className="level-badge flex-shrink-0" style={{ background: doneDiffs.length === 3 ? '#84D270' : '#B28DFF', color: '#160B24' }}>{doneDiffs.length === 3 ? '✓' : level.number}</div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-2xl">{level.icon}</span>
+                          <h3 className="font-sitka text-base" style={{ color: '#FFFFFF' }}>Nivel {level.number} — {level.title}</h3>
+                        </div>
+                        <p className="font-nunito text-xs mt-1" style={{ color: '#A4CDD5' }}>
+                          {doneDiffs.length === 0 ? 'Ninguna dificultad completada' : `Completado: ${doneDiffs.map(d => DIFFICULTIES[d].label).join(', ')}`}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {Object.values(DIFFICULTIES).map(diff => {
+                        const isDone = !!completed[`${level.number}-${diff.id}`];
+                        return (
+                          <button
+                            key={diff.id}
+                            onClick={() => startLevel(level, diff.id)}
+                            className={`diff-btn ${isDone ? 'done' : ''}`}
+                            style={{
+                              borderColor: diff.color,
+                              background: isDone ? `${diff.color}33` : 'rgba(22,11,36,0.5)',
+                              color: diff.color
+                            }}
+                          >
+                            <div className="font-sitka">{diff.stars} {diff.label}</div>
+                            <div className="font-nunito text-[10px] mt-1 opacity-80">{isDone ? '✓ Completado' : diff.desc}</div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <div className="animate-fade-in" key={`${active.level.number}-${active.difficulty}`}>
+            <div className="flex items-center justify-between mb-6 gap-2">
+              <button onClick={backToLevels} className="font-sitka text-xs px-4 py-2 rounded-lg border-2 transition-all hover:scale-105" style={{ background: '#160B24', borderColor: '#A4CDD5', color: '#A4CDD5' }}>← Niveles</button>
+              <div className="text-center">
+                <div className="font-sitka text-sm" style={{ color: '#B28DFF' }}>Nivel {active.level.number} · {active.level.title}</div>
+                <div className="font-nunito text-xs mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded" style={{ color: diffCfg.color, border: `1px solid ${diffCfg.color}` }}>{diffCfg.stars} {diffCfg.label}</div>
+              </div>
+              <div className="font-sitka text-xs" style={{ color: '#A4CDD5' }}>{active.level.number} / {curriculum.length}</div>
+            </div>
+            <TimedShell seconds={diffCfg.timer} onTimeout={backToLevels}>
+              {renderLevel()}
+            </TimedShell>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
+
+function ChapterCard({ capitulo, onClick }) {
+  return (
+    <div onClick={() => capitulo.esGratis && onClick(capitulo)} className={`chapter-card rounded-xl p-4 md:p-6 cursor-pointer ${!capitulo.esGratis ? 'locked' : ''}`}>
+      <div className="flex flex-col md:flex-row gap-4 items-start">
+        <div className="w-full md:w-48 h-32 rounded-lg overflow-hidden flex-shrink-0">
+          <img src={capitulo.portada} alt={capitulo.titulo} className="w-full h-full object-cover" />
+        </div>
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
+            <span className="font-sitka text-xs px-2 py-1 rounded" style={{ background: '#B28DFF', color: '#160B24' }}>GRADO {capitulo.grado}</span>
+            <span className="font-sitka text-xs px-2 py-1 rounded" style={{ background: '#84D270', color: '#160B24' }}>{capitulo.tema}</span>
+            {capitulo.esGratis ? <span className="font-sitka text-xs px-2 py-1 rounded" style={{ background: '#F0A8B6', color: '#160B24' }}>GRATIS</span> : <span className="font-sitka text-xs px-2 py-1 rounded" style={{ background: '#160B24', color: '#A4CDD5', border: '1px solid #A4CDD5' }}>🔒 BLOQUEADO</span>}
+          </div>
+          <h3 className="font-sitka text-sm md:text-base mb-2" style={{ color: '#FFFFFF' }}>{capitulo.titulo}</h3>
+          <p className="font-nunito text-sm text-gray-300">{capitulo.descripcion}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ClassCard({ claseId, onClick }) {
+  const clase = classContentPools[claseId];
+  if (!clase) return null;
+  const curriculum = buildCurriculum(clase);
+  return (
+    <div onClick={() => clase.esGratis && onClick(claseId)} className={`class-card rounded-xl p-4 md:p-6 cursor-pointer ${!clase.esGratis ? 'locked' : ''}`}>
+      <div className="flex items-start gap-4">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
+            <span className="font-sitka text-xs px-2 py-1 rounded" style={{ background: '#84D270', color: '#160B24' }}>{clase.materia}</span>
+            <span className="font-sitka text-xs px-2 py-1 rounded" style={{ background: '#B28DFF', color: '#160B24' }}>GRADO {clase.grado}</span>
+            {clase.esGratis ? <span className="font-sitka text-xs px-2 py-1 rounded" style={{ background: '#F0A8B6', color: '#160B24' }}>GRATIS</span> : <span className="font-sitka text-xs px-2 py-1 rounded" style={{ background: '#160B24', color: '#A4CDD5', border: '1px solid #A4CDD5' }}>BLOQUEADO</span>}
+          </div>
+          <h3 className="font-sitka text-sm md:text-base mb-2" style={{ color: '#FFFFFF' }}>{clase.titulo}</h3>
+          <p className="font-nunito text-sm text-gray-300">{clase.descripcion}</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {curriculum.map(lv => (
+              <span key={lv.number} className="font-sitka text-xs px-2 py-1 rounded" style={{ background: 'rgba(164,205,213,0.2)', color: '#A4CDD5' }}>{lv.icon} Niv. {lv.number}</span>
+            ))}
+          </div>
+          <div className="mt-2 font-nunito text-xs" style={{ color: '#B28DFF' }}>{curriculum.length} niveles independientes · 3 dificultades (Fácil / Medio / Difícil)</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DignaLearnApp() {
+  const [modo, setModo] = useState(null);
+  const [capituloActivo, setCapituloActivo] = useState(null);
+  const [claseActiva, setClaseActiva] = useState(null);
+
+  useEffect(() => { preloadSprites(); }, []);
+
+  if (capituloActivo) return <StoryReader capitulo={capituloActivo} onExit={() => setCapituloActivo(null)} />;
+  if (claseActiva) return <ClassReader claseId={claseActiva} onExit={() => setClaseActiva(null)} />;
+
+  if (modo === 'historia') {
+    return (
+      <div className="min-h-screen" style={{ background: '#160B24' }}>
+        <header className="border-b-2" style={{ borderColor: '#F0A8B6' }}>
+          <div className="max-w-7xl mx-auto px-4 py-6 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button onClick={() => setModo(null)} className="font-sitka text-xs px-4 py-2 rounded-lg border-2 transition-all hover:scale-105" style={{ background: '#160B24', borderColor: '#F0A8B6', color: '#F0A8B6' }}>← Inicio</button>
+              <div>
+                <h1 className="font-sitka text-xl md:text-2xl" style={{ color: '#F0A8B6' }}>📖 Modo Historia</h1>
+                <p className="font-nunito text-sm" style={{ color: '#A4CDD5' }}>Novela Visual Educativa</p>
+              </div>
+            </div>
+          </div>
+        </header>
+        <main className="max-w-7xl mx-auto px-4 py-8">
+          <div className="mb-8">
+            <h2 className="font-sitka text-lg mb-2" style={{ color: '#FFFFFF' }}>Capítulos Disponibles</h2>
+            <p className="font-nunito text-gray-400">Aprende sobre Derechos y Dignidad de la Mujer a través de la historia de Sofía</p>
+          </div>
+          <div className="grid gap-4">{capitulos.map(cap => <ChapterCard key={cap.id} capitulo={cap} onClick={setCapituloActivo} />)}</div>
+        </main>
+      </div>
+    );
+  }
+
+  if (modo === 'clases') {
+    return (
+      <div className="min-h-screen" style={{ background: '#160B24' }}>
+        <header className="border-b-2" style={{ borderColor: '#84D270' }}>
+          <div className="max-w-7xl mx-auto px-4 py-6 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button onClick={() => setModo(null)} className="font-sitka text-xs px-4 py-2 rounded-lg border-2 transition-all hover:scale-105" style={{ background: '#160B24', borderColor: '#84D270', color: '#84D270' }}>← Inicio</button>
+              <div>
+                <h1 className="font-sitka text-xl md:text-2xl" style={{ color: '#84D270' }}>📚 Modo Clases</h1>
+                <p className="font-nunito text-sm" style={{ color: '#A4CDD5' }}>Niveles independientes con dificultad seleccionable</p>
+              </div>
+            </div>
+          </div>
+        </header>
+        <main className="max-w-7xl mx-auto px-4 py-8">
+          <div className="mb-8">
+            <h2 className="font-sitka text-lg mb-2" style={{ color: '#FFFFFF' }}>Clases Disponibles</h2>
+            <p className="font-nunito text-gray-400">Entra a una clase, elige el nivel y luego la dificultad: Fácil, Medio o Difícil</p>
+          </div>
+          <div className="grid gap-4">{Object.keys(classContentPools).map(id => <ClassCard key={id} claseId={id} onClick={setClaseActiva} />)}</div>
+        </main>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen" style={{ background: '#160B24' }}>
+      <header className="border-b-2" style={{ borderColor: '#F0A8B6' }}>
+        <div className="max-w-7xl mx-auto px-4 py-6 flex flex-col md:flex-row items-center justify-center gap-4">
+          <div className="w-20 h-20 md:w-24 md:h-24 rounded-lg overflow-hidden flex-shrink-0">
+            <img src={LOGO_URL} alt="DignaLearn Logo" className="w-full h-full object-cover" />
+          </div>
+          <div className="text-center">
+            <h1 className="font-sitka text-2xl md:text-3xl"><span style={{ color: '#FFFFFF' }}>Digna</span><span style={{ color: '#A4CDD5' }}>Learn</span></h1>
+            <p className="font-nunito text-sm" style={{ color: '#F0A8B6' }}>Plataforma Educativa para Secundaria</p>
+          </div>
+        </div>
+      </header>
+      <main className="max-w-5xl mx-auto px-4 py-12">
+        <div className="text-center mb-12">
+          <h2 className="font-sitka text-xl md:text-2xl mb-4" style={{ color: '#FFFFFF' }}>Bienvenida a DignaLearn</h2>
+          <p className="font-nunito text-lg text-gray-300 max-w-2xl mx-auto">Elige un modo de aprendizaje y comienza tu aventura educativa</p>
+        </div>
+        <div className="grid grid-cols-1 gap-6 max-w-md mx-auto">
+          <button onClick={() => setModo('historia')} className="chapter-card rounded-xl p-8 text-left transition-all hover:scale-105">
+            <div className="text-6xl mb-4">📖</div>
+            <h3 className="font-sitka text-lg mb-3" style={{ color: '#F0A8B6' }}>Modo Historia</h3>
+            <p className="font-nunito text-gray-300 mb-4">Novela visual interactiva sobre Derechos y Dignidad de la Mujer. Acompaña a Sofía en su aprendizaje.</p>
+            <div className="font-sitka text-xs" style={{ color: '#A4CDD5' }}>6 capítulos · Decisiones que importan</div>
+          </button>
+          <button onClick={() => setModo('clases')} className="class-card rounded-xl p-8 text-left transition-all hover:scale-105" style={{ display: 'none' }}>
+            <div className="text-6xl mb-4">📚</div>
+            <h3 className="font-sitka text-lg mb-3" style={{ color: '#84D270' }}>Modo Clases</h3>
+            <p className="font-nunito text-gray-300 mb-4">Contenido educativo con niveles independientes. Elige la actividad y su dificultad: Fácil, Medio o Difícil.</p>
+            <div className="font-sitka text-xs" style={{ color: '#A4CDD5' }}>8 materias · Niveles + 3 dificultades</div>
+          </button>
+        </div>
+        <div className="mt-12 p-6 rounded-xl border-2" style={{ borderColor: '#B28DFF', background: 'rgba(178,141,255,0.1)' }}>
+          <h3 className="font-sitka text-sm mb-4" style={{ color: '#B28DFF' }}>PERSONAJES</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { sprite: 'sofia-feliz', name: 'Sofía', role: 'Protagonista' },
+              { sprite: 'profesora-normal', name: 'Prof. María', role: 'Maestra' },
+              { sprite: 'carlos-normal', name: 'Carlos', role: 'Compañero' },
+              { sprite: 'abuela-normal', name: 'Abuela Carmen', role: 'Familia' },
+              { sprite: 'ana-feliz', name: 'Ana', role: 'Mejor amiga' },
+              { sprite: 'don-jose', name: 'Don José', role: 'Abuelo' },
+              { sprite: 'abogada-carmen', name: 'Abogada', role: 'Defensora' },
+              { sprite: 'sofia-triste', name: 'Sofía', role: 'Reflexiva' }
+            ].map((char, idx) => (
+              <div key={idx} className="text-center">
+                <div className="w-24 h-28 mx-auto mb-2 animate-float gallery-sprite-box overflow-hidden" style={{ border: 'none', background: 'transparent' }}>
+                  <CharacterSprite src={SPRITES[char.sprite]} alt={char.name} style={{ maxHeight: '112px' }} />
+                </div>
+                <p className="font-sitka text-xs" style={{ color: '#A4CDD5' }}>{char.name}</p>
+                <p className="font-nunito text-xs text-gray-400">{char.role}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="mt-12 p-6 rounded-xl border-2" style={{ borderColor: '#84D270', background: 'rgba(132,210,112,0.1)' }}>
+          <h3 className="font-sitka text-sm mb-4" style={{ color: '#84D270' }}>🎮 JUEGOS EDUCATIVOS DISPONIBLES</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { icon: '📝', name: 'Quiz', desc: 'Opción múltiple' },
+              { icon: '✓', name: 'Verdadero/Falso', desc: 'Afirmaciones' },
+              { icon: '✏️', name: 'Completar', desc: 'Espacios en blanco' },
+              { icon: '🔗', name: 'Asociar', desc: 'Parejas concepto-definición' },
+              { icon: '🎴', name: 'Memoria', desc: 'Encuentra las parejas' },
+              { icon: '🔎', name: 'Sopa de Letras', desc: 'Busca palabras ocultas' },
+              { icon: '📋', name: 'Ordenar', desc: 'Secuencia correcta' },
+              { icon: '🎯', name: 'Sudoku', desc: 'Puzzle de lógica 4x4' }
+            ].map((game, idx) => (
+              <div key={idx} className="rounded-lg p-4" style={{ background: 'rgba(22,11,36,0.5)', border: '1px solid #84D270' }}>
+                <div className="text-3xl mb-2">{game.icon}</div>
+                <p className="font-sitka text-sm" style={{ color: '#FFFFFF' }}>{game.name}</p>
+                <p className="font-nunito text-xs text-gray-400">{game.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </main>
+      <footer className="border-t-2 mt-12 py-6" style={{ borderColor: '#F0A8B6' }}>
+        <div className="max-w-7xl mx-auto px-4 text-center font-nunito text-sm" style={{ color: '#A4CDD5' }}>
+          <p>DignaLearn © 2026 — Proyecto educativo sobre Derechos y Dignidad de la Mujer</p>
+          <p className="mt-1 text-xs" style={{ color: '#F0A8B6' }}>Desarrollado para el MINED Nicaragua</p>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+ReactDOM.render(<DignaLearnApp />, document.getElementById('root'));
+</script>
+</body>
+</html>
+

@@ -14,8 +14,7 @@ Venimos dispuestos a absorber todo el conocimiento posible, dar nuestro mayor es
 
 | Miembro | Rol |  
 | :--- | :--- |  
-| **Eddy Marenco** | Líder / Marketing |  
-| **Ronald Dávila** | Comunicador |  
+| **Eddy Marenco** | Líder, Marketing y Comunicaciones |  
 | **Sharis Peralta** | Diseñadora |  
 | **Dirk Martinez** | Desarrollador Backend |  
 | **Sidar Perez** | Diseñador / Desarrollador Frontend |
